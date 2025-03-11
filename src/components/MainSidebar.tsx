@@ -59,7 +59,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
                     : "text-purple-800/80 hover:bg-purple-500/30 hover:text-purple-900"
                 )}
               >
-                <item.icon size={20} className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")} />
+                <item.icon size={24} className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")} />
                 {!collapsed && <span className="truncate text-xs">{item.name}</span>}
               </Link>
             );
@@ -76,7 +76,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
               className="w-full text-xs bg-purple-500/30 text-purple-900 hover:bg-purple-500/50"
             >
               <div className="flex items-center justify-center w-full">
-                <Settings size={20} className={cn(collapsed ? "mx-auto" : "mr-3")} />
+                <Settings size={24} className={cn(collapsed ? "mx-auto" : "mr-3")} />
                 {!collapsed && <span>Settings</span>}
               </div>
             </Button>
@@ -102,7 +102,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
           className="w-full justify-center mt-2 bg-purple-500/30 text-purple-900 hover:bg-purple-500/50"
           onClick={toggleCollapsed}
         >
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {collapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
         </Button>
       </div>
     </div>
