@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui-extensions/Button";
 import { Input } from "@/components/ui/input";
@@ -126,7 +125,9 @@ const Login = () => {
                 Google
               </Button>
               <Button variant="outline" className="flex items-center justify-center gap-2">
-                <Linkedin size={18} />
+                <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 72 72" width="18" fill="#0A66C2">
+                  <path d="M64,0H8C3.6,0,0,3.6,0,8v56c0,4.4,3.6,8,8,8h56c4.4,0,8-3.6,8-8V8C72,3.6,68.4,0,64,0z M21.8,62H11V27.3h10.7V62z M16.3,22.8c-3.5,0-6.3-2.9-6.3-6.4c0-3.5,2.8-6.4,6.3-6.4s6.3,2.9,6.3,6.4C22.7,19.9,19.9,22.8,16.3,22.8z M62,62H51.3V43.8c0-5-1.9-7.8-5.8-7.8c-4.3,0-6.5,2.9-6.5,7.8V62H28.6V27.3h10.3v4.7c0,0,3.1-5.7,10.5-5.7c7.4,0,12.6,4.5,12.6,13.8V62z"/>
+                </svg>
                 LinkedIn
               </Button>
             </div>
@@ -192,7 +193,9 @@ const Login = () => {
                 Google
               </Button>
               <Button variant="outline" className="flex items-center justify-center gap-2">
-                <Linkedin size={18} />
+                <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 0 72 72" width="18" fill="#0A66C2">
+                  <path d="M64,0H8C3.6,0,0,3.6,0,8v56c0,4.4,3.6,8,8,8h56c4.4,0,8-3.6,8-8V8C72,3.6,68.4,0,64,0z M21.8,62H11V27.3h10.7V62z M16.3,22.8c-3.5,0-6.3-2.9-6.3-6.4c0-3.5,2.8-6.4,6.3-6.4s6.3,2.9,6.3,6.4C22.7,19.9,19.9,22.8,16.3,22.8z M62,62H51.3V43.8c0-5-1.9-7.8-5.8-7.8c-4.3,0-6.5,2.9-6.5,7.8V62H28.6V27.3h10.3v4.7c0,0,3.1-5.7,10.5-5.7c7.4,0,12.6,4.5,12.6,13.8V62z"/>
+                </svg>
                 LinkedIn
               </Button>
             </div>
@@ -204,3 +207,4 @@ const Login = () => {
 };
 
 export default Login;
+
