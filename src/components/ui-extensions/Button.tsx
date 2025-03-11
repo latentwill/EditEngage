@@ -9,10 +9,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   className?: string;
   showArrow?: boolean;
+  asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "default", size = "default", children, className, showArrow = false, ...props }, ref) => {
+  ({ variant = "default", size = "default", children, className, showArrow = false, asChild = false, ...props }, ref) => {
     const variantClassMap = {
       primary: "bg-primary text-white hover:bg-primary/90 transition-all duration-300",
       outline: "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground transition-all duration-300",
@@ -33,6 +34,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           "font-medium relative overflow-hidden group", 
           finalClassName
         )}
+        asChild={asChild}
         {...props}
       >
         <span className="relative z-10 flex items-center gap-2">

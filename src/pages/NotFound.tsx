@@ -1,5 +1,5 @@
 
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui-extensions/Button";
 
@@ -27,7 +27,7 @@ const NotFound = () => {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <Button variant="primary" asChild>
-          <a href="/">Return Home</a>
+          <Link to="/">Return Home</Link>
         </Button>
       </div>
     </div>
