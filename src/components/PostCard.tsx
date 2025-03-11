@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Post } from "@/types/post";
 import { AIMode } from "@/types/ai";
 import { Button } from "@/components/ui-extensions/Button";
-import { Calendar, Check, MessageCircle, X, Zap } from "lucide-react";
+import { Calendar, Check, X, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -16,7 +16,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [showEdited, setShowEdited] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -55,41 +55,59 @@ const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
         </h3>
       </div>
 
-      {/* Content Comparison */}
-      <div className="flex border-t border-border/50">
-        {/* Original Content */}
-        <div className="flex-1 p-4 border-r border-border/50 relative">
-          <div className="absolute top-4 right-4">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">
-              Submitted
-            </span>
-          </div>
-          <div className="mb-3 mt-6 text-sm text-gray-700">
-            {truncateContent(post.content)}
-          </div>
-          {post.mediaUrls && post.mediaUrls.length > 0 && (
-            <div className="w-full h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
-              Media attachment
-            </div>
-          )}
+      {/* Slider Switch */}
+      <div className="flex justify-end px-4 mb-2">
+        <div className="flex items-center space-x-2">
+          <span className={`text-xs font-medium ${!showEdited ? 'text-amber-800' : 'text-gray-400'}`}>Submitted</span>
+          <button 
+            onClick={() => setShowEdited(!showEdited)}
+            className="relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none"
+          >
+            <div 
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                showEdited ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className={`text-xs font-medium ${showEdited ? 'text-green-800' : 'text-gray-400'}`}>Edited</span>
         </div>
-        
-        {/* Edited Content */}
-        <div className="flex-1 p-4 relative">
-          <div className="absolute top-4 right-4">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-green-100 text-green-800">
-              Edited
-            </span>
-          </div>
-          <div className="mb-3 mt-6 text-sm text-gray-700">
-            {post.editedContent ? truncateContent(post.editedContent) : "Not yet edited"}
-          </div>
-          {post.mediaUrls && post.mediaUrls.length > 0 && (
-            <div className="w-full h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
-              Media attachment
+      </div>
+
+      {/* Content Display */}
+      <div className="px-4 py-3 min-h-[120px] transition-all duration-300 ease-in-out">
+        {showEdited ? (
+          <div className="relative">
+            <div className="absolute top-0 right-0">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-green-100 text-green-800">
+                Edited
+              </span>
             </div>
-          )}
-        </div>
+            <div className="pt-6 text-sm text-gray-700">
+              {post.editedContent ? truncateContent(post.editedContent) : "Not yet edited"}
+            </div>
+            {post.mediaUrls && post.mediaUrls.length > 0 && (
+              <div className="mt-3 w-full h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+                Media attachment
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="absolute top-0 right-0">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">
+                Submitted
+              </span>
+            </div>
+            <div className="pt-6 text-sm text-gray-700">
+              {truncateContent(post.content)}
+            </div>
+            {post.mediaUrls && post.mediaUrls.length > 0 && (
+              <div className="mt-3 w-full h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+                Media attachment
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tags */}
@@ -116,8 +134,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
             className="text-xs flex items-center"
             onClick={onEditWithAI}
           >
-            <MessageCircle size={14} className="mr-1" />
-            Edit with AI
+            Edit
           </Button>
         </div>
         <div className="flex space-x-2">

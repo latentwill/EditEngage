@@ -9,7 +9,7 @@ interface PlatformIconProps {
   size?: number;
 }
 
-const PlatformIcon: React.FC<PlatformIconProps> = ({ platform, className, size = 20 }) => {
+const PlatformIcon: React.FC<PlatformIconProps> = ({ platform, className, size = 24 }) => {
   const getIcon = () => {
     switch (platform) {
       case "twitter":
