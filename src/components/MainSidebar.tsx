@@ -42,7 +42,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
 
   return (
     <div className={cn(
-      "h-screen bg-[#8B5CF6] fixed left-0 top-0 z-40 flex flex-col border-r border-purple-400/50 transition-all duration-300 pt-16",
+      "h-screen bg-[#E6E0F5] fixed left-0 top-0 z-40 flex flex-col border-r border-purple-200/50 transition-all duration-300 pt-16",
       collapsed ? "w-14" : "w-52"
     )}>
       <div className="flex-1 overflow-y-auto p-3">
@@ -56,8 +56,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
                 className={cn(
                   "flex items-center px-3 py-2 rounded-md transition-colors group",
                   isActive 
-                    ? "bg-purple-500/50 text-white" 
-                    : "text-white/80 hover:bg-purple-500/30 hover:text-white"
+                    ? "bg-purple-500/50 text-purple-900" 
+                    : "text-purple-800/80 hover:bg-purple-500/30 hover:text-purple-900"
                 )}
               >
                 <item.icon size={20} className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")} />
@@ -68,13 +68,13 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
         </nav>
       </div>
       
-      <div className="p-3 border-t border-purple-400/50">
+      <div className="p-3 border-t border-purple-200/50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="subtle" 
               size="sm" 
-              className="w-full text-xs bg-purple-500/30 text-white hover:bg-purple-500/50"
+              className="w-full text-xs bg-purple-500/30 text-purple-900 hover:bg-purple-500/50"
             >
               <div className="flex items-center justify-center w-full">
                 <Settings size={18} className={cn(collapsed ? "mx-auto" : "mr-2")} />
@@ -85,10 +85,6 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
-              <User size={16} className="mr-2" />
-              <span>Profile</span>
-            </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer">
               <Settings size={16} className="mr-2" />
               <span>Settings</span>
@@ -104,7 +100,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
         <Button 
           variant="subtle" 
           size="sm" 
-          className="w-full justify-center mt-2 bg-purple-500/30 text-white hover:bg-purple-500/50"
+          className="w-full justify-center mt-2 bg-purple-500/30 text-purple-900 hover:bg-purple-500/50"
           onClick={toggleCollapsed}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
