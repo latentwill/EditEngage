@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Post } from "@/types/post";
 import { AIMode } from "@/types/ai";
@@ -29,11 +28,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
   };
 
   return (
-    <div className="mb-8">
-      {/* Agent Info Section - Now outside the card */}
-      <div className="flex items-center mb-3 ml-10">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3">
-          <Zap size={16} className="text-green-500" />
+    <div className="mb-8 max-w-4xl">
+      {/* Agent Info Section - Now with line */}
+      <div className="flex items-center mb-3 relative pl-14">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 z-10">
+            <Zap size={16} className="text-green-500" />
+          </div>
+          <div className="w-6 h-[2px] bg-border/50 absolute left-8" />
         </div>
         <div className="flex items-center text-sm">
           <span className="font-medium">{post.sourceAgent}</span>
@@ -45,7 +47,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
       </div>
 
       {/* The Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-border/50 transition-all hover:shadow-md overflow-hidden">
+      <div className="relative bg-white rounded-lg shadow-sm border border-border/50 transition-all hover:shadow-md overflow-hidden ml-14">
         {/* Post Title */}
         <div className="px-4 pt-4 pb-3 text-center">
           <h3 className="font-semibold text-base">
@@ -155,7 +157,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
           </div>
         </div>
 
-        {/* Platform Icon - Always visible in top right corner */}
+        {/* Platform Icon */}
         <div className="absolute top-4 right-4">
           <PlatformIcon platform={post.platform} size={20} />
         </div>
