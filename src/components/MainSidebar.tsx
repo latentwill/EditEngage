@@ -74,13 +74,12 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
             <Button 
               variant="subtle" 
               size="sm" 
-              className="w-full justify-between text-xs bg-amber-100/70 text-amber-700 hover:bg-amber-200/60"
+              className="w-full text-xs bg-amber-100/70 text-amber-700 hover:bg-amber-200/60"
             >
-              <div className="flex items-center">
-                <User size={18} className={cn(collapsed ? "mx-auto" : "mr-2")} />
-                {!collapsed && <span>Profile</span>}
+              <div className="flex items-center justify-center w-full">
+                <Settings size={18} className={cn(collapsed ? "mx-auto" : "mr-2")} />
+                {!collapsed && <span>Settings</span>}
               </div>
-              {!collapsed && <ChevronRight size={16} />}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
