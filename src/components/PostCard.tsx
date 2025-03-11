@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Post } from "@/types/post";
 import { AIMode } from "@/types/ai";
@@ -32,8 +33,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
       {/* Agent Info Section - Now with line */}
       <div className="flex items-center mb-3 relative pl-14">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 z-10">
-            <Zap size={16} className="text-green-500" />
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 z-10">
+            <Zap size={16} className="text-[#8B5CF6]" />
           </div>
           <div className="w-6 h-[2px] bg-border/50 absolute left-8" />
         </div>

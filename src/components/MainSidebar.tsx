@@ -42,7 +42,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
 
   return (
     <div className={cn(
-      "h-screen bg-[#F0E6FF] fixed left-0 top-0 z-40 flex flex-col border-r border-border/50 transition-all duration-300 pt-16",
+      "h-screen bg-[#FEF7CD] fixed left-0 top-0 z-40 flex flex-col border-r border-border/50 transition-all duration-300 pt-16",
       collapsed ? "w-[4.5rem]" : "w-64"
     )}>
       <div className="flex-1 overflow-y-auto p-3">
@@ -56,8 +56,8 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
                 className={cn(
                   "flex items-center px-3 py-2 rounded-md transition-colors group",
                   isActive 
-                    ? "bg-[#9b87f5]/20 text-[#6E59A5]" 
-                    : "text-[#7E69AB] hover:bg-[#9b87f5]/10 hover:text-[#6E59A5]"
+                    ? "bg-amber-200/70 text-amber-800" 
+                    : "text-amber-700/80 hover:bg-amber-100 hover:text-amber-800"
                 )}
               >
                 <item.icon size={20} className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")} />
@@ -68,13 +68,13 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
         </nav>
       </div>
       
-      <div className="p-3 border-t border-[#D6BCFA]/30">
+      <div className="p-3 border-t border-amber-200">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="subtle" 
               size="sm" 
-              className="w-full justify-between text-xs"
+              className="w-full justify-between text-xs bg-amber-100/70 text-amber-700 hover:bg-amber-200/60"
             >
               <div className="flex items-center">
                 <User size={18} className={cn(collapsed ? "mx-auto" : "mr-2")} />
@@ -105,7 +105,7 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
         <Button 
           variant="subtle" 
           size="sm" 
-          className="w-full justify-center mt-2"
+          className="w-full justify-center mt-2 bg-amber-100/70 text-amber-700 hover:bg-amber-200/60"
           onClick={toggleCollapsed}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
