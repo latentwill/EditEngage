@@ -1,10 +1,15 @@
 
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui-extensions/Button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+  const { user } = useAuth();
+  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -34,6 +39,16 @@ const Header = () => {
               <span>EditEngage</span>
             </Link>
           </div>
+          
+          {isHomePage && !user && (
+            <div>
+              <Link to="/login">
+                <Button variant="primary" size="sm">
+                  Login
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
