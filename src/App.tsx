@@ -40,6 +40,14 @@ const App = () => (
                 </PrivateRoute>
               } 
             />
+            <Route 
+              path="/connections" 
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              } 
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
