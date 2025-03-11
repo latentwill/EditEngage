@@ -12,10 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { User, Settings, LogOut, LayoutDashboard, TagIcon, BarChart3 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,7 +56,7 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            {navigationItems.map((item) => (
+            {user && navigationItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
@@ -65,31 +67,39 @@ const Header = () => {
               </Link>
             ))}
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="subtle" size="sm" className="h-9 w-9 rounded-full p-0">
-                  <span className="sr-only">Open user menu</span>
-                  <User size={18} />
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="subtle" size="sm" className="h-9 w-9 rounded-full p-0">
+                    <span className="sr-only">Open user menu</span>
+                    <User size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer">
+                    <User size={16} className="mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Settings size={16} className="mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer text-red-600" onClick={() => signOut()}>
+                    <LogOut size={16} className="mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/login">
+                <Button variant="primary" size="sm">
+                  Sign In
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
-                  <User size={16} className="mr-2" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Settings size={16} className="mr-2" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-red-600">
-                  <LogOut size={16} className="mr-2" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+            )}
           </nav>
 
           {/* Mobile menu button */}
@@ -124,7 +134,7 @@ const Header = () => {
         )}
       >
         <div className="px-4 pt-2 pb-4 space-y-1">
-          {navigationItems.map((item) => (
+          {user && navigationItems.map((item) => (
             <Link
               key={item.name}
               to={item.path}
@@ -135,31 +145,45 @@ const Header = () => {
               {item.name}
             </Link>
           ))}
-          <div className="pt-2 pb-1 border-t border-border/50 mt-2">
+          {user ? (
+            <div className="pt-2 pb-1 border-t border-border/50 mt-2">
+              <Link
+                to="/profile"
+                className="flex items-center px-3 py-2 text-base font-medium text-foreground hover:bg-muted/50 rounded-md"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <User size={18} className="mr-2" />
+                Profile
+              </Link>
+              <Link
+                to="/settings"
+                className="flex items-center px-3 py-2 text-base font-medium text-foreground hover:bg-muted/50 rounded-md"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Settings size={18} className="mr-2" />
+                Settings
+              </Link>
+              <button
+                className="flex items-center px-3 py-2 text-base font-medium text-red-600 hover:bg-muted/50 rounded-md w-full text-left"
+                onClick={() => {
+                  signOut();
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <LogOut size={18} className="mr-2" />
+                Logout
+              </button>
+            </div>
+          ) : (
             <Link
-              to="/profile"
+              to="/login"
               className="flex items-center px-3 py-2 text-base font-medium text-foreground hover:bg-muted/50 rounded-md"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <User size={18} className="mr-2" />
-              Profile
+              Sign In
             </Link>
-            <Link
-              to="/settings"
-              className="flex items-center px-3 py-2 text-base font-medium text-foreground hover:bg-muted/50 rounded-md"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Settings size={18} className="mr-2" />
-              Settings
-            </Link>
-            <button
-              className="flex items-center px-3 py-2 text-base font-medium text-red-600 hover:bg-muted/50 rounded-md w-full text-left"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <LogOut size={18} className="mr-2" />
-              Logout
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </header>
