@@ -26,10 +26,16 @@ const Dashboard = () => {
         toggleCollapsed={() => setSidebarCollapsed(!sidebarCollapsed)} 
       />
       
-      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-[4.5rem]' : 'ml-64'} mt-16`}>
+      <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-14' : 'ml-52'} mt-16`}>
         <div className="container mx-auto px-4 py-6">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">Social Media Posts</h1>
+          <div className="flex items-center mb-6 bg-white/60 p-3 rounded-lg shadow-sm">
+            <div className="relative flex-1 mr-4">
+              <Input 
+                className="pl-10 pr-4 py-2 w-full bg-white" 
+                placeholder="Search posts or prompt AI..."
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+            </div>
             <div className="flex items-center space-x-4">
               <NotificationBell count={3} />
               <AIToggle mode={aiMode} onModeChange={setAIMode} />
@@ -38,14 +44,6 @@ const Dashboard = () => {
                 New Post
               </Button>
             </div>
-          </div>
-
-          <div className="relative mb-6">
-            <Input 
-              className="pl-10 pr-4 py-2 w-full bg-white" 
-              placeholder="Search posts or prompt AI..."
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
           </div>
           
           <Tabs defaultValue="pending">
