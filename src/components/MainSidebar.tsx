@@ -7,7 +7,6 @@ import {
   TagIcon,
   Plug,
   Settings, 
-  User,
   LogOut,
   ChevronLeft, 
   ChevronRight 

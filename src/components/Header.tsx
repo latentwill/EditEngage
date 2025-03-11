@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui-extensions/Button";
@@ -18,10 +18,10 @@ const Header = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Link to="/" className="text-xl font-medium text-foreground flex items-center gap-2">
-              <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold">E</span>
+              <span className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                <span className="text-[#8B5CF6] font-semibold">E</span>
               </span>
-              <span>EditEngage</span>
+              <span>ditEngage</span>
             </Link>
           </div>
           
