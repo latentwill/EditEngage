@@ -67,19 +67,38 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
         </nav>
       </div>
       
-      <div className="p-3 border-t border-purple-200/50">
+      <div className="p-3 border-t border-purple-200/50 space-y-1">
+        <Link
+          to="/settings"
+          className={cn(
+            "flex items-center px-3 py-2 rounded-md transition-colors group text-purple-800/80 hover:bg-purple-500/30 hover:text-purple-900"
+          )}
+        >
+          <Settings size={24} className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")} />
+          {!collapsed && <span className="truncate text-xs">Settings</span>}
+        </Link>
+        
+        <Button 
+          variant="subtle" 
+          size="sm" 
+          className={cn(
+            "w-full text-purple-800/80 hover:bg-purple-500/30 hover:text-purple-900 flex items-center px-3 py-2 rounded-md transition-colors",
+            "bg-transparent hover:bg-purple-500/30"
+          )}
+          onClick={toggleCollapsed}
+        >
+          {collapsed ? 
+            <ChevronRight size={24} className="mx-auto" /> : 
+            <div className="flex items-center w-full">
+              <ChevronLeft size={24} className="mr-3" />
+              <span className="truncate text-xs">Collapse</span>
+            </div>
+          }
+        </Button>
+        
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="subtle" 
-              size="sm" 
-              className="w-full text-xs bg-purple-500/30 text-purple-900 hover:bg-purple-500/50"
-            >
-              <div className="flex items-center justify-center w-full">
-                <Settings size={24} className={cn(collapsed ? "mx-auto" : "mr-3")} />
-                {!collapsed && <span>Settings</span>}
-              </div>
-            </Button>
+          <DropdownMenuTrigger className="hidden">
+            <span>Account</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -95,15 +114,6 @@ const MainSidebar: React.FC<MainSidebarProps> = ({ collapsed, toggleCollapsed })
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <Button 
-          variant="subtle" 
-          size="sm" 
-          className="w-full justify-center mt-2 bg-purple-500/30 text-purple-900 hover:bg-purple-500/50"
-          onClick={toggleCollapsed}
-        >
-          {collapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
-        </Button>
       </div>
     </div>
   );
