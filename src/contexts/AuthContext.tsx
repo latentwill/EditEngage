@@ -49,11 +49,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        // Special handling for "Email not confirmed" error
+        if (error.message === "Email not confirmed") {
+          // If email confirmation is disabled in Supabase dashboard but the error still occurs
+          // Let's try to force sign in again after a short delay
+          toast({
+            title: "Attempting to sign in",
+            description: "Trying to sign in despite email confirmation error...",
+          });
+          
+          // Wait a short moment and try again
+          setTimeout(async () => {
+            const { error: retryError } = await supabase.auth.signInWithPassword({ email, password });
+            if (retryError) {
+              toast({
+                title: "Sign in failed",
+                description: retryError.message,
+                variant: "destructive",
+              });
+            } else {
+              navigate('/dashboard');
+              toast({
+                title: "Signed in",
+                description: "You have successfully signed in.",
+              });
+            }
+            setLoading(false);
+          }, 1000);
+          return;
+        }
+        
         toast({
           title: "Sign in failed",
           description: error.message,
           variant: "destructive",
         });
+        setLoading(false);
         return;
       }
       
@@ -87,11 +118,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log(`Using ${emailToUse} instead of ${email} for testing`);
       }
       
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email: emailToUse, 
         password,
         options: {
-          emailRedirectTo: window.location.origin + '/login'
+          emailRedirectTo: window.location.origin + '/login',
+          data: {
+            email_confirmed: true  // Add this to try to bypass email confirmation
+          }
         }
       });
       
@@ -109,8 +143,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "Your account has been created successfully.",
       });
       
-      // Since email confirmation is disabled, we can sign in right away
-      await signIn(emailToUse, password);
+      // For auto sign-in, we should wait a moment to ensure the user has been created
+      setTimeout(async () => {
+        try {
+          // Try to sign in with the credentials
+          const { error: signInError } = await supabase.auth.signInWithPassword({ 
+            email: emailToUse, 
+            password 
+          });
+          
+          if (signInError) {
+            if (signInError.message === "Email not confirmed") {
+              console.log("Email confirmation still required despite being disabled in dashboard");
+              
+              // Try once more after a short delay
+              setTimeout(async () => {
+                const { error: retryError } = await supabase.auth.signInWithPassword({ 
+                  email: emailToUse, 
+                  password 
+                });
+                
+                if (!retryError) {
+                  navigate('/dashboard');
+                  toast({
+                    title: "Signed in",
+                    description: "Sign in successful after retry.",
+                  });
+                }
+              }, 1500);
+            } else {
+              console.error("Sign in after signup failed:", signInError.message);
+            }
+          } else {
+            navigate('/dashboard');
+          }
+        } catch (e) {
+          console.error("Error in auto-signin:", e);
+        }
+      }, 1000);
     } catch (error) {
       if (error instanceof Error) {
         toast({
