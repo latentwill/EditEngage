@@ -21,7 +21,7 @@ const Header = () => {
               <span className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
                 <span className="text-[#8B5CF6] font-semibold">E</span>
               </span>
-              <span>ditEngage</span>
+              <span>EditEngage</span>
             </Link>
           </div>
           
