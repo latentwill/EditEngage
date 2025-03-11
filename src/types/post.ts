@@ -1,5 +1,5 @@
 
-export type Platform = "linkedin" | "twitter" | "facebook" | "instagram" | "tiktok" | "bluesky";
+export type Platform = "linkedin" | "twitter" | "facebook" | "instagram" | "tiktok" | "bluesky" | "threads";
 
 export type PostStatus = "pending" | "approved" | "denied" | "scheduled";
 
@@ -22,4 +22,6 @@ export interface Post {
   tags: Tag[];
   aiSuggestion?: string;
   aiConfidence?: number;
+  editedContent?: string;
+  title?: string;
 }

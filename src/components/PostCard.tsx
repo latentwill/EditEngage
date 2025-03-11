@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Post } from "@/types/post";
 import { AIMode } from "@/types/ai";
 import { Button } from "@/components/ui-extensions/Button";
-import { Calendar, Check, MessageCircle, X } from "lucide-react";
+import { Calendar, Check, MessageCircle, X, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -18,80 +18,93 @@ interface PostCardProps {
 const PostCard: React.FC<PostCardProps> = ({ post, aiMode, onEditWithAI }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const renderAIBadge = () => {
-    if (!post.aiSuggestion || aiMode === "human") return null;
-
-    const badgeColor = post.aiSuggestion === "approve" 
-      ? "bg-green-100 text-green-800"
-      : post.aiSuggestion === "deny"
-        ? "bg-red-100 text-red-800"
-        : "bg-amber-100 text-amber-800";
-
-    const badgeText = post.aiSuggestion === "approve" 
-      ? "AI: Approve"
-      : post.aiSuggestion === "deny"
-        ? "AI: Deny"
-        : "AI: Edit";
-
-    return (
-      <div className={cn("text-xs flex items-center px-2 py-1 rounded-full", badgeColor)}>
-        {badgeText} ({Math.round(post.aiConfidence! * 100)}%)
-      </div>
-    );
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'MMM yyyy');
+  };
+  
+  const truncateContent = (content: string, maxLength = 120) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + "...";
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-border/50 transition-all hover:shadow-md">
-      <div className="flex items-start justify-between mb-3">
+    <div className="bg-white rounded-lg shadow-sm border border-border/50 transition-all hover:shadow-md overflow-hidden">
+      {/* Card Header */}
+      <div className="p-4 pb-2 flex items-center justify-between">
         <div className="flex items-center">
-          <PlatformIcon platform={post.platform} className="mr-2" />
-          <span className="font-medium text-sm">{post.account}</span>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 mr-3">
+            <Zap size={16} className="text-green-500" />
+          </div>
+          <div>
+            <span className="text-sm font-medium">
+              {post.sourceAgent} on {post.platform} submitted this post
+            </span>
+            <div className="text-xs text-muted-foreground">
+              {formatDate(post.createdAt)}
+            </div>
+          </div>
         </div>
-        {renderAIBadge()}
-      </div>
-
-      <div 
-        className={cn(
-          "text-sm mb-4 relative overflow-hidden transition-all", 
-          !expanded && "max-h-20"
-        )}
-      >
-        <p>{post.content}</p>
-        {!expanded && post.content.length > 150 && (
-          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
-        )}
+        <PlatformIcon platform={post.platform} size={24} />
       </div>
       
-      {post.content.length > 150 && (
-        <button 
-          className="text-xs text-primary mb-3 font-medium"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? "Show less" : "Show more"}
-        </button>
-      )}
-
-      <div className="flex flex-wrap gap-2 mb-4">
-        {post.tags.map((tag) => (
-          <Badge key={tag.id} style={{ backgroundColor: tag.color }} variant="secondary" className="text-xs">
-            {tag.name}
-          </Badge>
-        ))}
+      {/* Post Title */}
+      <div className="px-4 pt-2 pb-3 text-center">
+        <h3 className="font-semibold text-base">
+          {post.title || `Post for ${post.account}`}
+        </h3>
       </div>
 
-      <div className="flex items-center text-xs text-muted-foreground mb-4">
-        <span className="mr-4">Source: {post.sourceAgent}</span>
-        <span>Created: {format(new Date(post.createdAt), 'MMM d, yyyy')}</span>
-      </div>
-
-      {post.scheduledFor && (
-        <div className="flex items-center text-xs text-primary mb-4">
-          <Calendar size={14} className="mr-1" />
-          <span>Scheduled for {format(new Date(post.scheduledFor), 'MMM d, yyyy h:mm a')}</span>
+      {/* Content Comparison */}
+      <div className="flex border-t border-border/50">
+        {/* Original Content */}
+        <div className="flex-1 p-4 border-r border-border/50 relative">
+          <div className="absolute top-4 right-4">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-amber-100 text-amber-800">
+              Submitted
+            </span>
+          </div>
+          <div className="mb-3 mt-6 text-sm text-gray-700">
+            {truncateContent(post.content)}
+          </div>
+          {post.mediaUrls && post.mediaUrls.length > 0 && (
+            <div className="w-full h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+              Media attachment
+            </div>
+          )}
         </div>
-      )}
+        
+        {/* Edited Content */}
+        <div className="flex-1 p-4 relative">
+          <div className="absolute top-4 right-4">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-medium bg-green-100 text-green-800">
+              Edited
+            </span>
+          </div>
+          <div className="mb-3 mt-6 text-sm text-gray-700">
+            {post.editedContent ? truncateContent(post.editedContent) : "Not yet edited"}
+          </div>
+          {post.mediaUrls && post.mediaUrls.length > 0 && (
+            <div className="w-full h-12 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+              Media attachment
+            </div>
+          )}
+        </div>
+      </div>
 
-      <div className="flex justify-between items-center pt-2 border-t border-border/50">
+      {/* Tags */}
+      <div className="px-4 py-3 border-t border-border/50">
+        <div className="flex flex-wrap gap-2">
+          {post.tags.map((tag) => (
+            <Badge key={tag.id} style={{ backgroundColor: tag.color }} variant="secondary" className="text-xs">
+              {tag.name}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center p-4 pt-2 border-t border-border/50">
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" className="text-xs flex items-center">
             <Calendar size={14} className="mr-1" />

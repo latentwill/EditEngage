@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Platform } from "@/types/post";
-import { Twitter, Linkedin, Facebook, Instagram, Video, Globe } from "lucide-react";
+import { Twitter, Linkedin, Facebook, Instagram, Video, Globe, MessageCircle } from "lucide-react";
 
 interface PlatformIconProps {
   platform: Platform;
@@ -9,7 +9,7 @@ interface PlatformIconProps {
   size?: number;
 }
 
-const PlatformIcon: React.FC<PlatformIconProps> = ({ platform, className, size = 16 }) => {
+const PlatformIcon: React.FC<PlatformIconProps> = ({ platform, className, size = 20 }) => {
   const getIcon = () => {
     switch (platform) {
       case "twitter":
@@ -24,6 +24,8 @@ const PlatformIcon: React.FC<PlatformIconProps> = ({ platform, className, size =
         return <Video size={size} className="text-[#000000]" />;
       case "bluesky":
         return <Globe size={size} className="text-[#0081FF]" />;
+      case "threads":
+        return <MessageCircle size={size} className="text-[#000000]" />;
       default:
         return <Globe size={size} />;
     }

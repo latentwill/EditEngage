@@ -6,7 +6,8 @@ import Sidebar from "@/components/Sidebar";
 import { AIMode } from "@/types/ai";
 import { Button } from "@/components/ui-extensions/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusIcon, Settings } from "lucide-react";
+import { PlusIcon, Settings, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import NotificationBell from "@/components/NotificationBell";
 import AIToggle from "@/components/AIToggle";
 
@@ -20,7 +21,7 @@ const Dashboard = () => {
       
       <main className="flex-1 container mx-auto px-4 py-6 mt-16">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Content Dashboard</h1>
+          <h1 className="text-2xl font-bold">Social Media Posts</h1>
           <div className="flex items-center space-x-4">
             <NotificationBell count={3} />
             <AIToggle mode={aiMode} onModeChange={setAIMode} />
@@ -29,6 +30,14 @@ const Dashboard = () => {
               New Post
             </Button>
           </div>
+        </div>
+
+        <div className="relative mb-6">
+          <Input 
+            className="pl-10 pr-4 py-2 w-full bg-white" 
+            placeholder="Search posts or prompt AI..."
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
         </div>
         
         <Tabs defaultValue="pending">

@@ -9,7 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 const mockPosts: Post[] = [
   {
     id: "1",
+    title: "Social Media in 2028",
     content: "Excited to announce our new product launch! Check out our website for more details. #innovation #tech",
+    editedContent: "Excited to announce our innovative product launch! Visit our website for more details. #innovation #tech #future",
     platform: "twitter",
     account: "@techcompany",
     status: "pending",
@@ -24,6 +26,7 @@ const mockPosts: Post[] = [
   },
   {
     id: "2",
+    title: "Job Opportunities",
     content: "We're hiring! Join our team of passionate developers and help us build the future of technology. Apply now at careers.techcompany.com",
     platform: "linkedin",
     account: "Tech Company Inc.",
@@ -39,7 +42,9 @@ const mockPosts: Post[] = [
   },
   {
     id: "3",
+    title: "Tech Conference Highlights",
     content: "Our team had a great time at the tech conference last weekend. Thanks to all who stopped by our booth!",
+    editedContent: "Our fantastic team had an amazing time at the tech conference last weekend. Thanks to everyone who visited our booth and engaged with our demos!",
     platform: "linkedin",
     account: "Tech Company Inc.",
     status: "scheduled",
@@ -80,10 +85,14 @@ const PostFeed: React.FC<PostFeedProps> = ({ status, aiMode, onEditWithAI }) => 
           <div key={i} className="bg-white rounded-lg p-6 shadow-sm border border-border/50">
             <div className="space-y-3">
               <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-4 w-full" />
               <div className="flex space-x-2">
-                <Skeleton className="h-6 w-16" />
-                <Skeleton className="h-6 w-16" />
+                <div className="w-1/2">
+                  <Skeleton className="h-16 w-full" />
+                </div>
+                <div className="w-1/2">
+                  <Skeleton className="h-16 w-full" />
+                </div>
               </div>
               <div className="flex justify-between pt-2">
                 <Skeleton className="h-8 w-24" />
@@ -106,7 +115,7 @@ const PostFeed: React.FC<PostFeedProps> = ({ status, aiMode, onEditWithAI }) => 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {posts.map((post) => (
         <PostCard 
           key={post.id} 
