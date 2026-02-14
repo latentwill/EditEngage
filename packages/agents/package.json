@@ -1,0 +1,15 @@
+{
+  "name": "@editengage/agents",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/types.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "typescript": "^5.5.0"
+  }
+}
