@@ -1,5 +1,5 @@
 /**
- * @behavior Database types define the complete schema for all 14 tables
+ * @behavior Database types define the complete schema for all 15 tables
  * with Row, Insert, and Update variants and all enum types
  * @business_rule Types must match the SQL schema exactly to ensure
  * type-safe database operations throughout the application
@@ -16,13 +16,15 @@ import type {
   TopicStatus,
   TemplateDataSourceType,
   GeneratedPageStatus,
+  ApiProvider,
 } from './database.js';
 
 type Tables = Database['public']['Tables'];
 
 describe('Database types', () => {
-  describe('includes all 14 tables', () => {
+  describe('includes all 15 tables', () => {
     const tableNames = [
+      'api_keys',
       'organizations',
       'organization_members',
       'projects',
@@ -48,6 +50,19 @@ describe('Database types', () => {
         ? true
         : false = true;
       expect(assertion).toBe(true);
+    });
+  });
+
+  describe('api_keys table Row has expected columns', () => {
+    it('has id, project_id, provider, api_key, is_active, created_at, updated_at', () => {
+      type Row = Tables['api_keys']['Row'];
+      expectTypeOf<Row>().toHaveProperty('id');
+      expectTypeOf<Row>().toHaveProperty('project_id');
+      expectTypeOf<Row>().toHaveProperty('provider');
+      expectTypeOf<Row>().toHaveProperty('api_key');
+      expectTypeOf<Row>().toHaveProperty('is_active');
+      expectTypeOf<Row>().toHaveProperty('created_at');
+      expectTypeOf<Row>().toHaveProperty('updated_at');
     });
   });
 
@@ -256,6 +271,10 @@ describe('Database types', () => {
 
     it('GeneratedPageStatus is a union of draft | published | archived', () => {
       expectTypeOf<GeneratedPageStatus>().toEqualTypeOf<'draft' | 'published' | 'archived'>();
+    });
+
+    it('ApiProvider is a union of openrouter | perplexity | tavily | openai | serpapi', () => {
+      expectTypeOf<ApiProvider>().toEqualTypeOf<'openrouter' | 'perplexity' | 'tavily' | 'openai' | 'serpapi'>();
     });
   });
 });

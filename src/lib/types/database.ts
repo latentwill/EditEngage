@@ -32,6 +32,8 @@ export type TemplateDataSourceType =
 
 export type GeneratedPageStatus = 'draft' | 'published' | 'archived';
 
+export type ApiProvider = 'openrouter' | 'perplexity' | 'tavily' | 'openai' | 'serpapi';
+
 // -- Database Type ------------------------------------------------------------
 
 export interface Database {
@@ -496,6 +498,35 @@ export interface Database {
           metadata?: Record<string, unknown>;
           is_read?: boolean;
           created_at?: string;
+        };
+      };
+      api_keys: {
+        Row: {
+          id: string;
+          project_id: string;
+          provider: ApiProvider;
+          api_key: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          provider: ApiProvider;
+          api_key: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          provider?: ApiProvider;
+          api_key?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       notifications: {

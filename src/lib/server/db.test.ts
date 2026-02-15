@@ -13,6 +13,11 @@ const MIGRATION_PATH = resolve(
   '../../../supabase/migrations/001_initial_schema.sql'
 );
 
+const MIGRATION_PATH_002 = resolve(
+  import.meta.dirname ?? __dirname,
+  '../../../supabase/migrations/002_api_keys.sql'
+);
+
 describe('001_initial_schema migration', () => {
   it('migration file exists', () => {
     expect(existsSync(MIGRATION_PATH)).toBe(true);
@@ -138,6 +143,64 @@ describe('001_initial_schema migration', () => {
           expect(sql).toMatch(pattern);
         }
       );
+    });
+  });
+});
+
+describe('002_api_keys migration', () => {
+  it('migration file exists', () => {
+    expect(existsSync(MIGRATION_PATH_002)).toBe(true);
+  });
+
+  describe('SQL content is valid', () => {
+    let sql: string;
+
+    beforeAll(() => {
+      sql = readFileSync(MIGRATION_PATH_002, 'utf-8');
+    });
+
+    it('is non-empty SQL', () => {
+      expect(sql.length).toBeGreaterThan(0);
+    });
+
+    it('defines enum type api_provider', () => {
+      const pattern = /create\s+type\s+api_provider\s+as\s+enum/i;
+      expect(sql).toMatch(pattern);
+    });
+
+    it('defines table api_keys', () => {
+      const pattern = /create\s+table\s+api_keys\s*\(/i;
+      expect(sql).toMatch(pattern);
+    });
+
+    it('has unique constraint on (project_id, provider)', () => {
+      const lower = sql.toLowerCase();
+      expect(lower).toContain('unique');
+      expect(lower).toContain('project_id');
+      expect(lower).toContain('provider');
+    });
+
+    it('enables RLS on api_keys', () => {
+      const pattern = /alter\s+table\s+api_keys\s+enable\s+row\s+level\s+security/i;
+      expect(sql).toMatch(pattern);
+    });
+
+    describe('has RLS policies for api_keys', () => {
+      it('has select policy', () => {
+        expect(sql.toLowerCase()).toContain('on api_keys for select');
+      });
+
+      it('has insert policy', () => {
+        expect(sql.toLowerCase()).toContain('on api_keys for insert');
+      });
+
+      it('has update policy', () => {
+        expect(sql.toLowerCase()).toContain('on api_keys for update');
+      });
+
+      it('has delete policy', () => {
+        expect(sql.toLowerCase()).toContain('on api_keys for delete');
+      });
     });
   });
 });
