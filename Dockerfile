@@ -11,7 +11,10 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npm run build > /tmp/build.log 2>&1; \
+    BUILD_EXIT=$?; \
+    cat /tmp/build.log; \
+    exit $BUILD_EXIT
 
 FROM node:20-alpine AS runtime
 
