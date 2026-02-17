@@ -16,6 +16,9 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-editengage_redis_secret}
+    depends_on:
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://0.0.0.0:3000/api/health"]
       interval: 30s
@@ -28,10 +31,49 @@ services:
           memory: 512M
           cpus: '1.0'
 
-  # worker and redis temporarily disabled for build debugging
-  # worker:
-  #   build:
-  #     context: .
-  #     dockerfile: packages/worker/Dockerfile
+  worker:
+    build:
+      context: .
+      dockerfile: packages/worker/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-editengage_redis_secret}
+      - PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const fs = require('fs'); try { const s = fs.statSync('/tmp/worker-healthy'); process.exit(Date.now() - s.mtimeMs < 60000 ? 0 : 1); } catch { process.exit(1); }"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
 
-volumes: {}
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-editengage_redis_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-editengage_redis_secret} --maxmemory 256mb --maxmemory-policy noeviction
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+volumes:
+  redis_data:
