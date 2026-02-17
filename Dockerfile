@@ -3,16 +3,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci && echo "=== NPM CI SUCCESS ==="
+RUN npm ci
 
 COPY . .
-
-# Debug: show node/npm versions and env
-RUN echo "=== NODE $(node -v) NPM $(npm -v) ===" && \
-    echo "=== ENV VARS ===" && env | grep -E '^(PUBLIC_|SUPABASE_|NODE_|ORIGIN)' || true && \
-    echo "=== STARTING BUILD ===" && \
-    npm run build && \
-    echo "=== BUILD SUCCESS ==="
+RUN npm run build
 
 FROM node:20-alpine AS runtime
 

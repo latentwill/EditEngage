@@ -1,0 +1,14 @@
+node_modules
+.git
+.env
+.env.*
+!.env.example
+build
+.svelte-kit
+.oss
+tests
+*.test.ts
+*.spec.ts
+docs
+FRONTEND-SPEC.md
+README.md
