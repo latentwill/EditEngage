@@ -102,10 +102,11 @@ describe('Settings Hub Navigation', () => {
     const stylesLink = nav.querySelector('a[href="/dashboard/settings/writing-styles"]');
     expect(stylesLink).toBeInTheDocument();
 
-    // Should NOT have old Destinations or API Keys links
+    // Should have Destinations link (added per design spec)
     const destLink = nav.querySelector('a[href="/dashboard/settings/destinations"]');
-    expect(destLink).not.toBeInTheDocument();
+    expect(destLink).toBeInTheDocument();
 
+    // Should NOT have old API Keys link
     const apiKeysLink = nav.querySelector('a[href="/dashboard/settings/api-keys"]');
     expect(apiKeysLink).not.toBeInTheDocument();
   });
