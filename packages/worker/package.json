@@ -9,6 +9,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
     "bullmq": "^5.0.0",
     "ioredis": "^5.4.0"
   },

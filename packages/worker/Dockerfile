@@ -15,4 +15,4 @@ RUN npm link /app/packages/agents
 
 ENV NODE_ENV=production
 
-CMD ["node", "--import", "tsx", "src/index.ts"]
+CMD ["node", "--import", "tsx", "src/main.ts"]
