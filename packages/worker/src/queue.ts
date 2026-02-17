@@ -8,7 +8,8 @@ export function createQueue(): QueueInstance {
   const queue = new Queue('editengage-pipeline', {
     connection: {
       host: process.env.REDIS_HOST ?? 'localhost',
-      port: Number(process.env.REDIS_PORT ?? 6379)
+      port: Number(process.env.REDIS_PORT ?? 6379),
+      password: process.env.REDIS_PASSWORD
     }
   });
   return queue as unknown as QueueInstance;
