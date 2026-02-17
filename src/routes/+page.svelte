@@ -98,6 +98,20 @@
   ];
 </script>
 
+<!-- Navigation -->
+<nav
+  data-testid="landing-nav"
+  class="fixed top-0 left-0 right-0 z-50 backdrop-blur-[20px] bg-white/[0.06] border-b border-white/[0.08] px-6 py-4"
+>
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    <span class="text-lg font-bold text-white">EditEngage</span>
+    <div class="flex items-center gap-4">
+      <a href="/auth/login" class="text-sm text-white/70 hover:text-white transition-colors">Sign In</a>
+      <a href="/auth/signup" class="text-sm px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg transition-colors">Get Started</a>
+    </div>
+  </div>
+</nav>
+
 <!-- Hero Section -->
 <section
   data-testid="hero-section"
@@ -105,6 +119,8 @@
   style="min-height: 92vh;"
 >
   <div class="absolute inset-0 bg-gradient-radial from-emerald-900/10 via-transparent to-transparent pointer-events-none"></div>
+  <div data-testid="floating-shape" class="absolute top-20 left-10 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+  <div data-testid="floating-shape" class="absolute bottom-20 right-10 w-80 h-80 bg-cyan-500/20 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
 
   <div class="relative z-10 max-w-4xl mx-auto">
     <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
@@ -270,3 +286,14 @@
     </div>
   </div>
 </section>
+
+<!-- Footer -->
+<footer
+  data-testid="landing-footer"
+  class="border-t border-white/[0.08] px-6 py-12"
+>
+  <div class="max-w-6xl mx-auto text-center">
+    <span class="text-lg font-bold text-white">EditEngage</span>
+    <p class="text-sm text-white/50 mt-2">Built with AI, for content creators.</p>
+  </div>
+</footer>
