@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "main": "./src/types.ts",
+  "exports": {
+    ".": "./src/types.ts",
+    "./orchestrator": "./src/orchestrator.ts",
+    "./*": "./src/*.ts"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
