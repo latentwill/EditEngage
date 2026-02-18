@@ -47,10 +47,10 @@
   let localTopics = $state<TopicItem[]>(data.topics);
 
   const statusColors: Record<TopicStatus, string> = {
-    pending: 'bg-yellow-500/20 text-yellow-400',
-    in_progress: 'bg-blue-500/20 text-blue-400',
-    completed: 'bg-emerald-500/20 text-emerald-400',
-    skipped: 'bg-white/10 text-white/60'
+    pending: 'badge-warning',
+    in_progress: 'badge-info',
+    completed: 'badge-success',
+    skipped: 'badge-ghost'
   };
 
   let filteredTopics = $derived(
@@ -122,18 +122,18 @@
 
 <div data-testid="topics-page" class="space-y-8 py-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-white">Topic Queue</h1>
+    <h1 class="text-2xl font-bold text-base-content">Topic Queue</h1>
     <div class="flex items-center gap-3">
       <button
         data-testid="import-topics-button"
-        class="px-4 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/80 hover:bg-white/[0.12] transition-all duration-300"
+        class="btn btn-ghost"
         onclick={() => { showImportForm = !showImportForm; }}
       >
         Import CSV
       </button>
       <button
         data-testid="add-topic-button"
-        class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-sm text-emerald-400 hover:bg-emerald-500/30 transition-all duration-300"
+        class="btn btn-primary btn-sm"
         onclick={() => { showAddForm = !showAddForm; }}
       >
         Add Topic
@@ -143,14 +143,14 @@
 
   <!-- Add Topic Form -->
   {#if showAddForm}
-    <div class="backdrop-blur-[20px] bg-white/[0.08] border border-white/[0.08] rounded-xl p-6 space-y-4">
-      <h2 class="text-lg font-semibold text-white">Add New Topic</h2>
+    <div class="card bg-base-200 shadow-xl p-6 space-y-4">
+      <h2 class="text-lg font-semibold text-base-content">Add New Topic</h2>
       <div class="space-y-3">
         <input
           data-testid="topic-title-input"
           type="text"
           placeholder="Topic title"
-          class="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white placeholder-white/40"
+          class="input input-bordered w-full"
           value={newTitle}
           oninput={(e: Event) => { newTitle = (e.target as HTMLInputElement).value; }}
         />
@@ -158,21 +158,21 @@
           data-testid="topic-keywords-input"
           type="text"
           placeholder="Keywords (comma-separated)"
-          class="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white placeholder-white/40"
+          class="input input-bordered w-full"
           value={newKeywords}
           oninput={(e: Event) => { newKeywords = (e.target as HTMLInputElement).value; }}
         />
         <textarea
           data-testid="topic-notes-input"
           placeholder="Notes (optional)"
-          class="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white placeholder-white/40 resize-none"
+          class="textarea textarea-bordered w-full resize-none"
           rows="3"
           value={newNotes}
           oninput={(e: Event) => { newNotes = (e.target as HTMLTextAreaElement).value; }}
         ></textarea>
         <button
           data-testid="topic-submit-button"
-          class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-sm text-emerald-400 hover:bg-emerald-500/30 transition-all duration-300"
+          class="btn btn-primary btn-sm"
           onclick={handleAddTopic}
         >
           Save Topic
@@ -183,34 +183,34 @@
 
   <!-- Import Form -->
   {#if showImportForm}
-    <div class="backdrop-blur-[20px] bg-white/[0.08] border border-white/[0.08] rounded-xl p-6 space-y-4">
-      <h2 class="text-lg font-semibold text-white">Import Topics</h2>
+    <div class="card bg-base-200 shadow-xl p-6 space-y-4">
+      <h2 class="text-lg font-semibold text-base-content">Import Topics</h2>
       <div class="flex items-center gap-3">
         <input
           data-testid="csv-file-input"
           type="file"
           accept=".csv,.json"
-          class="text-sm text-white/60"
+          class="file-input file-input-bordered w-full max-w-xs"
           onchange={handleFileChange}
         />
         <button
           data-testid="csv-upload-button"
-          class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-sm text-emerald-400 hover:bg-emerald-500/30 transition-all duration-300"
+          class="btn btn-primary btn-sm"
           onclick={handleImportUpload}
         >
           Upload
         </button>
       </div>
       {#if importSummary}
-        <div data-testid="import-summary" class="p-4 rounded-lg bg-white/[0.04] border border-white/[0.06] space-y-2">
-          <p class="text-sm text-white/80">
-            Imported: <span data-testid="import-count" class="text-emerald-400 font-medium">{importSummary.imported}</span>
+        <div data-testid="import-summary" class="card bg-base-200/50 p-4 space-y-2">
+          <p class="text-sm text-base-content/80">
+            Imported: <span data-testid="import-count" class="text-success font-medium">{importSummary.imported}</span>
           </p>
-          <p class="text-sm text-white/80">
-            Skipped: <span data-testid="import-skipped" class="text-yellow-400 font-medium">{importSummary.skipped}</span>
+          <p class="text-sm text-base-content/80">
+            Skipped: <span data-testid="import-skipped" class="text-warning font-medium">{importSummary.skipped}</span>
           </p>
           {#if importSummary.errors.length > 0}
-            <div class="text-sm text-red-400">
+            <div class="text-sm text-error">
               {#each importSummary.errors as error}
                 <p>{error}</p>
               {/each}
@@ -222,31 +222,31 @@
   {/if}
 
   <!-- Tabs -->
-  <div class="flex items-center gap-1 border-b border-white/[0.08]">
+  <div class="tabs tabs-bordered">
     <button
       data-testid="tab-pending"
-      class="px-4 py-2 text-sm font-medium transition-all duration-200 {activeTab === 'pending' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-white/60 hover:text-white/80'}"
+      class="tab {activeTab === 'pending' ? 'tab-active' : ''}"
       onclick={() => { activeTab = 'pending'; }}
     >
       Pending
     </button>
     <button
       data-testid="tab-completed"
-      class="px-4 py-2 text-sm font-medium transition-all duration-200 {activeTab === 'completed' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-white/60 hover:text-white/80'}"
+      class="tab {activeTab === 'completed' ? 'tab-active' : ''}"
       onclick={() => { activeTab = 'completed'; }}
     >
       Completed
     </button>
     <button
       data-testid="tab-skipped"
-      class="px-4 py-2 text-sm font-medium transition-all duration-200 {activeTab === 'skipped' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-white/60 hover:text-white/80'}"
+      class="tab {activeTab === 'skipped' ? 'tab-active' : ''}"
       onclick={() => { activeTab = 'skipped'; }}
     >
       Skipped
     </button>
     <button
       data-testid="tab-variety-memory"
-      class="px-4 py-2 text-sm font-medium transition-all duration-200 {activeTab === 'variety-memory' ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-white/60 hover:text-white/80'}"
+      class="tab {activeTab === 'variety-memory' ? 'tab-active' : ''}"
       onclick={() => { activeTab = 'variety-memory'; }}
     >
       Variety Memory
@@ -259,19 +259,19 @@
       {#each filteredTopics as topic}
         <div
           data-testid="topic-item"
-          class="backdrop-blur-[20px] bg-white/[0.08] border border-white/[0.08] rounded-xl p-4 hover:bg-white/[0.12] transition-all duration-300"
+          class="card bg-base-200 shadow-xl p-4 hover:bg-base-300 transition-all duration-300"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <span data-testid="topic-title" class="text-sm font-medium text-white">{topic.title}</span>
+              <span data-testid="topic-title" class="text-sm font-medium text-base-content">{topic.title}</span>
               <span
                 data-testid="topic-status-badge"
-                class="text-xs px-2 py-0.5 rounded-full {statusColors[topic.status]}"
+                class="badge {statusColors[topic.status]}"
               >
                 {topic.status}
               </span>
               {#if topic.seo_score !== null}
-                <span data-testid="topic-seo-score" class="text-xs text-white/40">
+                <span data-testid="topic-seo-score" class="text-xs text-base-content/40">
                   SEO: {topic.seo_score}
                 </span>
               {/if}
@@ -280,7 +280,7 @@
               {#if topic.keywords.length > 0}
                 <div class="flex gap-1">
                   {#each topic.keywords as keyword}
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-white/50">
+                    <span class="badge badge-ghost badge-sm">
                       {keyword}
                     </span>
                   {/each}
@@ -289,7 +289,7 @@
               {#if topic.status === 'pending'}
                 <button
                   data-testid="skip-topic-button"
-                  class="text-xs px-2 py-1 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white/60 hover:text-white/80 hover:bg-white/[0.12] transition-all duration-200"
+                  class="btn btn-ghost btn-xs"
                   onclick={() => handleSkipTopic(topic.id)}
                 >
                   Skip
@@ -298,13 +298,13 @@
             </div>
           </div>
           {#if topic.notes}
-            <p class="mt-2 text-xs text-white/40">{topic.notes}</p>
+            <p class="mt-2 text-xs text-base-content/40">{topic.notes}</p>
           {/if}
         </div>
       {/each}
 
       {#if filteredTopics.length === 0}
-        <div class="py-8 text-center text-sm text-white/40">
+        <div class="py-8 text-center text-sm text-base-content/40">
           No {activeTab} topics.
         </div>
       {/if}
@@ -317,10 +317,10 @@
       {#each data.varietyMemory as memoryItem}
         <div
           data-testid="variety-memory-item"
-          class="backdrop-blur-[20px] bg-white/[0.08] border border-white/[0.08] rounded-xl p-4 hover:bg-white/[0.12] transition-all duration-300"
+          class="card bg-base-200 shadow-xl p-4 hover:bg-base-300 transition-all duration-300"
         >
           <div class="flex items-center justify-between">
-            <span data-testid="canonical-line" class="text-sm text-white/80 italic">
+            <span data-testid="canonical-line" class="text-sm text-base-content/80 italic">
               "{memoryItem.canonical_line}"
             </span>
             <div class="flex items-center gap-3">
@@ -328,12 +328,12 @@
                 <a
                   data-testid="content-link"
                   href="/dashboard/content/{memoryItem.content_id}"
-                  class="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                  class="text-xs text-primary hover:text-primary-focus transition-colors"
                 >
                   View Content
                 </a>
               {/if}
-              <span class="text-xs text-white/40">
+              <span class="text-xs text-base-content/40">
                 {new Date(memoryItem.created_at).toLocaleDateString()}
               </span>
             </div>
@@ -342,7 +342,7 @@
       {/each}
 
       {#if data.varietyMemory.length === 0}
-        <div class="py-8 text-center text-sm text-white/40">
+        <div class="py-8 text-center text-sm text-base-content/40">
           No variety memory entries yet.
         </div>
       {/if}

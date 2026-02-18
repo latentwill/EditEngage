@@ -36,4 +36,40 @@ describe('StatCard', () => {
 
     expect(screen.queryByTestId('stat-trend')).not.toBeInTheDocument();
   });
+
+  it('uses daisyUI stat class on the card container', () => {
+    render(StatCard, {
+      props: { label: 'Total', value: '10' }
+    });
+
+    const card = screen.getByTestId('stat-card');
+    expect(card.classList.contains('stat')).toBe(true);
+  });
+
+  it('uses daisyUI stat-title class on the label', () => {
+    render(StatCard, {
+      props: { label: 'Total', value: '10' }
+    });
+
+    const label = screen.getByTestId('stat-label');
+    expect(label.classList.contains('stat-title')).toBe(true);
+  });
+
+  it('uses daisyUI stat-value class on the value', () => {
+    render(StatCard, {
+      props: { label: 'Total', value: '10' }
+    });
+
+    const value = screen.getByTestId('stat-value');
+    expect(value.classList.contains('stat-value')).toBe(true);
+  });
+
+  it('uses daisyUI stat-desc class on the trend indicator', () => {
+    render(StatCard, {
+      props: { label: 'Total', value: '10', trend: '+5' }
+    });
+
+    const trend = screen.getByTestId('stat-trend');
+    expect(trend.classList.contains('stat-desc')).toBe(true);
+  });
 });

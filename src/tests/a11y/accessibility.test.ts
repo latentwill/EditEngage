@@ -18,24 +18,21 @@ describe('Task 40: Accessibility Audit - WCAG 2.1 AA', () => {
       const cssPath = path.resolve(__dirname, '../../../src/app.css');
       const css = fs.readFileSync(cssPath, 'utf-8');
 
-      // The dark theme uses --accent: #34D399 (emerald-400)
-      // Against a dark background (#0a0a0f or similar), #34D399 has ~8.5:1 contrast
-      // Verify the accent color is defined
-      expect(css).toContain('--accent:');
+      // The daisyUI theme uses primary: #34D399 (emerald-400)
+      // Against a dark background (#0a0a0f), #34D399 has ~8.5:1 contrast
+      // Verify focus-visible styles exist in the CSS (daisyUI handles color tokens via config)
+      expect(css).toContain(':focus-visible');
 
       // Read tailwind config to verify accessible color tokens
       const tailwindPath = path.resolve(__dirname, '../../../tailwind.config.ts');
       const tailwindConfig = fs.readFileSync(tailwindPath, 'utf-8');
 
-      // Verify emerald accent colors are used (these have good contrast on dark)
-      expect(tailwindConfig).toContain("'#34D399'");
-      expect(tailwindConfig).toContain("'#10B981'");
+      // Verify emerald primary color is used (high contrast on dark)
+      expect(tailwindConfig).toContain('"#34D399"');
 
-      // Verify the CSS uses high-contrast text colors
-      // White text on dark backgrounds passes 4.5:1 easily
-      // Check that primary text uses white, not low-opacity variants only
-      // The app.css should define accessible text color tokens
-      expect(css).toContain('--glass-bg:');
+      // Verify daisyUI theme defines accessible color tokens
+      // The tailwind config should define base-content for text colors
+      expect(tailwindConfig).toContain('"base-content"');
     });
 
     it('CSS provides high-contrast focus-visible styles for accessibility', () => {

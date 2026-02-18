@@ -61,7 +61,7 @@
 <div
   data-testid="command-ticker"
   onclick={handleClick}
-  class="fixed bottom-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-sm border-t border-white/[0.08] px-4 py-2 cursor-pointer font-mono text-emerald-400 flex items-center gap-3"
+  class="fixed bottom-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-sm border-t border-base-300 px-4 py-2 cursor-pointer font-mono text-emerald-400 flex items-center gap-3"
 >
   <span
     data-testid="status-dot"
@@ -71,11 +71,11 @@
     <span data-testid="ticker-text" class="flex-1 text-sm truncate {animating ? 'ticker-animate' : ''}">
       {latestEvent.description}
     </span>
-    <span data-testid="ticker-time" class="text-xs text-white/40 shrink-0">
+    <span data-testid="ticker-time" class="text-xs text-base-content/40 shrink-0">
       {formatRelativeTime(latestEvent.created_at)}
     </span>
   {:else}
-    <span data-testid="ticker-text" class="flex-1 text-sm text-white/40">
+    <span data-testid="ticker-text" class="flex-1 text-sm text-base-content/40">
       No recent activity
     </span>
   {/if}

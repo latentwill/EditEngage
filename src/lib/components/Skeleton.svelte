@@ -3,7 +3,7 @@
 </script>
 
 <div
-  class="animate-pulse bg-white/[0.08] rounded"
+  class="skeleton"
   style:width={width}
   style:height={height}
 ></div>

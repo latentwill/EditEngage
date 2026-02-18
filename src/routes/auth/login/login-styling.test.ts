@@ -1,5 +1,5 @@
 /**
- * @behavior Login page renders with glassmorphism design: centered card, gradient bg, glass inputs, emerald CTA
+ * @behavior Login page renders with daisyUI card design: centered card, themed inputs, primary CTA
  * @business_rule Auth pages are the first authenticated touchpoint; professional design builds trust
  */
 import { render, screen } from '@testing-library/svelte';
@@ -17,8 +17,8 @@ vi.mock('$lib/supabase', () => ({
 
 import LoginPage from './+page.svelte';
 
-describe('Login Page - Glassmorphism Styling', () => {
-  it('renders centered auth container with glass card styling', () => {
+describe('Login Page - DaisyUI Styling', () => {
+  it('renders centered auth container with card styling', () => {
     render(LoginPage);
     const container = screen.getByTestId('auth-container');
     expect(container.className).toMatch(/flex/);
@@ -27,29 +27,28 @@ describe('Login Page - Glassmorphism Styling', () => {
     expect(container.className).toMatch(/min-h-screen/);
   });
 
-  it('renders glass card wrapper with backdrop-blur and border', () => {
+  it('renders daisyUI card wrapper with shadow', () => {
     render(LoginPage);
     const card = screen.getByTestId('auth-card');
-    expect(card.className).toMatch(/backdrop-blur/);
-    expect(card.className).toMatch(/border/);
-    expect(card.className).toMatch(/rounded-xl/);
+    expect(card.className).toMatch(/card/);
+    expect(card.className).toMatch(/bg-base-200/);
+    expect(card.className).toMatch(/shadow-xl/);
     expect(card.className).toMatch(/max-w-md/);
   });
 
-  it('renders inputs with glass styling', () => {
+  it('renders inputs with daisyUI input-bordered styling', () => {
     render(LoginPage);
     const emailInput = screen.getByLabelText(/email/i);
-    expect(emailInput.className).toMatch(/bg-white/);
-    expect(emailInput.className).toMatch(/border/);
-    expect(emailInput.className).toMatch(/rounded-lg/);
-    expect(emailInput.className).toMatch(/text-white/);
+    expect(emailInput.className).toMatch(/input/);
+    expect(emailInput.className).toMatch(/input-bordered/);
+    expect(emailInput.className).toMatch(/w-full/);
   });
 
-  it('renders primary emerald submit button', () => {
+  it('renders primary submit button with daisyUI btn class', () => {
     render(LoginPage);
     const button = screen.getByRole('button', { name: /log in/i });
-    expect(button.className).toMatch(/bg-emerald/);
-    expect(button.className).toMatch(/rounded-lg/);
+    expect(button.className).toMatch(/btn/);
+    expect(button.className).toMatch(/btn-primary/);
   });
 
   it('renders signup link', () => {

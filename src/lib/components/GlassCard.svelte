@@ -23,15 +23,23 @@
     default: '',
     stat: 'p-4 min-w-[140px] text-center',
     feature: 'p-6 flex flex-col gap-3',
-    elevated: 'shadow-lg',
+    elevated: 'shadow-2xl',
     flat: 'shadow-none'
   };
+
+  const useCardBody = variant === 'default' || variant === 'elevated' || variant === 'flat';
 </script>
 
 <div
   data-testid="glass-card"
   data-variant={variant}
-  class="backdrop-blur-[20px] bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-xl shadow-glass transition-all duration-300 {variant === 'stat' || variant === 'feature' ? variantClasses[variant] : paddingMap[padding]} {hover ? 'hover:bg-white/[0.12] hover:border-white/[0.20] cursor-pointer' : ''} {variantClasses[variant] ?? ''}"
+  class="card bg-base-200 shadow-xl {variantClasses[variant] ?? ''} {hover ? 'hover:bg-base-300 cursor-pointer transition-colors' : ''}"
 >
-  {@render children?.()}
+  {#if useCardBody}
+    <div class="card-body {paddingMap[padding]}">
+      {@render children?.()}
+    </div>
+  {:else}
+    {@render children?.()}
+  {/if}
 </div>

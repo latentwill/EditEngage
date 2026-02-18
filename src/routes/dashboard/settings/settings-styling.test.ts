@@ -31,10 +31,10 @@ describe('Settings Page - Styling', () => {
     expect(page).toBeInTheDocument();
   });
 
-  it('renders settings nav with glass styling and links', () => {
+  it('renders settings nav with daisyUI menu and links', () => {
     render(SettingsPage);
     const nav = screen.getByTestId('settings-nav');
-    expect(nav.className).toMatch(/backdrop-blur|bg-white/);
+    expect(nav.className).toMatch(/menu/);
     const links = nav.querySelectorAll('a');
     expect(links.length).toBeGreaterThanOrEqual(3);
   });
@@ -46,13 +46,13 @@ describe('Settings Page - Styling', () => {
     expect(heading.className).toMatch(/font-bold|font-semibold/);
   });
 
-  it('nav links have hover/active styling classes', () => {
+  it('nav links are inside daisyUI menu list items', () => {
     render(SettingsPage);
     const nav = screen.getByTestId('settings-nav');
-    const links = nav.querySelectorAll('a');
-    links.forEach(link => {
-      expect(link.className).toMatch(/rounded/);
-      expect(link.className).toMatch(/px-|py-/);
+    const listItems = nav.querySelectorAll('li');
+    expect(listItems.length).toBeGreaterThanOrEqual(3);
+    listItems.forEach(li => {
+      expect(li.querySelector('a')).not.toBeNull();
     });
   });
 });

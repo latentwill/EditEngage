@@ -24,7 +24,7 @@
 </script>
 
 <div data-testid="step-agents">
-  <h2 class="text-lg font-semibold text-white mb-4">Select agents</h2>
+  <h2 class="text-lg font-semibold text-base-content mb-4">Select agents</h2>
 
   <div class="grid grid-cols-2 gap-3 mb-4">
     {#each availableAgents as agent (agent.type)}
@@ -33,9 +33,9 @@
         data-testid="agent-card"
         data-agent-type={agent.type}
         onclick={() => onToggleAgent(agent.type)}
-        class="p-3 rounded-lg border text-left transition-all {isSelected(agent.type)
-          ? 'bg-blue-500/20 border-blue-400/40 text-blue-300'
-          : 'bg-white/5 border-white/10 text-white/70 hover:border-white/20'}"
+        class="card bg-base-200 card-compact p-3 border text-left transition-all {isSelected(agent.type)
+          ? 'border-primary ring ring-primary/30 text-primary'
+          : 'border-base-300 text-base-content/70 hover:border-base-content/20'}"
       >
         <span data-testid="agent-card-{agent.type}">{agent.label}</span>
       </button>
@@ -44,20 +44,20 @@
 
   {#if selectedAgents.length > 0}
     <div data-testid="selected-agents-list" class="mt-4">
-      <h3 class="text-sm text-white/50 mb-2">Selected agents (drag to reorder)</h3>
+      <h3 class="text-sm text-base-content/50 mb-2">Selected agents (drag to reorder)</h3>
       {#each selectedAgents as agent, i (agent.type)}
         <div
           data-testid="selected-agent-item"
-          class="flex items-center gap-2 p-2 mb-1 rounded bg-white/5 border border-white/10"
+          class="flex items-center gap-2 p-2 mb-1 rounded bg-base-200 border border-base-300"
         >
-          <span data-testid="agent-drag-handle" class="cursor-grab text-white/30">&#x2630;</span>
-          <span class="flex-1 text-white/80">{agent.label}</span>
+          <span data-testid="agent-drag-handle" class="cursor-grab text-base-content/30">&#x2630;</span>
+          <span class="flex-1 text-base-content/80">{agent.label}</span>
           {#if i > 0}
             <button
               type="button"
               data-testid="agent-move-up"
               onclick={() => onMoveAgent(i, 'up')}
-              class="text-white/40 hover:text-white/70 text-sm"
+              class="text-base-content/40 hover:text-base-content/70 text-sm"
             >&#9650;</button>
           {/if}
           {#if i < selectedAgents.length - 1}
@@ -65,7 +65,7 @@
               type="button"
               data-testid="agent-move-down"
               onclick={() => onMoveAgent(i, 'down')}
-              class="text-white/40 hover:text-white/70 text-sm"
+              class="text-base-content/40 hover:text-base-content/70 text-sm"
             >&#9660;</button>
           {/if}
         </div>

@@ -52,15 +52,15 @@
 </script>
 
 <div data-testid="step-config">
-  <h2 class="text-lg font-semibold text-white mb-4">Configure agents</h2>
+  <h2 class="text-lg font-semibold text-base-content mb-4">Configure agents</h2>
 
   {#each selectedAgents as agent (agent.type)}
-    <div data-testid="agent-config-section-{agent.type}" class="mb-6 p-4 rounded-lg bg-white/5 border border-white/10">
-      <h3 class="text-sm font-medium text-white/80 mb-3">{agent.label}</h3>
+    <div data-testid="agent-config-section-{agent.type}" class="mb-6 p-4 rounded-lg bg-base-200 border border-base-300">
+      <h3 class="text-sm font-medium text-base-content/80 mb-3">{agent.label}</h3>
 
       {#each (configFieldsByAgent[agent.type] ?? []) as field (field.key)}
         <div class="mb-3">
-          <label class="block text-white/50 text-xs mb-1" for="config-{agent.type}-{field.key}">
+          <label class="block text-base-content/50 text-xs mb-1" for="config-{agent.type}-{field.key}">
             {field.label}{#if field.required}<span class="text-red-400"> *</span>{/if}
           </label>
           <input
@@ -69,7 +69,7 @@
             type="text"
             value={agentConfigs[agent.type]?.[field.key] ?? ''}
             oninput={(e) => onConfigChange(agent.type, field.key, (e.target as HTMLInputElement).value)}
-            class="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-white/30 text-sm"
+            class="input input-bordered w-full text-sm"
           />
         </div>
       {/each}
