@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createSupabaseClient } from '$lib/supabase';
+  import { goto, invalidateAll } from '$app/navigation';
 
   let email = $state('');
   let password = $state('');
@@ -23,7 +24,8 @@
     if (error) {
       errorMessage = error.message;
     } else {
-      window.location.href = '/dashboard';
+      await invalidateAll();
+      await goto('/dashboard');
     }
   }
 </script>
