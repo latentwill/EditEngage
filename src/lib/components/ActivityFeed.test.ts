@@ -24,7 +24,7 @@ const mockEvents = [
     id: 'evt-1',
     project_id: 'proj-1',
     event_type: 'pipeline.started',
-    description: 'Pipeline "SEO Articles" started',
+    description: 'Circuit "SEO Articles" started',
     metadata: {},
     is_read: false,
     created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString() // 2 minutes ago
@@ -92,7 +92,7 @@ describe('ActivityFeed', () => {
 
     const items = screen.getAllByTestId('activity-item');
     // First item should be most recent (evt-1)
-    expect(items[0].textContent).toContain('Pipeline "SEO Articles" started');
+    expect(items[0].textContent).toContain('Circuit "SEO Articles" started');
     expect(items[2].textContent).toContain('New topic "AI Trends" added');
   });
 
@@ -107,7 +107,7 @@ describe('ActivityFeed', () => {
 
     // Each item should have an icon area, description, and timestamp
     expect(items[0].querySelector('[data-testid="event-icon"]')).not.toBeNull();
-    expect(items[0].textContent).toContain('Pipeline "SEO Articles" started');
+    expect(items[0].textContent).toContain('Circuit "SEO Articles" started');
     expect(items[0].querySelector('[data-testid="event-time"]')).not.toBeNull();
     // Relative timestamp: "2m ago"
     expect(items[0].querySelector('[data-testid="event-time"]')!.textContent).toContain('2m ago');
@@ -143,7 +143,7 @@ describe('ActivityFeed', () => {
       id: 'evt-4',
       project_id: 'proj-1',
       event_type: 'pipeline.completed',
-      description: 'Pipeline "SEO Articles" completed',
+      description: 'Circuit "SEO Articles" completed',
       metadata: {},
       is_read: false,
       created_at: new Date().toISOString()
@@ -156,7 +156,7 @@ describe('ActivityFeed', () => {
     });
 
     const items = screen.getAllByTestId('activity-item');
-    expect(items[0].textContent).toContain('Pipeline "SEO Articles" completed');
+    expect(items[0].textContent).toContain('Circuit "SEO Articles" completed');
   });
 
   it('unsubscribes from channel on unmount', async () => {

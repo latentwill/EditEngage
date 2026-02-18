@@ -1,8 +1,8 @@
 /**
  * @behavior Content library renders content items with filtering by status,
- * content type, and pipeline; each item shows title, status badge, and date
+ * content type, and circuit; each item shows title, status badge, and date
  * @business_rule Users can browse, filter, and manage all content generated
- * by their project's pipelines from a central content library
+ * by their project's circuits from a central content library
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -199,7 +199,7 @@ describe('Content Library Page', () => {
     expect(screen.queryByText('How to Scale SEO in 2025')).not.toBeInTheDocument();
   });
 
-  it('pipeline filter narrows results to selected pipeline content', async () => {
+  it('circuit filter narrows results to selected circuit content', async () => {
     const ContentPage = (await import('./+page.svelte')).default;
 
     render(ContentPage, {

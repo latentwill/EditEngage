@@ -40,18 +40,18 @@ describe('Task 41: Performance & Lighthouse Optimization', () => {
   });
 
   describe('Test 2: Heavy components are lazy-loaded (dynamic imports)', () => {
-    it('PipelineWizard is available for lazy loading via dynamic import pattern', () => {
-      // Verify PipelineWizard exists as a separate component (not inlined)
-      const wizardPath = path.resolve(__dirname, '../../../src/lib/components/PipelineWizard.svelte');
+    it('CircuitWizard is available for lazy loading via dynamic import pattern', () => {
+      // Verify CircuitWizard exists as a separate component (not inlined)
+      const wizardPath = path.resolve(__dirname, '../../../src/lib/components/CircuitWizard.svelte');
       expect(fs.existsSync(wizardPath)).toBe(true);
 
-      // The pipelines page that uses PipelineWizard should exist
+      // The pipelines page that uses CircuitWizard should exist
       const pipelinesPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/pipelines/+page.svelte');
       const pipelinesPage = fs.readFileSync(pipelinesPagePath, 'utf-8');
 
-      // Verify PipelineWizard is NOT eagerly imported at the top level of the list page
+      // Verify CircuitWizard is NOT eagerly imported at the top level of the list page
       // (It should only be imported in the create/edit page or loaded conditionally)
-      expect(pipelinesPage).not.toContain("import PipelineWizard from");
+      expect(pipelinesPage).not.toContain("import CircuitWizard from");
     });
 
     it('BulkActionBar is available for lazy loading via dynamic import pattern', () => {

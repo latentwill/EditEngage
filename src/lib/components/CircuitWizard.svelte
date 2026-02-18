@@ -11,6 +11,12 @@
     label: string;
   };
 
+  let {
+    projectId = ''
+  }: {
+    projectId?: string;
+  } = $props();
+
   const TOTAL_STEPS = 5;
 
   const AVAILABLE_AGENTS: AgentOption[] = [
@@ -59,7 +65,7 @@
   function validateStep(): boolean {
     if (currentStep === 1) {
       if (!pipelineName.trim()) {
-        nameError = 'Pipeline name is required';
+        nameError = 'Circuit name is required';
         return false;
       }
       nameError = null;
@@ -149,7 +155,7 @@
       destination: selectedDestination
     };
 
-    await fetch('/api/v1/pipelines', {
+    await fetch('/api/v1/circuits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -249,7 +255,7 @@
         onclick={handleSave}
         class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/30 transition-all"
       >
-        Save Pipeline
+        Save Circuit
       </button>
     {/if}
   </div>

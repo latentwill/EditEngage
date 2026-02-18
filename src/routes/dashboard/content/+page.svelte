@@ -89,7 +89,7 @@
       class="px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/80"
       bind:value={pipelineFilter}
     >
-      <option value="all">All Pipelines</option>
+      <option value="all">All Circuits</option>
       {#each data.pipelines as pipeline}
         <option value={pipeline.name}>{pipeline.name}</option>
       {/each}

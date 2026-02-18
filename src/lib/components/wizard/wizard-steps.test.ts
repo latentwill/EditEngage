@@ -1,18 +1,18 @@
 /**
- * @behavior Steps 3-5 of the PipelineWizard handle agent configuration,
+ * @behavior Steps 3-5 of the CircuitWizard handle agent configuration,
  * scheduling, and destination selection. The final step saves the complete
- * pipeline via POST /api/v1/pipelines.
+ * circuit via POST /api/v1/circuits.
  * @business_rule Each agent must have valid config before proceeding. Schedule
  * defaults to draft_for_review review mode. The save action assembles all
  * wizard state into a single API call.
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import PipelineWizard from '../PipelineWizard.svelte';
+import CircuitWizard from '../CircuitWizard.svelte';
 
 // Helper to navigate through steps 1 and 2
 async function navigateToStep(targetStep: number) {
-  render(PipelineWizard);
+  render(CircuitWizard);
 
   // Step 1: fill name
   const nameInput = screen.getByTestId('pipeline-name-input');
@@ -49,7 +49,7 @@ async function navigateToStep(targetStep: number) {
   await fireEvent.click(nextBtn);
 }
 
-describe('PipelineWizard — Step 3: Agent Configuration', () => {
+describe('CircuitWizard — Step 3: Agent Configuration', () => {
   it('renders agent-specific config forms based on agent type', async () => {
     await navigateToStep(3);
 
@@ -83,7 +83,7 @@ describe('PipelineWizard — Step 3: Agent Configuration', () => {
   });
 });
 
-describe('PipelineWizard — Step 4: Schedule', () => {
+describe('CircuitWizard — Step 4: Schedule', () => {
   it('renders cron schedule input and review mode toggle', async () => {
     await navigateToStep(4);
 
@@ -106,7 +106,7 @@ describe('PipelineWizard — Step 4: Schedule', () => {
   });
 });
 
-describe('PipelineWizard — Step 5: Destination & Save', () => {
+describe('CircuitWizard — Step 5: Destination & Save', () => {
   it('renders available destinations and save button', async () => {
     await navigateToStep(5);
 
@@ -123,7 +123,7 @@ describe('PipelineWizard — Step 5: Destination & Save', () => {
     expect(saveBtn).toBeInTheDocument();
   });
 
-  it('save calls POST /api/v1/pipelines with complete pipeline config', async () => {
+  it('save calls POST /api/v1/circuits with complete pipeline config', async () => {
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ id: 'new-pipeline-id' })
@@ -142,7 +142,7 @@ describe('PipelineWizard — Step 5: Destination & Save', () => {
 
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
-        '/api/v1/pipelines',
+        '/api/v1/circuits',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({

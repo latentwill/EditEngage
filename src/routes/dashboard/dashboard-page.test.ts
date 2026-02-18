@@ -1,5 +1,5 @@
 /**
- * @behavior Dashboard page renders stat cards, recent pipeline runs,
+ * @behavior Dashboard page renders stat cards, recent circuit runs,
  * content awaiting review, and topic queue health, all scoped to active project
  * @business_rule Dashboard is the primary control surface; metrics must be
  * project-scoped and provide actionable visibility into content operations
@@ -59,7 +59,7 @@ describe('Dashboard Page', () => {
     expect(labels).toContain('Total Content');
     expect(labels).toContain('Published This Week');
     expect(labels).toContain('Pending Review');
-    expect(labels).toContain('Active Pipelines');
+    expect(labels).toContain('Active Circuits');
   });
 
   it('stat cards display values from project data', async () => {

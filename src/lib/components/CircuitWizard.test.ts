@@ -1,18 +1,18 @@
 /**
- * @behavior PipelineWizard renders a multi-step wizard (Steps 1-2) for creating
- * a content pipeline. Step 1 collects name/description with validation. Step 2
+ * @behavior CircuitWizard renders a multi-step wizard (Steps 1-2) for creating
+ * a content circuit. Step 1 collects name/description with validation. Step 2
  * lets users select and reorder agent types.
- * @business_rule A pipeline must have a name before proceeding. At least one
+ * @business_rule A circuit must have a name before proceeding. At least one
  * agent must be selected to move past Step 2. Agent ordering determines
  * execution sequence.
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import PipelineWizard from './PipelineWizard.svelte';
+import CircuitWizard from './CircuitWizard.svelte';
 
-describe('PipelineWizard — Step 1: Name & Description', () => {
+describe('CircuitWizard — Step 1: Name & Description', () => {
   it('renders name and description inputs with validation', () => {
-    render(PipelineWizard);
+    render(CircuitWizard);
 
     const nameInput = screen.getByTestId('pipeline-name-input');
     const descInput = screen.getByTestId('pipeline-description-input');
@@ -24,7 +24,7 @@ describe('PipelineWizard — Step 1: Name & Description', () => {
   });
 
   it('blocks progression when name is empty', async () => {
-    render(PipelineWizard);
+    render(CircuitWizard);
 
     const nextBtn = screen.getByTestId('wizard-next-btn');
     await fireEvent.click(nextBtn);
@@ -39,9 +39,9 @@ describe('PipelineWizard — Step 1: Name & Description', () => {
   });
 });
 
-describe('PipelineWizard — Step 2: Agent Selection', () => {
+describe('CircuitWizard — Step 2: Agent Selection', () => {
   async function goToStep2() {
-    render(PipelineWizard);
+    render(CircuitWizard);
 
     // Fill in name to pass step 1 validation
     const nameInput = screen.getByTestId('pipeline-name-input');

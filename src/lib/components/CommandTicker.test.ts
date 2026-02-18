@@ -23,7 +23,7 @@ const mockEvents = [
     id: 'evt-1',
     project_id: 'proj-1',
     event_type: 'pipeline.started',
-    description: 'Pipeline "SEO Articles" started',
+    description: 'Circuit "SEO Articles" started',
     metadata: {},
     is_read: false,
     created_at: new Date(Date.now() - 30 * 1000).toISOString() // 30 seconds ago
@@ -67,7 +67,7 @@ describe('CommandTicker', () => {
 
     await vi.waitFor(() => {
       const ticker = screen.getByTestId('command-ticker');
-      expect(ticker.textContent).toContain('Pipeline "SEO Articles" started');
+      expect(ticker.textContent).toContain('Circuit "SEO Articles" started');
     });
 
     expect(screen.getByTestId('ticker-time')).not.toBeNull();
@@ -139,7 +139,7 @@ describe('CommandTicker', () => {
 
     await vi.waitFor(() => {
       const ticker = screen.getByTestId('command-ticker');
-      expect(ticker.textContent).toContain('Pipeline "SEO Articles" started');
+      expect(ticker.textContent).toContain('Circuit "SEO Articles" started');
     });
 
     const dot = screen.getByTestId('status-dot');

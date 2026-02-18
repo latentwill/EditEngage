@@ -97,4 +97,33 @@ describe('ProjectSwitcher', () => {
 
     expect(mockStorage.getItem('activeProjectId')).toBe('proj-2');
   });
+
+  describe('Create Project', () => {
+    it('renders "New Project" button in dropdown', async () => {
+      render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      const newProjectBtn = screen.getByTestId('new-project-btn');
+      expect(newProjectBtn).toBeInTheDocument();
+      expect(newProjectBtn.textContent).toContain('New Project');
+    });
+
+    it('shows input form when New Project is clicked', async () => {
+      render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      const newProjectBtn = screen.getByTestId('new-project-btn');
+      await fireEvent.click(newProjectBtn);
+
+      const nameInput = screen.getByTestId('new-project-name-input');
+      expect(nameInput).toBeInTheDocument();
+
+      const submitBtn = screen.getByTestId('new-project-submit-btn');
+      expect(submitBtn).toBeInTheDocument();
+    });
+  });
 });
