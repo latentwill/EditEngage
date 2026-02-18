@@ -80,7 +80,7 @@
 <div data-testid="pipeline-detail-page" class="space-y-8 py-6">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <a href="/dashboard/pipelines" class="text-white/40 hover:text-white/60 text-sm">&larr; Pipelines</a>
+      <a href="/dashboard/pipelines" class="text-white/40 hover:text-white/60 text-sm">&larr; Circuits</a>
     </div>
   </div>
 

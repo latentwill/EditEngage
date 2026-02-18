@@ -43,7 +43,7 @@
     <StatCard label="Total Content" value={String(data.totalContent)} />
     <StatCard label="Published This Week" value={String(data.publishedThisWeek)} />
     <StatCard label="Pending Review" value={String(data.pendingReview)} />
-    <StatCard label="Active Pipelines" value={String(data.activePipelines)} />
+    <StatCard label="Active Circuits" value={String(data.activePipelines)} />
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -52,7 +52,7 @@
       data-testid="recent-pipeline-runs"
       class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-4"
     >
-      <h2 class="text-sm font-semibold text-white/70 uppercase tracking-wide mb-3">Recent Pipeline Runs</h2>
+      <h2 class="text-sm font-semibold text-white/70 uppercase tracking-wide mb-3">Recent Circuit Runs</h2>
       <div class="space-y-2">
         {#each data.recentPipelineRuns.slice(0, 5) as run}
           <div data-testid="pipeline-run-item" class="flex items-center justify-between py-2 border-b border-white/[0.06] last:border-0">

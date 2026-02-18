@@ -1,5 +1,5 @@
 /**
- * @behavior POST /api/v1/pipelines/:id/run enqueues a BullMQ pipeline job
+ * @behavior POST /api/v1/circuits/:id/run enqueues a BullMQ pipeline job
  * and returns a jobId immediately without blocking the response.
  * @business_rule Pipeline runs are fire-and-forget: the API creates a
  * pipeline_runs record, enqueues the job, and returns within 200ms so the
@@ -70,13 +70,13 @@ vi.mock('$lib/server/supabase', () => ({
 // --- Helpers ---
 
 function makeRunRequest(pipelineId: string): Request {
-  return new Request(`http://localhost/api/v1/pipelines/${pipelineId}/run`, {
+  return new Request(`http://localhost/api/v1/circuits/${pipelineId}/run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }
   });
 }
 
-describe('POST /api/v1/pipelines/:id/run', () => {
+describe('POST /api/v1/circuits/:id/run', () => {
   const pipelineId = 'pipeline-1';
   const pipelineRunId = 'run-uuid-1';
   const jobId = 'job-123';

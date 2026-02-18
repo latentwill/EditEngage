@@ -36,7 +36,7 @@
   };
 
   async function runPipeline(pipelineId: string) {
-    await fetch(`/api/v1/pipelines/${pipelineId}/run`, {
+    await fetch(`/api/v1/circuits/${pipelineId}/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -44,7 +44,7 @@
 
   async function togglePipeline(pipeline: Pipeline) {
     const newActive = !pipeline.is_active;
-    await fetch(`/api/v1/pipelines/${pipeline.id}`, {
+    await fetch(`/api/v1/circuits/${pipeline.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: newActive })
@@ -55,13 +55,13 @@
 
 <div data-testid="pipelines-page" class="space-y-8 py-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-white">Pipelines</h1>
+    <h1 class="text-2xl font-bold text-white">Circuits</h1>
     <a
       href="/dashboard/pipelines/create"
       data-testid="create-pipeline-button"
       class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
     >
-      Create Pipeline
+      Create Circuit
     </a>
   </div>
 

@@ -24,8 +24,8 @@ const mockNotifications = [
     user_id: 'user-1',
     project_id: 'proj-1',
     event_id: 'evt-1',
-    title: 'Pipeline Complete',
-    message: 'SEO Articles pipeline finished successfully',
+    title: 'Circuit Complete',
+    message: 'SEO Articles circuit finished successfully',
     is_read: false,
     created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
   },

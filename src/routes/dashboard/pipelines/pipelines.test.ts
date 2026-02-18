@@ -1,7 +1,7 @@
 /**
- * @behavior Pipeline list shows all project pipelines with management actions;
- * Pipeline detail shows run history with status, duration, and output
- * @business_rule Users can view, run, pause, and resume their project's pipelines.
+ * @behavior Circuit list shows all project circuits with management actions;
+ * Circuit detail shows run history with status, duration, and output
+ * @business_rule Users can view, run, pause, and resume their project's circuits.
  * Real-time status updates keep the UI in sync during active runs.
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
@@ -130,7 +130,7 @@ const mockPipelineRuns = [
   }
 ];
 
-describe('Pipeline List Page', () => {
+describe('Circuit List Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
@@ -139,7 +139,7 @@ describe('Pipeline List Page', () => {
     });
   });
 
-  it('renders all project pipelines with name and status badge', async () => {
+  it('renders all project circuits with name and status badge', async () => {
     const PipelinesPage = (await import('./+page.svelte')).default;
 
     render(PipelinesPage, {
@@ -160,7 +160,7 @@ describe('Pipeline List Page', () => {
     expect(statusBadges).toHaveLength(3);
   });
 
-  it('shows active/paused toggle per pipeline', async () => {
+  it('shows active/paused toggle per circuit', async () => {
     const PipelinesPage = (await import('./+page.svelte')).default;
 
     render(PipelinesPage, {
@@ -176,7 +176,7 @@ describe('Pipeline List Page', () => {
     expect(toggles[2].getAttribute('aria-checked')).toBe('true');
   });
 
-  it('"Run Now" button calls POST /api/v1/pipelines/:id/run', async () => {
+  it('"Run Now" button calls POST /api/v1/circuits/:id/run', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ jobId: 'run-uuid-1' })
@@ -192,12 +192,12 @@ describe('Pipeline List Page', () => {
     await fireEvent.click(runButtons[0]);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v1/pipelines/pipe-1/run',
+      '/api/v1/circuits/pipe-1/run',
       expect.objectContaining({ method: 'POST' })
     );
   });
 
-  it('pause toggle calls PATCH /api/v1/pipelines/:id with is_active: false', async () => {
+  it('pause toggle calls PATCH /api/v1/circuits/:id with is_active: false', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ data: { ...mockPipelines[0], is_active: false } })
@@ -214,7 +214,7 @@ describe('Pipeline List Page', () => {
     await fireEvent.click(toggles[0]);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v1/pipelines/pipe-1',
+      '/api/v1/circuits/pipe-1',
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ is_active: false })
@@ -223,7 +223,7 @@ describe('Pipeline List Page', () => {
   });
 });
 
-describe('Pipeline Detail Page', () => {
+describe('Circuit Detail Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({

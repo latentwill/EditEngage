@@ -9,6 +9,7 @@
   }: {
     data: {
       projects: Array<{ id: string; name: string; icon: string | null; color: string | null }>;
+      orgId: string | undefined;
       session: { user: { id: string; email: string }; access_token: string } | null;
     };
     children?: Snippet;
@@ -17,7 +18,7 @@
 
 <div class="min-h-screen flex flex-col">
   <GlassNav currentPath="/dashboard">
-    <ProjectSwitcher projects={data.projects} />
+    <ProjectSwitcher projects={data.projects} orgId={data.orgId} />
   </GlassNav>
 
   <main id="main-content" data-testid="dashboard-main" class="flex-1 pt-16 px-6 pb-20">
