@@ -165,25 +165,18 @@
 
 <div
   data-testid="pipeline-wizard"
-  class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-6 max-w-2xl mx-auto"
+  class="card bg-base-200 border border-base-300 rounded-xl p-6 max-w-2xl mx-auto"
 >
   <!-- Step Indicator -->
-  <div data-testid="wizard-step-indicator" class="flex items-center justify-center gap-2 mb-6">
+  <ul data-testid="wizard-step-indicator" class="steps steps-horizontal w-full mb-6">
     {#each Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1) as step (step)}
-      <div
-        class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all {step === currentStep
-          ? 'bg-blue-500/30 text-blue-300 border border-blue-400/40'
-          : step < currentStep
-            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-400/30'
-            : 'bg-white/5 text-white/30 border border-white/10'}"
+      <li
+        class="step {step <= currentStep ? 'step-primary' : ''}"
       >
         {step}
-      </div>
-      {#if step < TOTAL_STEPS}
-        <div class="w-8 h-px {step < currentStep ? 'bg-emerald-400/30' : 'bg-white/10'}"></div>
-      {/if}
+      </li>
     {/each}
-  </div>
+  </ul>
 
   <!-- Step Content -->
   {#if currentStep === 1}
@@ -225,13 +218,13 @@
   {/if}
 
   <!-- Navigation -->
-  <div class="flex justify-between mt-6 pt-4 border-t border-white/10">
+  <div class="flex justify-between mt-6 pt-4 border-t border-base-300">
     {#if currentStep > 1}
       <button
         type="button"
         data-testid="wizard-prev-btn"
         onclick={handlePrevious}
-        class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 transition-all"
+        class="btn btn-ghost"
       >
         Previous
       </button>
@@ -244,7 +237,7 @@
         type="button"
         data-testid="wizard-next-btn"
         onclick={handleNext}
-        class="px-4 py-2 rounded-lg bg-blue-500/20 border border-blue-400/30 text-blue-300 hover:bg-blue-500/30 transition-all"
+        class="btn btn-primary"
       >
         Next
       </button>
@@ -253,7 +246,7 @@
         type="button"
         data-testid="wizard-save-btn"
         onclick={handleSave}
-        class="px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 hover:bg-emerald-500/30 transition-all"
+        class="btn btn-primary"
       >
         Save Circuit
       </button>

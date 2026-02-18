@@ -44,7 +44,7 @@
 
 <div data-testid="activity-feed" class="space-y-2">
   {#each events as event (event.id)}
-    <div data-testid="activity-item" class="flex items-start gap-3 p-3 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+    <div data-testid="activity-item" class="flex items-start gap-3 p-3 rounded-lg bg-base-200/50 border border-base-300">
       <span data-testid="event-icon" class="mt-0.5 text-emerald-400">
         {#if getEventIcon(event.event_type) === 'play'}
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -57,8 +57,8 @@
         {/if}
       </span>
       <div class="flex-1 min-w-0">
-        <p class="text-sm text-white/80 truncate">{event.description}</p>
-        <span data-testid="event-time" class="text-xs text-white/40">{formatRelativeTime(event.created_at)}</span>
+        <p class="text-sm text-base-content/80 truncate">{event.description}</p>
+        <span data-testid="event-time" class="text-xs text-base-content/40">{formatRelativeTime(event.created_at)}</span>
       </div>
     </div>
   {/each}

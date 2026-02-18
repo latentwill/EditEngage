@@ -26,12 +26,11 @@ describe('GrainOverlay', () => {
     expect(overlay!.className).toMatch(/inset-0/);
   });
 
-  it('has glass CSS custom properties defined in app.css', () => {
-    const cssPath = resolve(__dirname, '../../app.css');
-    const css = readFileSync(cssPath, 'utf-8');
-    expect(css).toContain('--glass-bg');
-    expect(css).toContain('--glass-border');
-    expect(css).toContain('--glass-blur');
-    expect(css).toContain('--accent');
+  it('has daisyUI theme configured via tailwind.config.ts', () => {
+    const configPath = resolve(__dirname, '../../../tailwind.config.ts');
+    const config = readFileSync(configPath, 'utf-8');
+    expect(config).toContain('daisyui');
+    expect(config).toContain('editengage');
+    expect(config).toContain('primary');
   });
 });

@@ -1,5 +1,5 @@
 /**
- * @behavior Destinations page renders styled cards and forms with glassmorphism design
+ * @behavior Destinations page renders styled cards and forms with daisyUI design
  * @business_rule Destination management needs clear visual hierarchy for configuration
  */
 import { render, screen } from '@testing-library/svelte';
@@ -35,24 +35,21 @@ describe('Destinations Page - Styling', () => {
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading.className).toMatch(/text-2xl|text-xl/);
     expect(heading.className).toMatch(/font-bold|font-semibold/);
-    expect(heading.className).toMatch(/text-white/);
+    expect(heading.className).toMatch(/text-base-content/);
   });
 
-  it('renders destination cards with glass styling', () => {
+  it('renders destination cards with daisyUI styling', () => {
     render(DestinationsPage, { props: { data: { destinations: mockDestinations } } });
     const cards = screen.getAllByTestId('destination-card');
     cards.forEach(card => {
-      expect(card.className).toMatch(/backdrop-blur|bg-white|bg-\[var/);
-      expect(card.className).toMatch(/border/);
-      expect(card.className).toMatch(/rounded/);
+      expect(card.className).toMatch(/card/);
+      expect(card.className).toMatch(/bg-base-200/);
     });
   });
 
-  it('renders add button with glass styling', () => {
+  it('renders add button with daisyUI styling', () => {
     render(DestinationsPage, { props: { data: { destinations: mockDestinations } } });
     const addButton = screen.getByText(/add destination/i);
-    expect(addButton.className).toMatch(/bg-|border/);
-    expect(addButton.className).toMatch(/rounded/);
-    expect(addButton.className).toMatch(/px-/);
+    expect(addButton.className).toMatch(/btn/);
   });
 });

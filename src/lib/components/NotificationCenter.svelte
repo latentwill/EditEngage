@@ -66,14 +66,14 @@
 </script>
 
 {#if open}
-  <div data-testid="notification-center" class="fixed top-0 right-0 bottom-0 w-96 z-50 bg-black/80 backdrop-blur-md border-l border-white/[0.08] flex flex-col">
-    <div class="flex items-center justify-between p-4 border-b border-white/[0.08]">
+  <div data-testid="notification-center" class="fixed top-0 right-0 bottom-0 w-96 z-50 bg-base-100/95 backdrop-blur-md border-l border-base-300 flex flex-col">
+    <div class="flex items-center justify-between p-4 border-b border-base-300">
       <div class="flex items-center gap-2">
         <div class="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-base-content"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <NotificationBadge count={unreadCount()} />
         </div>
-        <h2 class="text-white font-medium">Notifications</h2>
+        <h2 class="text-base-content font-medium">Notifications</h2>
       </div>
       <button
         data-testid="mark-all-read"
@@ -91,12 +91,12 @@
         <div
           data-testid="notification-item"
           onclick={() => markAsRead(notification.id)}
-          class="p-3 rounded-lg cursor-pointer transition-colors hover:bg-white/[0.04] {!notification.is_read ? 'border-l-2 border-emerald-400 bg-white/[0.02]' : 'border-l-2 border-transparent'}"
+          class="p-3 rounded-lg cursor-pointer transition-colors hover:bg-base-200 {!notification.is_read ? 'border-l-2 border-emerald-400 bg-base-200/30' : 'border-l-2 border-transparent'}"
         >
-          <p class="text-sm font-medium {!notification.is_read ? 'text-white' : 'text-white/60'}">
+          <p class="text-sm font-medium {!notification.is_read ? 'text-base-content' : 'text-base-content/60'}">
             {notification.title}
           </p>
-          <p class="text-xs text-white/40 mt-1">{notification.message}</p>
+          <p class="text-xs text-base-content/40 mt-1">{notification.message}</p>
         </div>
       {/each}
     </div>

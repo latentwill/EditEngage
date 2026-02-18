@@ -18,7 +18,7 @@
 </script>
 
 <div data-testid="step-destination">
-  <h2 class="text-lg font-semibold text-white mb-4">Choose destination</h2>
+  <h2 class="text-lg font-semibold text-base-content mb-4">Choose destination</h2>
 
   <div class="grid grid-cols-2 gap-3">
     {#each destinations as dest (dest.type)}
@@ -26,9 +26,9 @@
         type="button"
         data-testid="destination-option"
         onclick={() => onSelectDestination(dest.type)}
-        class="p-4 rounded-lg border text-left transition-all {selectedDestination === dest.type
-          ? 'bg-blue-500/20 border-blue-400/40 text-blue-300'
-          : 'bg-white/5 border-white/10 text-white/70 hover:border-white/20'}"
+        class="card bg-base-200 card-compact p-4 border text-left transition-all {selectedDestination === dest.type
+          ? 'border-primary ring ring-primary/30 text-primary'
+          : 'border-base-300 text-base-content/70 hover:border-base-content/20'}"
       >
         <span data-testid="destination-option-{dest.type}">{dest.label}</span>
       </button>

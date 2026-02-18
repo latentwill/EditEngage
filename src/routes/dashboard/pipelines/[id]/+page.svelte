@@ -41,13 +41,13 @@
   let runs = $state(data.runs);
 
   const statusColors: Record<string, string> = {
-    active: 'bg-emerald-500/20 text-emerald-400',
-    paused: 'bg-yellow-500/20 text-yellow-400',
-    completed: 'bg-emerald-500/20 text-emerald-400',
-    running: 'bg-blue-500/20 text-blue-400',
-    pending: 'bg-yellow-500/20 text-yellow-400',
-    queued: 'bg-yellow-500/20 text-yellow-400',
-    failed: 'bg-red-500/20 text-red-400'
+    active: 'badge-success',
+    paused: 'badge-warning',
+    completed: 'badge-success',
+    running: 'badge-info',
+    pending: 'badge-warning',
+    queued: 'badge-warning',
+    failed: 'badge-error'
   };
 
   function formatDuration(startedAt: string | null, completedAt: string | null): string {
@@ -80,17 +80,17 @@
 <div data-testid="pipeline-detail-page" class="space-y-8 py-6">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <a href="/dashboard/pipelines" class="text-white/40 hover:text-white/60 text-sm">&larr; Circuits</a>
+      <a href="/dashboard/pipelines" class="text-base-content/40 hover:text-base-content/60 text-sm">&larr; Circuits</a>
     </div>
   </div>
 
-  <div class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-6">
+  <div class="card bg-base-200 rounded-xl p-6">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <h1 data-testid="pipeline-detail-name" class="text-2xl font-bold text-white">{pipeline.name}</h1>
+        <h1 data-testid="pipeline-detail-name" class="text-2xl font-bold text-base-content">{pipeline.name}</h1>
         <span
           data-testid="pipeline-detail-status"
-          class="text-xs px-2 py-0.5 rounded-full {statusColors[pipeline.is_active ? 'active' : 'paused']}"
+          class="badge {statusColors[pipeline.is_active ? 'active' : 'paused']}"
         >
           {pipeline.is_active ? 'active' : 'paused'}
         </span>
@@ -98,22 +98,22 @@
 
       <button
         data-testid="pipeline-detail-run-button"
-        class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+        class="btn btn-primary btn-sm"
       >
         Run Now
       </button>
     </div>
 
     {#if pipeline.description}
-      <p class="text-sm text-white/60 mt-2">{pipeline.description}</p>
+      <p class="text-sm text-base-content/60 mt-2">{pipeline.description}</p>
     {/if}
   </div>
 
-  <div class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-4">
-    <h2 class="text-sm font-semibold text-white/70 uppercase tracking-wide mb-3">Run History</h2>
+  <div class="card bg-base-200 rounded-xl p-4">
+    <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Run History</h2>
 
     <div class="space-y-0">
-      <div class="grid grid-cols-4 gap-4 py-2 text-xs text-white/40 uppercase tracking-wide border-b border-white/[0.06]">
+      <div class="grid grid-cols-4 gap-4 py-2 text-xs text-base-content/40 uppercase tracking-wide border-b border-base-300">
         <span>Date</span>
         <span>Status</span>
         <span>Duration</span>
@@ -123,27 +123,27 @@
       {#each runs as run}
         <div
           data-testid="run-history-row"
-          class="grid grid-cols-4 gap-4 py-3 border-b border-white/[0.06] last:border-0"
+          class="grid grid-cols-4 gap-4 py-3 border-b border-base-300 last:border-0"
         >
-          <span class="text-sm text-white/80">
+          <span class="text-sm text-base-content/80">
             {new Date(run.created_at).toLocaleDateString()}
           </span>
           <span data-testid="run-status">
-            <span class="text-xs px-2 py-0.5 rounded-full {statusColors[run.status] ?? 'bg-white/10 text-white/60'}">
+            <span class="badge {statusColors[run.status] ?? 'badge-ghost'}">
               {run.status}
             </span>
           </span>
-          <span data-testid="run-duration" class="text-sm text-white/60">
+          <span data-testid="run-duration" class="text-sm text-base-content/60">
             {formatDuration(run.started_at, run.completed_at)}
           </span>
-          <span class="text-sm text-white/60">
+          <span class="text-sm text-base-content/60">
             {run.current_step}/{run.total_steps}
           </span>
         </div>
       {/each}
 
       {#if runs.length === 0}
-        <div class="py-8 text-center text-sm text-white/40">
+        <div class="py-8 text-center text-sm text-base-content/40">
           No runs yet. Click "Run Now" to start.
         </div>
       {/if}

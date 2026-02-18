@@ -29,8 +29,8 @@
 
   <div
     data-testid="command-ticker-slot"
-    class="fixed bottom-0 left-0 right-0 h-10 backdrop-blur-[20px] bg-black/40 border-t border-white/[0.08] flex items-center px-6 z-30"
+    class="fixed bottom-0 left-0 right-0 h-10 bg-base-100/80 backdrop-blur-lg border-t border-base-300 flex items-center px-6 z-30"
   >
-    <span class="text-xs text-white/40">Command Ticker</span>
+    <span class="text-xs text-base-content/40">Command Ticker</span>
   </div>
 </div>

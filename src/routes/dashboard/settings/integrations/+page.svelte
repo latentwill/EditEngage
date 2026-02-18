@@ -138,26 +138,26 @@
 </script>
 
 <div data-testid="integrations-page" class="space-y-8">
-  <h1 class="text-2xl font-bold text-white">Integrations</h1>
+  <h1 class="text-2xl font-bold text-base-content">Integrations</h1>
 
   <!-- AI Providers Section -->
   <section data-testid="ai-providers-section">
-    <h2 class="text-lg font-semibold text-white/80 mb-4">AI Providers</h2>
+    <h2 class="text-lg font-semibold text-base-content/80 mb-4">AI Providers</h2>
     <div class="space-y-3">
       {#each providers as provider}
-        <div class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-4 flex items-center gap-4">
-          <span class="text-white font-medium w-28">{provider.label}</span>
+        <div class="card bg-base-200 shadow-xl p-4 flex flex-row items-center gap-4">
+          <span class="text-base-content font-medium w-28">{provider.label}</span>
           <input
             data-testid="api-key-input-{provider.id}"
             type="password"
-            class="flex-1 bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm"
+            class="input input-bordered flex-1"
             placeholder="Enter API key..."
             value={keyValues[provider.id] ?? ''}
             oninput={(e) => { keyValues[provider.id] = (e.target as HTMLInputElement).value; }}
           />
           <button
             data-testid="api-key-save-{provider.id}"
-            class="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-medium hover:opacity-90"
+            class="btn btn-primary btn-sm"
             onclick={() => saveKey(provider.id)}
             disabled={keySaving[provider.id]}
           >
@@ -165,7 +165,7 @@
           </button>
         </div>
         {#if keySaveError[provider.id]}
-          <p data-testid="api-key-error-{provider.id}" class="text-red-400 text-sm mt-1">{keySaveError[provider.id]}</p>
+          <p data-testid="api-key-error-{provider.id}" class="text-error text-sm mt-1">{keySaveError[provider.id]}</p>
         {/if}
       {/each}
     </div>
@@ -173,19 +173,19 @@
 
   <!-- Publishing Destinations Section -->
   <section data-testid="destinations-section">
-    <h2 class="text-lg font-semibold text-white/80 mb-4">Publishing Destinations</h2>
+    <h2 class="text-lg font-semibold text-base-content/80 mb-4">Publishing Destinations</h2>
 
     {#each data.destinations as dest}
-      <div data-testid="destination-card" class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-4 mb-3">
-        <span class="text-white font-medium">{dest.name}</span>
-        <span class="text-white/60 ml-3 text-sm">{dest.type}</span>
-        <span class="ml-3 text-sm {dest.is_active ? 'text-emerald-400' : 'text-white/40'}">{dest.is_active ? 'active' : 'inactive'}</span>
+      <div data-testid="destination-card" class="card bg-base-200 shadow-xl p-4 mb-3">
+        <span class="text-base-content font-medium">{dest.name}</span>
+        <span class="text-base-content/60 ml-3 text-sm">{dest.type}</span>
+        <span class="ml-3 text-sm {dest.is_active ? 'text-success' : 'text-base-content/40'}">{dest.is_active ? 'active' : 'inactive'}</span>
       </div>
     {/each}
 
     {#if !showDestForm}
       <button
-        class="px-4 py-2 bg-white/[0.06] border border-white/[0.08] rounded-lg text-white/80 text-sm hover:bg-white/[0.12]"
+        class="btn btn-ghost"
         onclick={openDestForm}
       >
         Add Destination
@@ -194,11 +194,11 @@
 
     {#if showDestForm}
       <form
-        class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-4 space-y-3"
+        class="card bg-base-200 shadow-xl p-4 space-y-3"
         onsubmit={(e) => { e.preventDefault(); handleSaveDest(); }}
       >
-        <label for="dest-type" class="block text-white/80 text-sm">Destination Type</label>
-        <select id="dest-type" bind:value={selectedType} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm">
+        <label for="dest-type" class="block text-base-content/80 text-sm">Destination Type</label>
+        <select id="dest-type" bind:value={selectedType} class="select select-bordered w-full">
           <option value="ghost">Ghost</option>
           <option value="postbridge">Post Bridge</option>
           <option value="webhook">Webhook</option>
@@ -206,35 +206,35 @@
 
         {#if selectedType === 'ghost'}
           <label for="dest-name">Name</label>
-          <input id="dest-name" type="text" bind:value={destName} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="dest-name" type="text" bind:value={destName} class="input input-bordered w-full" />
 
           <label for="ghost-api-url">API URL</label>
-          <input id="ghost-api-url" type="text" bind:value={ghostApiUrl} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="ghost-api-url" type="text" bind:value={ghostApiUrl} class="input input-bordered w-full" />
 
           <label for="ghost-admin-key">Admin Key</label>
-          <input id="ghost-admin-key" type="password" bind:value={ghostAdminKey} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="ghost-admin-key" type="password" bind:value={ghostAdminKey} class="input input-bordered w-full" />
         {:else if selectedType === 'postbridge'}
           <label for="dest-name-pb">Name</label>
-          <input id="dest-name-pb" type="text" bind:value={destName} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="dest-name-pb" type="text" bind:value={destName} class="input input-bordered w-full" />
 
           <label for="pb-api-key">API Key</label>
-          <input id="pb-api-key" type="password" bind:value={postbridgeApiKey} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="pb-api-key" type="password" bind:value={postbridgeApiKey} class="input input-bordered w-full" />
 
           <label for="pb-account-id">Account ID</label>
-          <input id="pb-account-id" type="text" bind:value={postbridgeAccountId} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="pb-account-id" type="text" bind:value={postbridgeAccountId} class="input input-bordered w-full" />
         {:else if selectedType === 'webhook'}
           <label for="dest-name-wh">Name</label>
-          <input id="dest-name-wh" type="text" bind:value={destName} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="dest-name-wh" type="text" bind:value={destName} class="input input-bordered w-full" />
 
           <label for="webhook-url">Webhook URL</label>
-          <input id="webhook-url" type="url" bind:value={webhookUrl} class="w-full bg-white/[0.06] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm" />
+          <input id="webhook-url" type="url" bind:value={webhookUrl} class="input input-bordered w-full" />
         {/if}
 
         {#each validationErrors as error}
-          <p data-testid="validation-error" class="text-red-400 text-sm">{error}</p>
+          <p data-testid="validation-error" class="text-error text-sm">{error}</p>
         {/each}
 
-        <button type="submit" class="px-4 py-2 bg-[var(--accent)] text-black rounded-lg text-sm font-medium hover:opacity-90">
+        <button type="submit" class="btn btn-primary btn-sm">
           Save Destination
         </button>
       </form>

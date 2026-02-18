@@ -22,7 +22,7 @@ describe('ThemeToggle', () => {
   let mockStorage: Storage;
 
   beforeEach(() => {
-    document.documentElement.classList.remove('dark');
+    document.documentElement.removeAttribute('data-theme');
     mockStorage = createMockStorage();
     vi.stubGlobal('localStorage', mockStorage);
   });
@@ -34,26 +34,40 @@ describe('ThemeToggle', () => {
     expect(button.getAttribute('aria-label')).toBeTruthy();
   });
 
-  it('clicking toggles dark class on document.documentElement', async () => {
-    document.documentElement.classList.add('dark');
+  it('clicking toggles data-theme on document.documentElement', async () => {
+    document.documentElement.setAttribute('data-theme', 'editengage');
     render(ThemeToggle);
     const button = screen.getByRole('button');
 
     await fireEvent.click(button);
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 
     await fireEvent.click(button);
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('editengage');
   });
 
   it('reads saved preference from localStorage on mount', () => {
     mockStorage.setItem('theme', 'light');
     render(ThemeToggle);
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
   it('defaults to dark mode when no preference is saved', () => {
     render(ThemeToggle);
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('editengage');
+  });
+
+  it('uses daisyUI btn class on the toggle button', () => {
+    render(ThemeToggle);
+    const button = screen.getByTestId('theme-toggle');
+    expect(button.classList.contains('btn')).toBe(true);
+  });
+
+  it('uses daisyUI btn-ghost and btn-circle classes for styling', () => {
+    render(ThemeToggle);
+    const button = screen.getByTestId('theme-toggle');
+    expect(button.classList.contains('btn-ghost')).toBe(true);
+    expect(button.classList.contains('btn-sm')).toBe(true);
+    expect(button.classList.contains('btn-circle')).toBe(true);
   });
 });

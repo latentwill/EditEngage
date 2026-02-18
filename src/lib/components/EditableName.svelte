@@ -39,14 +39,14 @@
     bind:value={draft}
     onkeydown={handleKeyDown}
     onblur={commit}
-    class="bg-white/[0.06] border border-white/[0.08] rounded px-2 py-1 text-white outline-none focus:border-emerald-500/40 {props.className ?? ''}"
+    class="input input-bordered input-sm {props.className ?? ''}"
     autofocus
   />
 {:else}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <span
-    class="group inline-flex items-center gap-1.5 text-white cursor-pointer hover:underline hover:decoration-white/30 {props.className ?? ''}"
+    class="group inline-flex items-center gap-1.5 text-base-content cursor-pointer hover:underline hover:decoration-base-content/30 {props.className ?? ''}"
     onclick={startEditing}
   >
     {props.value}

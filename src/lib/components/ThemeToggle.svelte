@@ -18,14 +18,12 @@
     const storage = getStorage();
     const saved = storage?.getItem('theme') ?? null;
     isDark = saved ? saved === 'dark' : true;
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.classList.toggle('light', !isDark);
+    document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'light');
   });
 
   function toggle() {
     isDark = !isDark;
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.classList.toggle('light', !isDark);
+    document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'light');
     getStorage()?.setItem('theme', isDark ? 'dark' : 'light');
   }
 </script>
@@ -33,7 +31,7 @@
 <button
   data-testid="theme-toggle"
   onclick={toggle}
-  class="p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] transition-all duration-300"
+  class="btn btn-ghost btn-sm btn-circle"
   aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
 >
   {#if isDark}

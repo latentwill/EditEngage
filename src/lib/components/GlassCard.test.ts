@@ -1,17 +1,17 @@
 /**
- * @behavior GlassCard renders a glassmorphism container with variant-based layouts
- * @business_rule Consistent glass aesthetic with blur, transparency, and border tokens
+ * @behavior GlassCard renders a daisyUI card container with variant-based layouts
+ * @business_rule Consistent card aesthetic using daisyUI theme tokens
  */
 import { render, screen } from '@testing-library/svelte';
 import { describe, it, expect } from 'vitest';
 import GlassCard from './GlassCard.svelte';
 
 describe('GlassCard', () => {
-  it('renders children in a container with backdrop-blur and glass classes', () => {
+  it('renders children in a daisyUI card container', () => {
     const { container } = render(GlassCard);
-    const card = container.querySelector('[class*="backdrop-blur"]');
+    const card = container.querySelector('[class*="card"]');
     expect(card).not.toBeNull();
-    expect(card!.className).toContain('border');
+    expect(card!.className).toContain('bg-base-200');
   });
 
   it('stat variant renders with specific sizing', () => {
@@ -26,12 +26,13 @@ describe('GlassCard', () => {
     expect(card).not.toBeNull();
   });
 
-  it('applies CSS variable-based styling', () => {
+  it('applies daisyUI card and shadow classes', () => {
     const { container } = render(GlassCard);
-    const card = container.querySelector('[class*="backdrop-blur"]');
+    const card = container.querySelector('[class*="card"]');
     expect(card).not.toBeNull();
     const className = card!.className;
-    expect(className).toMatch(/bg-\[var\(--glass-bg\)\]/);
-    expect(className).toMatch(/border-\[var\(--glass-border\)\]/);
+    expect(className).toContain('card');
+    expect(className).toContain('bg-base-200');
+    expect(className).toContain('shadow-xl');
   });
 });

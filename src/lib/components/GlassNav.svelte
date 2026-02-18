@@ -34,7 +34,7 @@
 
 <nav
   data-testid="glass-nav"
-  class="fixed top-0 left-0 right-0 z-40 backdrop-blur-[20px] bg-black/40 border-b border-white/[0.08] px-6 py-3"
+  class="navbar bg-base-100/80 backdrop-blur-lg fixed top-0 z-40 border-b border-base-300 px-6"
 >
   <div class="flex items-center justify-between max-w-7xl mx-auto">
     <!-- Logo -->
@@ -52,7 +52,7 @@
       {#each navLinks as link}
         <a
           href={link.href}
-          class="px-3 py-2 rounded-lg text-sm transition-all duration-300 {isActive(link.href) ? 'text-white bg-white/[0.12]' : 'text-white/60 hover:text-white hover:bg-white/[0.06]'}"
+          class="btn btn-ghost btn-sm {isActive(link.href) ? 'btn-active' : ''}"
           aria-current={isActive(link.href) ? 'page' : null}
         >
           {link.label}
@@ -65,11 +65,11 @@
       <ThemeToggle />
       <div
         data-testid="avatar-placeholder"
-        class="w-8 h-8 rounded-full bg-white/[0.12] border border-white/[0.08]"
+        class="w-8 h-8 rounded-full bg-base-300"
       ></div>
       <button
         data-testid="hamburger-menu"
-        class="md:hidden p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] border border-white/[0.08] transition-all duration-300"
+        class="btn btn-ghost btn-sm md:hidden"
         aria-label="Toggle menu"
         onclick={toggleMobileMenu}
       >
@@ -91,7 +91,7 @@
       {#each navLinks as link}
         <a
           href={link.href}
-          class="px-3 py-2 rounded-lg text-sm transition-all duration-300 {isActive(link.href) ? 'text-white bg-white/[0.12]' : 'text-white/60 hover:text-white hover:bg-white/[0.06]'}"
+          class="btn btn-ghost btn-sm {isActive(link.href) ? 'btn-active' : ''}"
           aria-current={isActive(link.href) ? 'page' : null}
         >
           {link.label}

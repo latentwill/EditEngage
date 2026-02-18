@@ -1,5 +1,5 @@
 /**
- * @behavior Signup page renders with glassmorphism: centered card, glass inputs, emerald CTA, login link
+ * @behavior Signup page renders with daisyUI card: centered card, themed inputs, primary CTA, login link
  * @business_rule Professional signup page builds trust and increases conversion
  */
 import { render, screen } from '@testing-library/svelte';
@@ -17,7 +17,7 @@ vi.mock('$lib/supabase', () => ({
 
 import SignupPage from './+page.svelte';
 
-describe('Signup Page - Glassmorphism Styling', () => {
+describe('Signup Page - DaisyUI Styling', () => {
   it('renders centered auth container', () => {
     render(SignupPage);
     const container = screen.getByTestId('auth-container');
@@ -27,28 +27,28 @@ describe('Signup Page - Glassmorphism Styling', () => {
     expect(container.className).toMatch(/min-h-screen/);
   });
 
-  it('renders glass card wrapper', () => {
+  it('renders daisyUI card wrapper with shadow', () => {
     render(SignupPage);
     const card = screen.getByTestId('auth-card');
-    expect(card.className).toMatch(/backdrop-blur/);
-    expect(card.className).toMatch(/border/);
-    expect(card.className).toMatch(/rounded-xl/);
+    expect(card.className).toMatch(/card/);
+    expect(card.className).toMatch(/bg-base-200/);
+    expect(card.className).toMatch(/shadow-xl/);
     expect(card.className).toMatch(/max-w-md/);
   });
 
-  it('renders inputs with glass styling', () => {
+  it('renders inputs with daisyUI input-bordered styling', () => {
     render(SignupPage);
     const emailInput = screen.getByLabelText(/email/i);
-    expect(emailInput.className).toMatch(/bg-white/);
-    expect(emailInput.className).toMatch(/rounded-lg/);
-    expect(emailInput.className).toMatch(/text-white/);
+    expect(emailInput.className).toMatch(/input/);
+    expect(emailInput.className).toMatch(/input-bordered/);
+    expect(emailInput.className).toMatch(/w-full/);
   });
 
-  it('renders primary emerald submit button', () => {
+  it('renders primary submit button with daisyUI btn class', () => {
     render(SignupPage);
     const button = screen.getByRole('button', { name: /sign up/i });
-    expect(button.className).toMatch(/bg-emerald/);
-    expect(button.className).toMatch(/rounded-lg/);
+    expect(button.className).toMatch(/btn/);
+    expect(button.className).toMatch(/btn-primary/);
   });
 
   it('renders login link', () => {

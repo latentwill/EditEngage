@@ -1,5 +1,5 @@
 /**
- * @behavior Writing styles page renders styled cards and form with glassmorphism
+ * @behavior Writing styles page renders styled cards and form with daisyUI
  * @business_rule Writing style management needs clear presentation for content brand consistency
  */
 import { render, screen } from '@testing-library/svelte';
@@ -34,24 +34,21 @@ describe('Writing Styles Page - Styling', () => {
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading.className).toMatch(/text-2xl|text-xl/);
     expect(heading.className).toMatch(/font-bold|font-semibold/);
-    expect(heading.className).toMatch(/text-white/);
+    expect(heading.className).toMatch(/text-base-content/);
   });
 
-  it('renders style cards with glass styling', () => {
+  it('renders style cards with daisyUI styling', () => {
     render(WritingStylesPage, { props: { data: { writingStyles: mockStyles } } });
     const cards = screen.getAllByTestId('writing-style-card');
     cards.forEach(card => {
-      expect(card.className).toMatch(/backdrop-blur|bg-white|bg-\[var/);
-      expect(card.className).toMatch(/border/);
-      expect(card.className).toMatch(/rounded/);
+      expect(card.className).toMatch(/card/);
+      expect(card.className).toMatch(/bg-base-200/);
     });
   });
 
-  it('renders create button with styling', () => {
+  it('renders create button with daisyUI styling', () => {
     render(WritingStylesPage, { props: { data: { writingStyles: mockStyles } } });
     const button = screen.getByText(/create style/i);
-    expect(button.className).toMatch(/bg-/);
-    expect(button.className).toMatch(/rounded/);
-    expect(button.className).toMatch(/px-/);
+    expect(button.className).toMatch(/btn/);
   });
 });

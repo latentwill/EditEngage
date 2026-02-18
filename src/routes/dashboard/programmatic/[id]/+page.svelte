@@ -126,30 +126,30 @@
 
 <div data-testid="template-form-page" class="space-y-8 py-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-white">
+    <h1 class="text-2xl font-bold text-base-content">
       {data.mode === 'create' ? 'Create Template' : 'Edit Template'}
     </h1>
   </div>
 
-  <div class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-6 space-y-6">
+  <div class="card bg-base-200 shadow-xl p-6 space-y-6">
     <div>
-      <label for="template-name" class="block text-sm text-white/70 mb-1">Template Name</label>
+      <label for="template-name" class="block text-sm text-base-content/60 mb-1">Template Name</label>
       <input
         id="template-name"
         type="text"
         bind:value={name}
-        class="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/80"
+        class="input input-bordered w-full"
         placeholder="e.g. City Landing Pages"
       />
     </div>
 
     <div>
-      <label for="slug-pattern" class="block text-sm text-white/70 mb-1">Slug Pattern</label>
+      <label for="slug-pattern" class="block text-sm text-base-content/60 mb-1">Slug Pattern</label>
       <input
         id="slug-pattern"
         type="text"
         bind:value={slugPattern}
-        class="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/80 font-mono"
+        class="input input-bordered w-full font-mono"
         placeholder={slugPlaceholder}
       />
       {#if slugError}
@@ -158,36 +158,36 @@
     </div>
 
     <div>
-      <label for="body-template" class="block text-sm text-white/70 mb-1">Body Template</label>
+      <label for="body-template" class="block text-sm text-base-content/60 mb-1">Body Template</label>
       <textarea
         id="body-template"
         bind:value={bodyTemplate}
         rows="8"
-        class="w-full px-3 py-2 rounded-lg bg-white/[0.06] border border-white/[0.08] text-sm text-white/80 font-mono"
+        class="textarea textarea-bordered w-full font-mono"
         placeholder={bodyPlaceholder}
       ></textarea>
     </div>
 
     <div>
-      <label for="csv-upload" class="block text-sm text-white/70 mb-1">Data Source (CSV)</label>
+      <label for="csv-upload" class="block text-sm text-base-content/60 mb-1">Data Source (CSV)</label>
       <input
         id="csv-upload"
         data-testid="csv-upload"
         type="file"
         accept=".csv"
         onchange={handleCsvUpload}
-        class="text-sm text-white/60"
+        class="text-sm text-base-content/60"
       />
     </div>
 
     {#if variables.length > 0}
       <div>
-        <span class="block text-sm text-white/70 mb-1">Detected Variables</span>
+        <span class="block text-sm text-base-content/60 mb-1">Detected Variables</span>
         <div class="flex flex-wrap gap-2">
           {#each variables as variable}
             <span
               data-testid="variable-tag"
-              class="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-400"
+              class="badge badge-success badge-sm"
             >
               {variable}
             </span>
@@ -199,13 +199,13 @@
     <div class="flex items-center gap-3">
       <button
         onclick={handlePreview}
-        class="px-4 py-2 rounded-lg bg-white/[0.06] text-white/70 hover:bg-white/[0.12] transition-colors"
+        class="btn btn-ghost btn-sm"
       >
         Preview
       </button>
       <button
         onclick={handleSave}
-        class="px-4 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+        class="btn btn-primary btn-sm"
       >
         Save Template
       </button>
@@ -215,9 +215,9 @@
   {#if showPreview}
     <div
       data-testid="template-preview"
-      class="backdrop-blur-[20px] bg-[var(--glass-bg,rgba(255,255,255,0.08))] border border-[var(--glass-border,rgba(255,255,255,0.08))] rounded-xl p-6"
+      class="card bg-base-200 p-6"
     >
-      <h2 class="text-sm font-semibold text-white/70 uppercase tracking-wide mb-3">Preview</h2>
+      <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Preview</h2>
       <div class="prose prose-invert text-sm">
         {@html sanitizeHtml(previewHtml)}
       </div>
