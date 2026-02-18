@@ -1,8 +1,8 @@
 /**
- * @behavior createSupabaseClient() creates a Supabase client configured
- * with the project URL and anon key from environment variables
- * @business_rule All Supabase access goes through a single client factory
- * to ensure consistent configuration
+ * @behavior createSupabaseClient() creates a Supabase browser client configured
+ * with the project URL and anon key from environment variables, using cookie-based auth
+ * @business_rule All client-side Supabase access uses createBrowserClient from @supabase/ssr
+ * to ensure auth tokens are stored in cookies (readable by server-side hooks)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -22,8 +22,8 @@ const mockClient = {
   from: vi.fn()
 };
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => mockClient)
+vi.mock('@supabase/ssr', () => ({
+  createBrowserClient: vi.fn(() => mockClient)
 }));
 
 describe('createSupabaseClient', () => {
@@ -31,13 +31,13 @@ describe('createSupabaseClient', () => {
     vi.clearAllMocks();
   });
 
-  it('calls createClient with the configured URL and anon key', async () => {
+  it('calls createBrowserClient with the configured URL and anon key', async () => {
     const { createSupabaseClient } = await import('./supabase.js');
-    const { createClient } = await import('@supabase/supabase-js');
+    const { createBrowserClient } = await import('@supabase/ssr');
 
     createSupabaseClient();
 
-    expect(createClient).toHaveBeenCalledWith(
+    expect(createBrowserClient).toHaveBeenCalledWith(
       'http://localhost:54321',
       'test-anon-key'
     );
