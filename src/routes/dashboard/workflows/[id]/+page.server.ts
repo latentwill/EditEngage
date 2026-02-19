@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     .single();
 
   if (pipelineError || !pipeline) {
-    throw error(404, 'Circuit not found');
+    throw error(404, 'Workflow not found');
   }
 
   const { data: runs } = await supabase
@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     .limit(20);
 
   return {
-    pipeline,
+    workflow: pipeline,
     runs: runs ?? []
   };
 };

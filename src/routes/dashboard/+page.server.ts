@@ -12,8 +12,8 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       totalContent: 0,
       publishedThisWeek: 0,
       pendingReview: 0,
-      activePipelines: 0,
-      recentPipelineRuns: [],
+      activeWorkflows: 0,
+      recentWorkflowRuns: [],
       contentInReview: [],
       topicQueueHealth: { pendingCount: 0, nextScheduledRun: null },
       activeProjectId: ''
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
     { count: totalContent },
     { count: publishedThisWeek },
     { count: pendingReview },
-    { count: activePipelines },
+    { count: activeWorkflows },
     { data: pipelineRuns },
     { data: contentInReview },
     { count: pendingTopics }
@@ -71,7 +71,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       .eq('status', 'pending')
   ]);
 
-  const recentPipelineRuns = (pipelineRuns ?? []).map((run: Record<string, unknown>) => ({
+  const recentWorkflowRuns = (pipelineRuns ?? []).map((run: Record<string, unknown>) => ({
     ...run,
     pipeline_name: (run.pipelines as Record<string, unknown>)?.name ?? 'Unknown'
   }));
@@ -80,8 +80,8 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
     totalContent: totalContent ?? 0,
     publishedThisWeek: publishedThisWeek ?? 0,
     pendingReview: pendingReview ?? 0,
-    activePipelines: activePipelines ?? 0,
-    recentPipelineRuns,
+    activeWorkflows: activeWorkflows ?? 0,
+    recentWorkflowRuns,
     contentInReview: contentInReview ?? [],
     topicQueueHealth: {
       pendingCount: pendingTopics ?? 0,

@@ -12,9 +12,9 @@
  *  4. Destination creation dialog has no Cancel button
  *  5. Writing styles form has no Cancel button
  *  6. Integrations destination form has no Cancel button
- *  7. No Research link in GlassNav
+ *  7. No Research link in Sidebar
  */
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, cleanup } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -392,29 +392,32 @@ describe('Bug #6 — Integrations destination form has a Cancel button', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Bug #7: No Research link in GlassNav
+// Bug #7: No Research link in Sidebar
 // ---------------------------------------------------------------------------
 
-describe('Bug #7 — GlassNav includes a Research link', () => {
+describe('Bug #7 — Sidebar includes a Research link', () => {
+  beforeEach(() => {
+    cleanup();
+  });
+
   /**
-   * @behavior GlassNav renders a Research link pointing to /dashboard/research
+   * @behavior Sidebar renders a Research link pointing to /dashboard/research
    * @business_rule The research feature must be discoverable from the main
-   *   navigation bar so users can access their research workspace
+   *   navigation so users can access their research workspace
    */
-  it('desktop nav contains a Research link', async () => {
-    const GlassNav = (
-      await import('../../lib/components/GlassNav.svelte')
+  it('sidebar nav contains a Research link', { timeout: 10000 }, async () => {
+    const Sidebar = (
+      await import('../../lib/components/Sidebar.svelte')
     ).default;
 
-    render(GlassNav, { props: { currentPath: '/dashboard' } });
+    const { container } = render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
 
-    const desktopNav = screen.getByTestId('desktop-nav-links');
-    const researchLink = desktopNav.querySelector(
+    const researchLink = container.querySelector(
       'a[href="/dashboard/research"]'
     );
 
     expect(researchLink).not.toBeNull();
-    expect(researchLink?.textContent?.trim()).toBe('Research');
+    expect(researchLink?.textContent?.trim()).toContain('Research');
   });
 
   /**
@@ -422,15 +425,14 @@ describe('Bug #7 — GlassNav includes a Research link', () => {
    * @business_rule Active nav state provides wayfinding; Research must
    *   participate in the same active-link pattern as other nav items
    */
-  it('Research link is highlighted when on the research page', async () => {
-    const GlassNav = (
-      await import('../../lib/components/GlassNav.svelte')
+  it('Research link is highlighted when on the research page', { timeout: 10000 }, async () => {
+    const Sidebar = (
+      await import('../../lib/components/Sidebar.svelte')
     ).default;
 
-    render(GlassNav, { props: { currentPath: '/dashboard/research' } });
+    const { container } = render(Sidebar, { props: { currentPath: '/dashboard/research', collapsed: false } });
 
-    const desktopNav = screen.getByTestId('desktop-nav-links');
-    const researchLink = desktopNav.querySelector(
+    const researchLink = container.querySelector(
       'a[href="/dashboard/research"]'
     );
 

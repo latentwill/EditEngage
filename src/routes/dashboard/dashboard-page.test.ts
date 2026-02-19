@@ -21,8 +21,8 @@ const mockDashboardData = {
   totalContent: 42,
   publishedThisWeek: 7,
   pendingReview: 3,
-  activePipelines: 2,
-  recentPipelineRuns: [
+  activeWorkflows: 2,
+  recentWorkflowRuns: [
     { id: 'run-1', pipeline_id: 'pipe-1', status: 'completed', current_step: 3, total_steps: 3, started_at: '2025-01-10T10:00:00Z', completed_at: '2025-01-10T10:05:00Z', result: null, error: null, bullmq_job_id: null, created_at: '2025-01-10T10:00:00Z', pipeline_name: 'SEO Writer' },
     { id: 'run-2', pipeline_id: 'pipe-2', status: 'running', current_step: 1, total_steps: 4, started_at: '2025-01-10T11:00:00Z', completed_at: null, result: null, error: null, bullmq_job_id: null, created_at: '2025-01-10T11:00:00Z', pipeline_name: 'Social Posts' },
     { id: 'run-3', pipeline_id: 'pipe-1', status: 'failed', current_step: 2, total_steps: 3, started_at: '2025-01-09T08:00:00Z', completed_at: '2025-01-09T08:02:00Z', result: null, error: 'Timeout', bullmq_job_id: null, created_at: '2025-01-09T08:00:00Z', pipeline_name: 'SEO Writer' },
@@ -76,17 +76,17 @@ describe('Dashboard Page', () => {
     expect(values).toContain('2');
   });
 
-  it('recent pipeline runs section shows up to 5 runs with status badges', async () => {
+  it('recent workflow runs section shows up to 5 runs with status badges', async () => {
     const DashboardPage = (await import('./+page.svelte')).default;
 
     render(DashboardPage, {
       props: { data: mockDashboardData }
     });
 
-    const runsSection = screen.getByTestId('recent-pipeline-runs');
+    const runsSection = screen.getByTestId('recent-workflow-runs');
     expect(runsSection).toBeInTheDocument();
 
-    const runItems = screen.getAllByTestId('pipeline-run-item');
+    const runItems = screen.getAllByTestId('workflow-run-item');
     expect(runItems.length).toBeLessThanOrEqual(5);
     expect(runItems.length).toBe(5);
 

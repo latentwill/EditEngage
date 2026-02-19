@@ -95,7 +95,7 @@ describe('POST /api/v1/workflows', () => {
       data: {
         id: 'pipeline-new',
         project_id: 'proj-1',
-        name: 'My Circuit',
+        name: 'My Workflow',
         description: null,
         schedule: null,
         review_mode: 'draft_for_review',
@@ -111,20 +111,20 @@ describe('POST /api/v1/workflows', () => {
 
     const request = makeRequest('POST', {
       project_id: 'proj-1',
-      name: 'My Circuit'
+      name: 'My Workflow'
     });
 
     const response = await POST({ request } as never);
     const json = await response.json();
 
     expect(response.status).toBe(201);
-    expect(json.data.name).toBe('My Circuit');
+    expect(json.data.name).toBe('My Workflow');
     expect(json.data.project_id).toBe('proj-1');
     expect(mockSupabase.from).toHaveBeenCalledWith('pipelines');
     expect(mockPipelinesChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         project_id: 'proj-1',
-        name: 'My Circuit'
+        name: 'My Workflow'
       })
     );
   });
@@ -136,7 +136,7 @@ describe('POST /api/v1/workflows', () => {
 
     const request = makeRequest('POST', {
       project_id: 'proj-1',
-      name: 'My Circuit'
+      name: 'My Workflow'
     });
 
     const response = await POST({ request } as never);
@@ -185,8 +185,8 @@ describe('GET /api/v1/workflows', () => {
     };
     mockPipelinesChain = createChainMock({
       data: [
-        { id: 'pipeline-1', project_id: 'proj-1', name: 'Circuit Alpha' },
-        { id: 'pipeline-2', project_id: 'proj-2', name: 'Circuit Beta' }
+        { id: 'pipeline-1', project_id: 'proj-1', name: 'Workflow Alpha' },
+        { id: 'pipeline-2', project_id: 'proj-2', name: 'Workflow Beta' }
       ],
       error: null
     });

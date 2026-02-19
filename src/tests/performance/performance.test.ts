@@ -60,7 +60,7 @@ describe('Task 41: Performance & Lighthouse Optimization', () => {
       expect(fs.existsSync(barPath)).toBe(true);
 
       // Content page that uses BulkActionBar should conditionally render it
-      const contentPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/content/+page.svelte');
+      const contentPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/write/content/+page.svelte');
       const contentPage = fs.readFileSync(contentPagePath, 'utf-8');
 
       // BulkActionBar should only render when items are selected (conditional rendering)

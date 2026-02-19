@@ -1,6 +1,6 @@
 /**
  * @behavior WorkflowWizard renders a multi-step wizard (Steps 1-2) for creating
- * a workflow. Step 1 collects name/description with validation. Step 2
+ * a content workflow. Step 1 collects name/description with validation. Step 2
  * lets users select and reorder agent types.
  * @business_rule A workflow must have a name before proceeding. At least one
  * agent must be selected to move past Step 2. Agent ordering determines
@@ -14,8 +14,8 @@ describe('WorkflowWizard — Step 1: Name & Description', () => {
   it('renders name and description inputs with validation', () => {
     render(WorkflowWizard);
 
-    const nameInput = screen.getByTestId('pipeline-name-input');
-    const descInput = screen.getByTestId('pipeline-description-input');
+    const nameInput = screen.getByTestId('workflow-name-input');
+    const descInput = screen.getByTestId('workflow-description-input');
     const nextBtn = screen.getByTestId('wizard-next-btn');
 
     expect(nameInput).toBeInTheDocument();
@@ -44,8 +44,8 @@ describe('WorkflowWizard — Step 2: Agent Selection', () => {
     render(WorkflowWizard);
 
     // Fill in name to pass step 1 validation
-    const nameInput = screen.getByTestId('pipeline-name-input');
-    await fireEvent.input(nameInput, { target: { value: 'My Workflow' } });
+    const nameInput = screen.getByTestId('workflow-name-input');
+    await fireEvent.input(nameInput, { target: { value: 'My Pipeline' } });
 
     // Navigate to step 2
     const nextBtn = screen.getByTestId('wizard-next-btn');

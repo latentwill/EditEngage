@@ -1,20 +1,20 @@
 /**
- * @behavior Users can create, run, and track pipelines asynchronously
- * @user-story US-005: Pipeline Creation, US-006: Pipeline Execution (Async)
- * @boundary API (/api/v1/pipelines, /api/v1/jobs)
+ * @behavior Users can create, run, and track workflows asynchronously
+ * @user-story US-005: Workflow Creation, US-006: Workflow Execution (Async)
+ * @boundary API (/api/v1/workflows, /api/v1/jobs)
  *
- * These acceptance tests verify the async pipeline execution contract:
+ * These acceptance tests verify the async workflow execution contract:
  * fire-and-forget with status polling. Tests the full lifecycle from
- * pipeline creation through run completion.
+ * workflow creation through run completion.
  */
 import { describe, it, expect } from 'vitest';
 
-describe('Pipeline Execution (Acceptance)', () => {
-  describe('Scenario: Create Pipeline via Wizard (AC-005.1 through AC-005.5)', () => {
-    it('should save a complete pipeline configuration', async () => {
+describe('Workflow Execution (Acceptance)', () => {
+  describe('Scenario: Create Workflow via Wizard (AC-005.1 through AC-005.5)', () => {
+    it('should save a complete workflow configuration', async () => {
       // GIVEN - I have a project with configured destinations and writing styles
-      const pipelineConfig = {
-        name: 'Extndly SEO Blog Pipeline',
+      const workflowConfig = {
+        name: 'Extndly SEO Blog Workflow',
         description: 'Automated SEO article generation for extndly.com',
         project_id: 'project-uuid',
         schedule: null, // manual only for now
@@ -27,19 +27,19 @@ describe('Pipeline Execution (Acceptance)', () => {
         ],
       };
 
-      // WHEN - I save the pipeline
-      const response = await fetch('/api/v1/pipelines', {
+      // WHEN - I save the workflow
+      const response = await fetch('/api/v1/workflows', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pipelineConfig),
+        body: JSON.stringify(workflowConfig),
       });
 
-      // THEN - The pipeline is saved with all steps
+      // THEN - The workflow is saved with all steps
       expect(response.status).toBe(201);
       const body = await response.json();
       expect(body.data).toMatchObject({
         id: expect.any(String),
-        name: 'Extndly SEO Blog Pipeline',
+        name: 'Extndly SEO Blog Workflow',
         review_mode: 'draft_for_review',
         is_active: true,
       });
@@ -47,13 +47,13 @@ describe('Pipeline Execution (Acceptance)', () => {
     });
   });
 
-  describe('Scenario: Manual Pipeline Run — Fire-and-Forget (AC-006.1)', () => {
+  describe('Scenario: Manual Workflow Run — Fire-and-Forget (AC-006.1)', () => {
     it('should enqueue a job and return jobId immediately', async () => {
-      // GIVEN - I have a saved, active pipeline
-      const pipelineId = 'pipeline-uuid';
+      // GIVEN - I have a saved, active workflow
+      const workflowId = 'pipeline-uuid';
 
       // WHEN - I click "Run Now"
-      const response = await fetch(`/api/v1/pipelines/${pipelineId}/run`, {
+      const response = await fetch(`/api/v1/workflows/${workflowId}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -69,7 +69,7 @@ describe('Pipeline Execution (Acceptance)', () => {
 
   describe('Scenario: Status Polling (AC-006.3)', () => {
     it('should return current progress for a running job', async () => {
-      // GIVEN - A pipeline is running
+      // GIVEN - A workflow is running
       const jobId = 'running-job-id';
 
       // WHEN - I poll for status
@@ -88,9 +88,9 @@ describe('Pipeline Execution (Acceptance)', () => {
     });
   });
 
-  describe('Scenario: Pipeline Completion (AC-006.5)', () => {
+  describe('Scenario: Workflow Completion (AC-006.5)', () => {
     it('should return completed status with result on success', async () => {
-      // GIVEN - A pipeline run has finished successfully
+      // GIVEN - A workflow run has finished successfully
       const jobId = 'completed-job-id';
 
       // WHEN - I check its status
@@ -106,9 +106,9 @@ describe('Pipeline Execution (Acceptance)', () => {
     });
   });
 
-  describe('Scenario: Pipeline Failure (AC-006.6)', () => {
+  describe('Scenario: Workflow Failure (AC-006.6)', () => {
     it('should return failed status with error details', async () => {
-      // GIVEN - A pipeline run has failed
+      // GIVEN - A workflow run has failed
       const jobId = 'failed-job-id';
 
       // WHEN - I check its status
@@ -125,25 +125,25 @@ describe('Pipeline Execution (Acceptance)', () => {
     });
   });
 
-  describe('Scenario: Pause/Resume Pipeline (AC-006.7)', () => {
+  describe('Scenario: Pause/Resume Workflow (AC-006.7)', () => {
     it('should stop scheduled runs when paused but allow manual runs', async () => {
-      // GIVEN - An active pipeline with a schedule
-      const pipelineId = 'scheduled-pipeline-id';
+      // GIVEN - An active workflow with a schedule
+      const workflowId = 'scheduled-pipeline-id';
 
       // WHEN - I toggle it to paused
-      const pauseResponse = await fetch(`/api/v1/pipelines/${pipelineId}`, {
+      const pauseResponse = await fetch(`/api/v1/workflows/${workflowId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: false }),
       });
 
-      // THEN - Pipeline is paused
+      // THEN - Workflow is paused
       expect(pauseResponse.status).toBe(200);
       const body = await pauseResponse.json();
       expect(body.data.is_active).toBe(false);
 
       // AND - I can still run it manually
-      const runResponse = await fetch(`/api/v1/pipelines/${pipelineId}/run`, {
+      const runResponse = await fetch(`/api/v1/workflows/${workflowId}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -151,9 +151,9 @@ describe('Pipeline Execution (Acceptance)', () => {
     });
   });
 
-  describe('Scenario: Pipeline Validation (AC-005.6)', () => {
-    it('should reject invalid pipeline configurations', async () => {
-      // GIVEN - An invalid pipeline config (missing required fields)
+  describe('Scenario: Workflow Validation (AC-005.6)', () => {
+    it('should reject invalid workflow configurations', async () => {
+      // GIVEN - An invalid workflow config (missing required fields)
       const invalidConfig = {
         name: '', // empty name
         project_id: 'project-uuid',
@@ -161,7 +161,7 @@ describe('Pipeline Execution (Acceptance)', () => {
       };
 
       // WHEN - I try to save it
-      const response = await fetch('/api/v1/pipelines', {
+      const response = await fetch('/api/v1/workflows', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invalidConfig),

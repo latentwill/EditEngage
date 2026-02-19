@@ -20,7 +20,7 @@
     pipeline_name: string;
   };
 
-  type PipelineRef = {
+  type WorkflowRef = {
     id: string;
     name: string;
   };
@@ -28,13 +28,13 @@
   let { data }: {
     data: {
       contentItems: ContentItem[];
-      pipelines: PipelineRef[];
+      pipelines: WorkflowRef[];
     };
   } = $props();
 
   let statusFilter = $state('all');
   let typeFilter = $state('all');
-  let pipelineFilter = $state('all');
+  let workflowFilter = $state('all');
 
   const statusColors: Record<string, string> = {
     draft: 'badge-ghost',
@@ -48,7 +48,7 @@
     data.contentItems.filter((item) => {
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (typeFilter !== 'all' && item.content_type !== typeFilter) return false;
-      if (pipelineFilter !== 'all' && item.pipeline_name !== pipelineFilter) return false;
+      if (workflowFilter !== 'all' && item.pipeline_name !== workflowFilter) return false;
       return true;
     })
   );
@@ -85,11 +85,11 @@
     </select>
 
     <select
-      data-testid="pipeline-filter"
+      data-testid="workflow-filter"
       class="select select-bordered select-sm"
-      bind:value={pipelineFilter}
+      bind:value={workflowFilter}
     >
-      <option value="all">All Circuits</option>
+      <option value="all">All Workflows</option>
       {#each data.pipelines as pipeline}
         <option value={pipeline.name}>{pipeline.name}</option>
       {/each}
@@ -99,7 +99,7 @@
   <div class="space-y-2">
     {#each filteredItems as item}
       <a
-        href="/dashboard/content/{item.id}"
+        href="/dashboard/write/content/{item.id}"
         data-testid="content-item"
         class="card bg-base-200 shadow-xl block p-4 hover:bg-base-300 transition-all duration-300"
       >

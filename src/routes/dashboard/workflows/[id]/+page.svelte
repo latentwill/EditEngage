@@ -32,12 +32,12 @@
 
   let { data }: {
     data: {
-      pipeline: Workflow;
+      workflow: Workflow;
       runs: WorkflowRun[];
     };
   } = $props();
 
-  let workflow = $derived(data.pipeline);
+  let workflow = $derived(data.workflow);
   let runs = $state(data.runs);
 
   const statusColors: Record<string, string> = {
@@ -87,9 +87,9 @@
   <div class="card bg-base-200 rounded-xl p-6">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <h1 data-testid="pipeline-detail-name" class="text-2xl font-bold text-base-content">{workflow.name}</h1>
+        <h1 data-testid="workflow-detail-name" class="text-2xl font-bold text-base-content">{workflow.name}</h1>
         <span
-          data-testid="pipeline-detail-status"
+          data-testid="workflow-detail-status"
           class="badge {statusColors[workflow.is_active ? 'active' : 'paused']}"
         >
           {workflow.is_active ? 'active' : 'paused'}

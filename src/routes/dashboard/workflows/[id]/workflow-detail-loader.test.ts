@@ -116,7 +116,7 @@ describe('Workflow Detail Loader', () => {
 
     // Verify returned data
     expect(result).toEqual({
-      pipeline: mockPipeline,
+      workflow: mockPipeline,
       runs: mockRuns
     });
   });

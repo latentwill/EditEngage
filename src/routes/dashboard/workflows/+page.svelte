@@ -9,7 +9,7 @@
     schedule: string | null;
     review_mode: WorkflowReviewMode;
     is_active: boolean;
-    steps: Array<{ agentType: string; config: Record<string, unknown> }>;
+    steps: Array<{ agentType: string; config: Record<string, unknown> }> | null | undefined;
     created_at: string;
     updated_at: string;
     last_run_at: string | null;
@@ -85,7 +85,7 @@
 
           <div class="flex items-center gap-3">
             <span class="text-xs text-base-content/40">
-              {workflow.steps.length} step{workflow.steps.length !== 1 ? 's' : ''}
+              {(workflow.steps ?? []).length} step{(workflow.steps ?? []).length !== 1 ? 's' : ''}
             </span>
 
             {#if workflow.last_run_at}

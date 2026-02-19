@@ -2,8 +2,8 @@
   const features = [
     {
       icon: 'M13 10V3L4 14h7v7l9-11h-7z',
-      title: 'Circuit Builder',
-      description: 'Compose AI agent workflows that chain research, writing, and publishing into automated circuits.'
+      title: 'Workflow Builder',
+      description: 'Compose AI agent workflows that chain research, writing, and publishing into automated workflows.'
     },
     {
       icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
@@ -18,7 +18,7 @@
     {
       icon: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z',
       title: 'Multi-Channel',
-      description: 'Publish to Ghost, social media, email newsletters, and more from a single circuit.'
+      description: 'Publish to Ghost, social media, email newsletters, and more from a single workflow.'
     },
     {
       icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
@@ -35,7 +35,7 @@
   const steps = [
     {
       number: '01',
-      title: 'Configure your circuit',
+      title: 'Configure your workflow',
       description: 'Select agents, set your schedule, and define your content strategy.'
     },
     {
@@ -57,7 +57,7 @@
       description: 'For individuals getting started with content automation.',
       features: [
         '1 project',
-        '5 circuit runs/month',
+        '5 workflow runs/month',
         '1 destination',
         'Basic SEO writer',
         'Community support'
@@ -71,7 +71,7 @@
       description: 'For creators and small teams scaling content.',
       features: [
         'Unlimited projects',
-        'Unlimited circuit runs',
+        'Unlimited workflow runs',
         'All destinations',
         'Research agents',
         'Variety engine',
@@ -131,7 +131,7 @@
       data-testid="hero-subheadline"
       class="text-lg md:text-xl text-base-content/60 mb-10 max-w-2xl mx-auto"
     >
-      Build AI agent circuits that research, write, and publish content across every channel — on autopilot.
+      Build AI agent workflows that research, write, and publish content across every channel — on autopilot.
     </p>
 
     <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">

@@ -244,15 +244,15 @@ describe('Workflow Detail Page', () => {
     render(WorkflowDetailPage, {
       props: {
         data: {
-          pipeline: mockWorkflows[0],
+          workflow: mockWorkflows[0],
           runs: mockWorkflowRuns
         }
       }
     });
 
     // Workflow name and status badge
-    expect(screen.getByTestId('pipeline-detail-name')).toHaveTextContent('SEO Writer');
-    expect(screen.getByTestId('pipeline-detail-status')).toBeInTheDocument();
+    expect(screen.getByTestId('workflow-detail-name')).toHaveTextContent('SEO Writer');
+    expect(screen.getByTestId('workflow-detail-status')).toBeInTheDocument();
 
     // Run history items
     const runRows = screen.getAllByTestId('run-history-row');
@@ -276,7 +276,7 @@ describe('Workflow Detail Page', () => {
     render(WorkflowDetailPage, {
       props: {
         data: {
-          pipeline: mockWorkflows[0],
+          workflow: mockWorkflows[0],
           runs: mockWorkflowRuns
         }
       }

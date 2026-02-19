@@ -60,8 +60,8 @@ const mockClient = {
   channel: vi.fn().mockReturnValue(mockChannel)
 };
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => mockClient)
+vi.mock('$lib/supabase', () => ({
+  createSupabaseClient: vi.fn(() => mockClient)
 }));
 
 describe('events store', () => {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { page } from '$app/stores';
   import SidebarDrawer from '$lib/components/SidebarDrawer.svelte';
   import ProjectSwitcher from '$lib/components/ProjectSwitcher.svelte';
 
@@ -17,7 +18,7 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-  <SidebarDrawer currentPath="/dashboard">
+  <SidebarDrawer currentPath={$page.url.pathname}>
     {#snippet projectSwitcher()}
       <ProjectSwitcher projects={data.projects} orgId={data.orgId} />
     {/snippet}

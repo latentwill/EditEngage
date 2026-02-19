@@ -5,8 +5,13 @@
  * nested routes (Write > Content/Topics) and collapsible navigation.
  */
 import { render, screen } from '@testing-library/svelte';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { writable } from 'svelte/store';
 import DashboardLayout from './+layout.svelte';
+
+vi.mock('$app/stores', () => ({
+  page: writable({ url: { pathname: '/dashboard' } }),
+}));
 
 const defaultData = {
   projects: [],
