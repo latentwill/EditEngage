@@ -1,6 +1,6 @@
 /**
- * @behavior Settings page renders sidebar navigation with glass styling and active link highlighting
- * @business_rule Settings page provides organized access to project configuration
+ * @behavior Settings general page renders with proper styling
+ * @business_rule Settings page provides a clean layout for project configuration
  */
 import { render, screen } from '@testing-library/svelte';
 import { describe, it, expect, vi } from 'vitest';
@@ -24,19 +24,11 @@ vi.mock('$lib/server/supabase', () => ({
 
 import SettingsPage from './+page.svelte';
 
-describe('Settings Page - Styling', () => {
-  it('renders settings page with glass card styling', () => {
+describe('Settings General Page - Styling', () => {
+  it('renders settings page with proper testid', () => {
     render(SettingsPage);
     const page = screen.getByTestId('settings-page');
     expect(page).toBeInTheDocument();
-  });
-
-  it('renders settings nav with daisyUI menu and links', () => {
-    render(SettingsPage);
-    const nav = screen.getByTestId('settings-nav');
-    expect(nav.className).toMatch(/menu/);
-    const links = nav.querySelectorAll('a');
-    expect(links.length).toBeGreaterThanOrEqual(3);
   });
 
   it('has styled heading', () => {
@@ -46,13 +38,8 @@ describe('Settings Page - Styling', () => {
     expect(heading.className).toMatch(/font-bold|font-semibold/);
   });
 
-  it('nav links are inside daisyUI menu list items', () => {
+  it('displays General Settings title', () => {
     render(SettingsPage);
-    const nav = screen.getByTestId('settings-nav');
-    const listItems = nav.querySelectorAll('li');
-    expect(listItems.length).toBeGreaterThanOrEqual(3);
-    listItems.forEach(li => {
-      expect(li.querySelector('a')).not.toBeNull();
-    });
+    expect(screen.getByText('General Settings')).toBeInTheDocument();
   });
 });

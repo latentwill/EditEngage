@@ -1,8 +1,8 @@
 /**
- * @behavior Settings hub page shows navigation links to Integrations and Writing Styles.
+ * @behavior Settings pages render correctly with data props.
  * Writing Styles page renders style list and creation form.
- * @business_rule Project settings are organized into Integrations (API keys + destinations)
- * and Writing Styles. Users navigate between them from the settings hub.
+ * @business_rule Project settings are organized into General and Connections.
+ * Writing Styles and Destinations have moved to their respective sections.
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -86,29 +86,13 @@ vi.mock('$lib/supabase', () => ({
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-describe('Settings Hub Navigation', () => {
-  it('displays Integrations and Writing Styles links', async () => {
+describe('Settings General Page', () => {
+  it('renders general settings page', async () => {
     const SettingsPage = (await import('./+page.svelte')).default;
     render(SettingsPage);
 
-    const nav = screen.getByTestId('settings-nav');
-
-    // Should have Integrations link (replaces old Destinations + API Keys)
-    const integrationsLink = nav.querySelector('a[href="/dashboard/settings/integrations"]');
-    expect(integrationsLink).toBeInTheDocument();
-    expect(integrationsLink?.textContent).toContain('Integrations');
-
-    // Should still have Writing Styles
-    const stylesLink = nav.querySelector('a[href="/dashboard/settings/writing-styles"]');
-    expect(stylesLink).toBeInTheDocument();
-
-    // Should have Destinations link (added per design spec)
-    const destLink = nav.querySelector('a[href="/dashboard/settings/destinations"]');
-    expect(destLink).toBeInTheDocument();
-
-    // Should NOT have old API Keys link
-    const apiKeysLink = nav.querySelector('a[href="/dashboard/settings/api-keys"]');
-    expect(apiKeysLink).not.toBeInTheDocument();
+    expect(screen.getByTestId('settings-page')).toBeInTheDocument();
+    expect(screen.getByText('General Settings')).toBeInTheDocument();
   });
 });
 
