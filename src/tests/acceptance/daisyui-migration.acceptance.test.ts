@@ -11,7 +11,7 @@
  *  2. GlassNav uses daisyUI navbar + btn-ghost
  *  3. GlassCard uses daisyUI card
  *  4. ProjectSwitcher uses daisyUI dropdown + menu
- *  5. Pipeline cards use daisyUI card + badge
+ *  5. Workflow cards use daisyUI card + badge
  *  6. Settings nav uses daisyUI menu
  *  7. Form controls use daisyUI input + select classes
  */
@@ -254,10 +254,10 @@ describe('ProjectSwitcher uses daisyUI dropdown', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Pipeline cards use daisyUI card and badge
+// 5. Workflow cards use daisyUI card and badge
 // ---------------------------------------------------------------------------
 
-describe('Pipeline cards use daisyUI card and badge', () => {
+describe('Workflow cards use daisyUI card and badge', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
@@ -266,7 +266,7 @@ describe('Pipeline cards use daisyUI card and badge', () => {
     });
   });
 
-  const pipelines = [
+  const workflows = [
     {
       id: 'pipe-1',
       project_id: 'proj-1',
@@ -283,20 +283,20 @@ describe('Pipeline cards use daisyUI card and badge', () => {
   ];
 
   /**
-   * @behavior Pipeline cards render with the daisyUI `card` class
-   * @business_rule Pipeline list items must use daisyUI card for visual
+   * @behavior Workflow cards render with the daisyUI `card` class
+   * @business_rule Workflow list items must use daisyUI card for visual
    *   consistency with other card-based layouts in the app
    */
-  it('pipeline cards have the card class', async () => {
-    const PipelinesPage = (
-      await import('../../routes/dashboard/pipelines/+page.svelte')
+  it('workflow cards have the card class', async () => {
+    const WorkflowsPage = (
+      await import('../../routes/dashboard/workflows/+page.svelte')
     ).default;
 
-    render(PipelinesPage, {
-      props: { data: { pipelines } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: workflows } }
     });
 
-    const cards = screen.getAllByTestId('pipeline-card');
+    const cards = screen.getAllByTestId('workflow-card');
     expect(cards.length).toBeGreaterThan(0);
     cards.forEach((card) => {
       expect(card.classList.contains('card')).toBe(true);
@@ -304,20 +304,20 @@ describe('Pipeline cards use daisyUI card and badge', () => {
   });
 
   /**
-   * @behavior Pipeline status badges render with the daisyUI `badge` class
+   * @behavior Workflow status badges render with the daisyUI `badge` class
    * @business_rule Status indicators must use daisyUI badge for consistent
    *   sizing, colors, and rounded-pill styling
    */
   it('status badges have the badge class', async () => {
-    const PipelinesPage = (
-      await import('../../routes/dashboard/pipelines/+page.svelte')
+    const WorkflowsPage = (
+      await import('../../routes/dashboard/workflows/+page.svelte')
     ).default;
 
-    render(PipelinesPage, {
-      props: { data: { pipelines } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: workflows } }
     });
 
-    const badges = screen.getAllByTestId('pipeline-status-badge');
+    const badges = screen.getAllByTestId('workflow-status-badge');
     expect(badges.length).toBeGreaterThan(0);
     badges.forEach((badge) => {
       expect(badge.classList.contains('badge')).toBe(true);

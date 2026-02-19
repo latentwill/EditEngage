@@ -529,6 +529,7 @@ export interface Database {
           updated_at?: string;
         };
       };
+      // Note: DB table is 'pipelines' but app-layer uses 'workflows'
       notifications: {
         Row: {
           id: string;
@@ -564,3 +565,13 @@ export interface Database {
     };
   };
 }
+
+// -- Workflow Type Aliases (app-layer names for DB 'pipelines' tables) --------
+
+export type WorkflowReviewMode = PipelineReviewMode;
+
+export type WorkflowRunStatus = PipelineRunStatus;
+
+export type Workflow = Database['public']['Tables']['pipelines']['Row'];
+
+export type WorkflowRun = Database['public']['Tables']['pipeline_runs']['Row'];

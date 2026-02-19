@@ -14,7 +14,7 @@
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/dashboard/pipelines', label: 'Circuits' },
+    { href: '/dashboard/workflows', label: 'Workflows' },
     { href: '/dashboard/content', label: 'Content' },
     { href: '/dashboard/topics', label: 'Topics' },
     { href: '/dashboard/settings', label: 'Settings' }

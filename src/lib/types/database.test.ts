@@ -17,6 +17,10 @@ import type {
   TemplateDataSourceType,
   GeneratedPageStatus,
   ApiProvider,
+  WorkflowReviewMode,
+  WorkflowRunStatus,
+  Workflow,
+  WorkflowRun,
 } from './database.js';
 
 type Tables = Database['public']['Tables'];
@@ -275,6 +279,26 @@ describe('Database types', () => {
 
     it('ApiProvider is a union of openrouter | perplexity | tavily | openai | serpapi', () => {
       expectTypeOf<ApiProvider>().toEqualTypeOf<'openrouter' | 'perplexity' | 'tavily' | 'openai' | 'serpapi'>();
+    });
+  });
+
+  describe('Workflow type aliases', () => {
+    it('WorkflowReviewMode matches PipelineReviewMode', () => {
+      expectTypeOf<WorkflowReviewMode>().toEqualTypeOf<PipelineReviewMode>();
+    });
+
+    it('WorkflowRunStatus matches PipelineRunStatus', () => {
+      expectTypeOf<WorkflowRunStatus>().toEqualTypeOf<PipelineRunStatus>();
+    });
+
+    it('Workflow matches pipelines table Row type', () => {
+      type PipelinesRow = Tables['pipelines']['Row'];
+      expectTypeOf<Workflow>().toEqualTypeOf<PipelinesRow>();
+    });
+
+    it('WorkflowRun matches pipeline_runs table Row type', () => {
+      type PipelineRunsRow = Tables['pipeline_runs']['Row'];
+      expectTypeOf<WorkflowRun>().toEqualTypeOf<PipelineRunsRow>();
     });
   });
 });

@@ -1,7 +1,7 @@
 /**
- * @behavior Circuit list shows all project circuits with management actions;
- * Circuit detail shows run history with status, duration, and output
- * @business_rule Users can view, run, pause, and resume their project's circuits.
+ * @behavior Workflow list shows all project workflows with management actions;
+ * Workflow detail shows run history with status, duration, and output
+ * @business_rule Users can view, run, pause, and resume their project's workflows.
  * Real-time status updates keep the UI in sync during active runs.
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
@@ -24,27 +24,33 @@ const mockChannel = {
   unsubscribe: vi.fn()
 };
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    channel: vi.fn().mockReturnValue(mockChannel),
-    removeChannel: vi.fn(),
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({ data: [], error: null })
-        })
+const mockSupabaseClient = {
+  channel: vi.fn().mockReturnValue(mockChannel),
+  removeChannel: vi.fn(),
+  from: vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        order: vi.fn().mockReturnValue({ data: [], error: null })
       })
     })
-  }))
+  })
+};
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => mockSupabaseClient)
+}));
+
+vi.mock('$lib/supabase', () => ({
+  createSupabaseClient: vi.fn(() => mockSupabaseClient)
 }));
 
 // Mock fetch for API calls
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-const mockPipelines = [
+const mockWorkflows = [
   {
-    id: 'pipe-1',
+    id: 'wf-1',
     project_id: 'proj-1',
     name: 'SEO Writer',
     description: 'Generates SEO articles',
@@ -57,7 +63,7 @@ const mockPipelines = [
     last_run_at: '2025-01-10T10:00:00Z'
   },
   {
-    id: 'pipe-2',
+    id: 'wf-2',
     project_id: 'proj-1',
     name: 'Social Posts',
     description: 'Creates social media content',
@@ -70,7 +76,7 @@ const mockPipelines = [
     last_run_at: '2025-01-09T14:00:00Z'
   },
   {
-    id: 'pipe-3',
+    id: 'wf-3',
     project_id: 'proj-1',
     name: 'Landing Pages',
     description: 'Generates landing page copy',
@@ -88,10 +94,10 @@ const mockPipelines = [
   }
 ];
 
-const mockPipelineRuns = [
+const mockWorkflowRuns = [
   {
     id: 'run-1',
-    pipeline_id: 'pipe-1',
+    pipeline_id: 'wf-1',
     status: 'completed',
     current_step: 3,
     total_steps: 3,
@@ -104,7 +110,7 @@ const mockPipelineRuns = [
   },
   {
     id: 'run-2',
-    pipeline_id: 'pipe-1',
+    pipeline_id: 'wf-1',
     status: 'failed',
     current_step: 2,
     total_steps: 3,
@@ -117,7 +123,7 @@ const mockPipelineRuns = [
   },
   {
     id: 'run-3',
-    pipeline_id: 'pipe-1',
+    pipeline_id: 'wf-1',
     status: 'completed',
     current_step: 3,
     total_steps: 3,
@@ -130,7 +136,7 @@ const mockPipelineRuns = [
   }
 ];
 
-describe('Circuit List Page', () => {
+describe('Workflow List Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
@@ -139,82 +145,82 @@ describe('Circuit List Page', () => {
     });
   });
 
-  it('renders all project circuits with name and status badge', async () => {
-    const PipelinesPage = (await import('./+page.svelte')).default;
+  it('renders all project workflows with name and status badge', async () => {
+    const WorkflowsPage = (await import('./+page.svelte')).default;
 
-    render(PipelinesPage, {
-      props: { data: { pipelines: mockPipelines } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: mockWorkflows } }
     });
 
-    // All pipeline names should be visible
+    // All workflow names should be visible
     expect(screen.getByText('SEO Writer')).toBeInTheDocument();
     expect(screen.getByText('Social Posts')).toBeInTheDocument();
     expect(screen.getByText('Landing Pages')).toBeInTheDocument();
 
-    // All pipeline cards should be rendered
-    const pipelineCards = screen.getAllByTestId('pipeline-card');
-    expect(pipelineCards).toHaveLength(3);
+    // All workflow cards should be rendered
+    const workflowCards = screen.getAllByTestId('workflow-card');
+    expect(workflowCards).toHaveLength(3);
 
     // Status badges should be present
-    const statusBadges = screen.getAllByTestId('pipeline-status-badge');
+    const statusBadges = screen.getAllByTestId('workflow-status-badge');
     expect(statusBadges).toHaveLength(3);
   });
 
-  it('shows active/paused toggle per circuit', async () => {
-    const PipelinesPage = (await import('./+page.svelte')).default;
+  it('shows active/paused toggle per workflow', async () => {
+    const WorkflowsPage = (await import('./+page.svelte')).default;
 
-    render(PipelinesPage, {
-      props: { data: { pipelines: mockPipelines } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: mockWorkflows } }
     });
 
-    const toggles = screen.getAllByTestId('pipeline-toggle');
+    const toggles = screen.getAllByTestId('workflow-toggle');
     expect(toggles).toHaveLength(3);
 
-    // First pipeline is active, second is paused
+    // First workflow is active, second is paused
     expect(toggles[0].getAttribute('aria-checked')).toBe('true');
     expect(toggles[1].getAttribute('aria-checked')).toBe('false');
     expect(toggles[2].getAttribute('aria-checked')).toBe('true');
   });
 
-  it('"Run Now" button calls POST /api/v1/circuits/:id/run', async () => {
+  it('"Run Now" button calls POST /api/v1/workflows/:id/run', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ jobId: 'run-uuid-1' })
     });
 
-    const PipelinesPage = (await import('./+page.svelte')).default;
+    const WorkflowsPage = (await import('./+page.svelte')).default;
 
-    render(PipelinesPage, {
-      props: { data: { pipelines: mockPipelines } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: mockWorkflows } }
     });
 
-    const runButtons = screen.getAllByTestId('pipeline-run-button');
+    const runButtons = screen.getAllByTestId('workflow-run-button');
     await fireEvent.click(runButtons[0]);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v1/circuits/pipe-1/run',
+      '/api/v1/workflows/wf-1/run',
       expect.objectContaining({ method: 'POST' })
     );
   });
 
-  it('pause toggle calls PATCH /api/v1/circuits/:id with is_active: false', async () => {
+  it('pause toggle calls PATCH /api/v1/workflows/:id with is_active: false', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ data: { ...mockPipelines[0], is_active: false } })
+      json: () => Promise.resolve({ data: { ...mockWorkflows[0], is_active: false } })
     });
 
-    const PipelinesPage = (await import('./+page.svelte')).default;
+    const WorkflowsPage = (await import('./+page.svelte')).default;
 
-    render(PipelinesPage, {
-      props: { data: { pipelines: mockPipelines } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: mockWorkflows } }
     });
 
-    // Click toggle on first pipeline (currently active -> should pause)
-    const toggles = screen.getAllByTestId('pipeline-toggle');
+    // Click toggle on first workflow (currently active -> should pause)
+    const toggles = screen.getAllByTestId('workflow-toggle');
     await fireEvent.click(toggles[0]);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/v1/circuits/pipe-1',
+      '/api/v1/workflows/wf-1',
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ is_active: false })
@@ -223,7 +229,7 @@ describe('Circuit List Page', () => {
   });
 });
 
-describe('Circuit Detail Page', () => {
+describe('Workflow Detail Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
@@ -233,18 +239,18 @@ describe('Circuit Detail Page', () => {
   });
 
   it('shows run history with status, duration, and output', async () => {
-    const PipelineDetailPage = (await import('./[id]/+page.svelte')).default;
+    const WorkflowDetailPage = (await import('./[id]/+page.svelte')).default;
 
-    render(PipelineDetailPage, {
+    render(WorkflowDetailPage, {
       props: {
         data: {
-          pipeline: mockPipelines[0],
-          runs: mockPipelineRuns
+          pipeline: mockWorkflows[0],
+          runs: mockWorkflowRuns
         }
       }
     });
 
-    // Pipeline name and status badge
+    // Workflow name and status badge
     expect(screen.getByTestId('pipeline-detail-name')).toHaveTextContent('SEO Writer');
     expect(screen.getByTestId('pipeline-detail-status')).toBeInTheDocument();
 
@@ -265,13 +271,13 @@ describe('Circuit Detail Page', () => {
   });
 
   it('subscribes to Supabase real-time for inline status updates during active run', async () => {
-    const PipelineDetailPage = (await import('./[id]/+page.svelte')).default;
+    const WorkflowDetailPage = (await import('./[id]/+page.svelte')).default;
 
-    render(PipelineDetailPage, {
+    render(WorkflowDetailPage, {
       props: {
         data: {
-          pipeline: mockPipelines[0],
-          runs: mockPipelineRuns
+          pipeline: mockWorkflows[0],
+          runs: mockWorkflowRuns
         }
       }
     });

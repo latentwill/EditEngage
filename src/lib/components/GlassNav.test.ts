@@ -20,7 +20,7 @@ describe('GlassNav', () => {
     // Nav links (appear in both desktop and mobile nav)
     const desktopNav = screen.getByTestId('desktop-nav-links');
     expect(desktopNav.querySelector('a[href="/dashboard"]')).not.toBeNull();
-    expect(desktopNav.querySelector('a[href="/dashboard/pipelines"]')).not.toBeNull();
+    expect(desktopNav.querySelector('a[href="/dashboard/workflows"]')).not.toBeNull();
     expect(desktopNav.querySelector('a[href="/dashboard/content"]')).not.toBeNull();
     expect(desktopNav.querySelector('a[href="/dashboard/topics"]')).not.toBeNull();
     expect(desktopNav.querySelector('a[href="/dashboard/settings"]')).not.toBeNull();
@@ -36,24 +36,24 @@ describe('GlassNav', () => {
     const hrefs = Array.from(links).map((link) => link.getAttribute('href'));
 
     expect(hrefs).toContain('/dashboard');
-    expect(hrefs).toContain('/dashboard/pipelines');
+    expect(hrefs).toContain('/dashboard/workflows');
     expect(hrefs).toContain('/dashboard/content');
     expect(hrefs).toContain('/dashboard/topics');
     expect(hrefs).toContain('/dashboard/settings');
   });
 
   it('highlights active nav link based on currentPath prop', () => {
-    render(GlassNav, { props: { currentPath: '/dashboard/pipelines' } });
+    render(GlassNav, { props: { currentPath: '/dashboard/workflows' } });
 
     const links = screen.getByTestId('desktop-nav-links').querySelectorAll('a');
-    const pipelinesLink = Array.from(links).find(
-      (link) => link.getAttribute('href') === '/dashboard/pipelines'
+    const workflowsLink = Array.from(links).find(
+      (link) => link.getAttribute('href') === '/dashboard/workflows'
     );
     const dashboardLink = Array.from(links).find(
       (link) => link.getAttribute('href') === '/dashboard'
     );
 
-    expect(pipelinesLink?.getAttribute('aria-current')).toBe('page');
+    expect(workflowsLink?.getAttribute('aria-current')).toBe('page');
     expect(dashboardLink?.getAttribute('aria-current')).toBeNull();
   });
 

@@ -1,8 +1,8 @@
 /**
- * @behavior Pipeline CRUD API routes create and list pipelines
+ * @behavior Workflow CRUD API routes create and list workflows
  * scoped to the authenticated user's projects (via organization membership).
- * @business_rule Pipelines belong to projects; only users who are members of
- * the project's organization can create or list pipelines.
+ * @business_rule Workflows belong to projects; only users who are members of
+ * the project's organization can create or list workflows.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -76,10 +76,10 @@ function makeRequest(method: string, body?: Record<string, unknown>, url?: strin
   if (body) {
     init.body = JSON.stringify(body);
   }
-  return new Request(url ?? 'http://localhost/api/v1/circuits', init);
+  return new Request(url ?? 'http://localhost/api/v1/workflows', init);
 }
 
-describe('POST /api/v1/circuits', () => {
+describe('POST /api/v1/workflows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser = { id: 'user-1' };
@@ -168,7 +168,7 @@ describe('POST /api/v1/circuits', () => {
   });
 });
 
-describe('GET /api/v1/circuits', () => {
+describe('GET /api/v1/workflows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser = { id: 'user-1' };
@@ -196,7 +196,7 @@ describe('GET /api/v1/circuits', () => {
     const { GET } = await import('./+server.js');
 
     const request = makeRequest('GET');
-    const url = new URL('http://localhost/api/v1/circuits');
+    const url = new URL('http://localhost/api/v1/workflows');
     const response = await GET({ request, url } as never);
     const json = await response.json();
 
@@ -210,7 +210,7 @@ describe('GET /api/v1/circuits', () => {
     const { GET } = await import('./+server.js');
 
     const request = makeRequest('GET');
-    const url = new URL('http://localhost/api/v1/circuits?project_id=proj-1');
+    const url = new URL('http://localhost/api/v1/workflows?project_id=proj-1');
     const response = await GET({ request, url } as never);
 
     expect(response.status).toBe(200);
@@ -223,7 +223,7 @@ describe('GET /api/v1/circuits', () => {
     const { GET } = await import('./+server.js');
 
     const request = makeRequest('GET');
-    const url = new URL('http://localhost/api/v1/circuits');
+    const url = new URL('http://localhost/api/v1/workflows');
     const response = await GET({ request, url } as never);
 
     expect(response.status).toBe(401);
