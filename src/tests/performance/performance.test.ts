@@ -40,18 +40,18 @@ describe('Task 41: Performance & Lighthouse Optimization', () => {
   });
 
   describe('Test 2: Heavy components are lazy-loaded (dynamic imports)', () => {
-    it('CircuitWizard is available for lazy loading via dynamic import pattern', () => {
-      // Verify CircuitWizard exists as a separate component (not inlined)
-      const wizardPath = path.resolve(__dirname, '../../../src/lib/components/CircuitWizard.svelte');
+    it('WorkflowWizard is available for lazy loading via dynamic import pattern', () => {
+      // Verify WorkflowWizard exists as a separate component (not inlined)
+      const wizardPath = path.resolve(__dirname, '../../../src/lib/components/WorkflowWizard.svelte');
       expect(fs.existsSync(wizardPath)).toBe(true);
 
-      // The pipelines page that uses CircuitWizard should exist
-      const pipelinesPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/pipelines/+page.svelte');
-      const pipelinesPage = fs.readFileSync(pipelinesPagePath, 'utf-8');
+      // The workflows page that uses WorkflowWizard should exist
+      const workflowsPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/workflows/+page.svelte');
+      const workflowsPage = fs.readFileSync(workflowsPagePath, 'utf-8');
 
-      // Verify CircuitWizard is NOT eagerly imported at the top level of the list page
+      // Verify WorkflowWizard is NOT eagerly imported at the top level of the list page
       // (It should only be imported in the create/edit page or loaded conditionally)
-      expect(pipelinesPage).not.toContain("import CircuitWizard from");
+      expect(workflowsPage).not.toContain("import WorkflowWizard from");
     });
 
     it('BulkActionBar is available for lazy loading via dynamic import pattern', () => {
@@ -60,7 +60,7 @@ describe('Task 41: Performance & Lighthouse Optimization', () => {
       expect(fs.existsSync(barPath)).toBe(true);
 
       // Content page that uses BulkActionBar should conditionally render it
-      const contentPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/content/+page.svelte');
+      const contentPagePath = path.resolve(__dirname, '../../../src/routes/dashboard/write/content/+page.svelte');
       const contentPage = fs.readFileSync(contentPagePath, 'utf-8');
 
       // BulkActionBar should only render when items are selected (conditional rendering)

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PipelineReviewMode } from '$lib/types/database';
+  import type { WorkflowReviewMode } from '$lib/types/database';
 
   let {
     schedule,
@@ -8,9 +8,9 @@
     onReviewModeChange
   }: {
     schedule: string;
-    reviewMode: PipelineReviewMode;
+    reviewMode: WorkflowReviewMode;
     onScheduleChange: (value: string) => void;
-    onReviewModeChange: (value: PipelineReviewMode) => void;
+    onReviewModeChange: (value: WorkflowReviewMode) => void;
   } = $props();
 </script>
 
@@ -37,7 +37,7 @@
       id="review-mode"
       data-testid="review-mode-select"
       value={reviewMode}
-      onchange={(e) => onReviewModeChange((e.target as HTMLSelectElement).value as PipelineReviewMode)}
+      onchange={(e) => onReviewModeChange((e.target as HTMLSelectElement).value as WorkflowReviewMode)}
       class="select select-bordered w-full"
     >
       <option value="draft_for_review">Draft for Review</option>

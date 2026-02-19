@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { setActiveProject, type ProjectInfo } from '$lib/stores/project';
 
   let {
@@ -12,6 +13,18 @@
   } = $props();
 
   let open = $state(false);
+  let containerEl: HTMLDivElement;
+
+  onMount(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (open && containerEl && !containerEl.contains(e.target as Node)) {
+        open = false;
+        search = '';
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  });
   let search = $state('');
   let selected = $state<ProjectInfo | null>(null);
   let creating = $state(false);
@@ -69,7 +82,7 @@
   }
 </script>
 
-<div class="dropdown">
+<div class="dropdown" bind:this={containerEl}>
   <button
     data-testid="project-switcher-trigger"
     onclick={toggle}

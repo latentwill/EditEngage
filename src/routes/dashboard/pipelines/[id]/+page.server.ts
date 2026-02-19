@@ -1,29 +1,6 @@
-import { error } from '@sveltejs/kit';
-import { createServerSupabaseClient } from '$lib/server/supabase';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, cookies }) => {
-  const supabase = createServerSupabaseClient(cookies);
-
-  const { data: pipeline, error: pipelineError } = await supabase
-    .from('pipelines')
-    .select('*')
-    .eq('id', params.id)
-    .single();
-
-  if (pipelineError || !pipeline) {
-    throw error(404, 'Circuit not found');
-  }
-
-  const { data: runs } = await supabase
-    .from('pipeline_runs')
-    .select('*')
-    .eq('pipeline_id', params.id)
-    .order('created_at', { ascending: false })
-    .limit(20);
-
-  return {
-    pipeline,
-    runs: runs ?? []
-  };
+export const load: PageServerLoad = async ({ params }) => {
+	redirect(301, `/dashboard/workflows/${params.id}`);
 };

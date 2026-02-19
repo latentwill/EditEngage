@@ -327,7 +327,7 @@
               {#if memoryItem.content_id}
                 <a
                   data-testid="content-link"
-                  href="/dashboard/content/{memoryItem.content_id}"
+                  href="/dashboard/write/content/{memoryItem.content_id}"
                   class="text-xs text-primary hover:text-primary-focus transition-colors"
                 >
                   View Content

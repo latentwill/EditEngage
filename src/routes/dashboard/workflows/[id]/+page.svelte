@@ -1,14 +1,14 @@
 <script lang="ts">
   import { createSupabaseClient } from '$lib/supabase.js';
-  import type { PipelineReviewMode, PipelineRunStatus } from '$lib/types/database.js';
+  import type { WorkflowReviewMode, WorkflowRunStatus } from '$lib/types/database.js';
 
-  type Pipeline = {
+  type Workflow = {
     id: string;
     project_id: string;
     name: string;
     description: string | null;
     schedule: string | null;
-    review_mode: PipelineReviewMode;
+    review_mode: WorkflowReviewMode;
     is_active: boolean;
     steps: Array<{ agentType: string; config: Record<string, unknown> }>;
     created_at: string;
@@ -16,10 +16,10 @@
     last_run_at: string | null;
   };
 
-  type PipelineRun = {
+  type WorkflowRun = {
     id: string;
     pipeline_id: string;
-    status: PipelineRunStatus;
+    status: WorkflowRunStatus;
     current_step: number;
     total_steps: number;
     started_at: string | null;
@@ -32,12 +32,12 @@
 
   let { data }: {
     data: {
-      pipeline: Pipeline;
-      runs: PipelineRun[];
+      workflow: Workflow;
+      runs: WorkflowRun[];
     };
   } = $props();
 
-  let pipeline = $derived(data.pipeline);
+  let workflow = $derived(data.workflow);
   let runs = $state(data.runs);
 
   const statusColors: Record<string, string> = {
@@ -61,51 +61,51 @@
     return `${minutes}m ${remainingSeconds}s`;
   }
 
-  // Subscribe to real-time updates for pipeline runs
+  // Subscribe to real-time updates for workflow runs
   const supabase = createSupabaseClient();
   const channel = supabase
-    .channel(`pipeline-runs-${pipeline.id}`)
+    .channel(`workflow-runs-${workflow.id}`)
     .on('postgres_changes', {
       event: '*',
       schema: 'public',
       table: 'pipeline_runs',
-      filter: `pipeline_id=eq.${pipeline.id}`
-    }, (payload: { new: PipelineRun }) => {
+      filter: `pipeline_id=eq.${workflow.id}`
+    }, (payload: { new: WorkflowRun }) => {
       const updated = payload.new;
       runs = runs.map(r => r.id === updated.id ? updated : r);
     })
     .subscribe();
 </script>
 
-<div data-testid="pipeline-detail-page" class="space-y-8 py-6">
+<div data-testid="workflow-detail-page" class="space-y-8 py-6">
   <div class="flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <a href="/dashboard/pipelines" class="text-base-content/40 hover:text-base-content/60 text-sm">&larr; Circuits</a>
+      <a href="/dashboard/workflows" class="text-base-content/40 hover:text-base-content/60 text-sm">&larr; Workflows</a>
     </div>
   </div>
 
   <div class="card bg-base-200 rounded-xl p-6">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <h1 data-testid="pipeline-detail-name" class="text-2xl font-bold text-base-content">{pipeline.name}</h1>
+        <h1 data-testid="workflow-detail-name" class="text-2xl font-bold text-base-content">{workflow.name}</h1>
         <span
-          data-testid="pipeline-detail-status"
-          class="badge {statusColors[pipeline.is_active ? 'active' : 'paused']}"
+          data-testid="workflow-detail-status"
+          class="badge {statusColors[workflow.is_active ? 'active' : 'paused']}"
         >
-          {pipeline.is_active ? 'active' : 'paused'}
+          {workflow.is_active ? 'active' : 'paused'}
         </span>
       </div>
 
       <button
-        data-testid="pipeline-detail-run-button"
+        data-testid="workflow-detail-run-button"
         class="btn btn-primary btn-sm"
       >
         Run Now
       </button>
     </div>
 
-    {#if pipeline.description}
-      <p class="text-sm text-base-content/60 mt-2">{pipeline.description}</p>
+    {#if workflow.description}
+      <p class="text-sm text-base-content/60 mt-2">{workflow.description}</p>
     {/if}
   </div>
 

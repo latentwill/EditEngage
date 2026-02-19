@@ -1,6 +1,6 @@
 /**
- * @behavior Pipelines list loader fetches all pipelines for the active project
- * @business_rule Users see only pipelines belonging to their active project;
+ * @behavior Workflows list loader fetches all workflows for the active project
+ * @business_rule Users see only workflows belonging to their active project;
  * if no active project exists, the loader returns an empty array
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -66,12 +66,12 @@ vi.mock('$lib/server/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => mockSupabase.client)
 }));
 
-describe('Pipelines List Loader', () => {
+describe('Workflows List Loader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should load pipelines for active project', async () => {
+  it('should load workflows for active project', async () => {
     mockSupabase = createMockSupabaseClient(mockPipelinesData);
 
     const { load } = await import('./+page.server');

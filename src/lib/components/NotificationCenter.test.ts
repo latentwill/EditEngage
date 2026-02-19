@@ -24,8 +24,8 @@ const mockNotifications = [
     user_id: 'user-1',
     project_id: 'proj-1',
     event_id: 'evt-1',
-    title: 'Circuit Complete',
-    message: 'SEO Articles circuit finished successfully',
+    title: 'Workflow Complete',
+    message: 'SEO Articles workflow finished successfully',
     is_read: false,
     created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
   },
@@ -71,8 +71,8 @@ const mockClient = {
   channel: vi.fn().mockReturnValue(mockChannel)
 };
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => mockClient)
+vi.mock('$lib/supabase', () => ({
+  createSupabaseClient: vi.fn(() => mockClient)
 }));
 
 import NotificationCenter from './NotificationCenter.svelte';

@@ -1,6 +1,6 @@
 /**
- * @behavior Pipeline detail loader fetches a single pipeline by ID with its recent run history
- * @business_rule Users can view pipeline details and run history; a 404 is thrown if the pipeline does not exist
+ * @behavior Workflow detail loader fetches a single workflow by ID with its recent run history
+ * @business_rule Users can view workflow details and run history; a 404 is thrown if the workflow does not exist
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -87,12 +87,12 @@ vi.mock('$lib/server/supabase', () => ({
   }))
 }));
 
-describe('Pipeline Detail Loader', () => {
+describe('Workflow Detail Loader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should load pipeline by id with run history', async () => {
+  it('should load workflow by id with run history', async () => {
     pipelineQuery = createPipelineQueryMock(mockPipeline);
     runsQuery = createRunsQueryMock(mockRuns);
 
@@ -116,12 +116,12 @@ describe('Pipeline Detail Loader', () => {
 
     // Verify returned data
     expect(result).toEqual({
-      pipeline: mockPipeline,
+      workflow: mockPipeline,
       runs: mockRuns
     });
   });
 
-  it('should throw 404 when pipeline not found', async () => {
+  it('should throw 404 when workflow not found', async () => {
     pipelineQuery = createPipelineQueryMock(null, { code: 'PGRST116', message: 'not found' });
     runsQuery = createRunsQueryMock([]);
 

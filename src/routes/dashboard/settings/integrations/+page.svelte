@@ -234,9 +234,10 @@
           <p data-testid="validation-error" class="text-error text-sm">{error}</p>
         {/each}
 
-        <button type="submit" class="btn btn-primary btn-sm">
-          Save Destination
-        </button>
+        <div class="flex gap-2">
+          <button type="submit" class="btn btn-primary btn-sm">Save Destination</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick={() => { showDestForm = false; }}>Cancel</button>
+        </div>
       </form>
     {/if}
   </section>

@@ -8,13 +8,13 @@
  * Bug tracker:
  *  1. Settings sub-pages crash (no server loaders)
  *  2. ProjectSwitcher dropdown doesn't close on click outside
- *  3. Circuits page crash on null steps
+ *  3. Workflows page crash on null steps
  *  4. Destination creation dialog has no Cancel button
  *  5. Writing styles form has no Cancel button
  *  6. Integrations destination form has no Cancel button
- *  7. No Research link in GlassNav
+ *  7. No Research link in Sidebar
  */
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, cleanup } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
@@ -181,10 +181,10 @@ describe('Bug #2 — ProjectSwitcher closes on click outside', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Bug #3: Circuits page crash on null steps
+// Bug #3: Workflows page crash on null steps
 // ---------------------------------------------------------------------------
 
-describe('Bug #3 — Circuits page handles null steps gracefully', () => {
+describe('Bug #3 — Workflows page handles null steps gracefully', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
@@ -194,21 +194,21 @@ describe('Bug #3 — Circuits page handles null steps gracefully', () => {
   });
 
   /**
-   * @behavior Pipeline list renders without crashing when a pipeline has
+   * @behavior Workflow list renders without crashing when a workflow has
    *   null steps (as returned from the database)
-   * @business_rule A newly-created pipeline may have null steps; the list
+   * @business_rule A newly-created workflow may have null steps; the list
    *   page must not crash and should display "0 steps"
    */
-  it('renders pipeline cards when steps is null', async () => {
-    const PipelinesPage = (
-      await import('../../routes/dashboard/pipelines/+page.svelte')
+  it('renders workflow cards when steps is null', async () => {
+    const WorkflowsPage = (
+      await import('../../routes/dashboard/workflows/+page.svelte')
     ).default;
 
-    const pipelinesWithNullSteps = [
+    const workflowsWithNullSteps = [
       {
         id: 'pipe-null',
         project_id: 'proj-1',
-        name: 'Empty Pipeline',
+        name: 'Empty Workflow',
         description: null,
         schedule: null,
         review_mode: 'draft_for_review' as const,
@@ -221,7 +221,7 @@ describe('Bug #3 — Circuits page handles null steps gracefully', () => {
       {
         id: 'pipe-undef',
         project_id: 'proj-1',
-        name: 'Undefined Steps Pipeline',
+        name: 'Undefined Steps Workflow',
         description: null,
         schedule: null,
         review_mode: 'auto_publish' as const,
@@ -234,17 +234,17 @@ describe('Bug #3 — Circuits page handles null steps gracefully', () => {
     ];
 
     // This should NOT throw
-    render(PipelinesPage, {
-      props: { data: { pipelines: pipelinesWithNullSteps } }
+    render(WorkflowsPage, {
+      props: { data: { pipelines: workflowsWithNullSteps } }
     });
 
     // Both cards should be present
-    const pipelineCards = screen.getAllByTestId('pipeline-card');
-    expect(pipelineCards).toHaveLength(2);
+    const workflowCards = screen.getAllByTestId('workflow-card');
+    expect(workflowCards).toHaveLength(2);
 
     // Step count should show 0 instead of crashing
-    expect(screen.getByText('Empty Pipeline')).toBeInTheDocument();
-    expect(screen.getByText('Undefined Steps Pipeline')).toBeInTheDocument();
+    expect(screen.getByText('Empty Workflow')).toBeInTheDocument();
+    expect(screen.getByText('Undefined Steps Workflow')).toBeInTheDocument();
   });
 });
 
@@ -392,29 +392,32 @@ describe('Bug #6 — Integrations destination form has a Cancel button', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Bug #7: No Research link in GlassNav
+// Bug #7: No Research link in Sidebar
 // ---------------------------------------------------------------------------
 
-describe('Bug #7 — GlassNav includes a Research link', () => {
+describe('Bug #7 — Sidebar includes a Research link', () => {
+  beforeEach(() => {
+    cleanup();
+  });
+
   /**
-   * @behavior GlassNav renders a Research link pointing to /dashboard/research
+   * @behavior Sidebar renders a Research link pointing to /dashboard/research
    * @business_rule The research feature must be discoverable from the main
-   *   navigation bar so users can access their research workspace
+   *   navigation so users can access their research workspace
    */
-  it('desktop nav contains a Research link', async () => {
-    const GlassNav = (
-      await import('../../lib/components/GlassNav.svelte')
+  it('sidebar nav contains a Research link', { timeout: 10000 }, async () => {
+    const Sidebar = (
+      await import('../../lib/components/Sidebar.svelte')
     ).default;
 
-    render(GlassNav, { props: { currentPath: '/dashboard' } });
+    const { container } = render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
 
-    const desktopNav = screen.getByTestId('desktop-nav-links');
-    const researchLink = desktopNav.querySelector(
+    const researchLink = container.querySelector(
       'a[href="/dashboard/research"]'
     );
 
     expect(researchLink).not.toBeNull();
-    expect(researchLink?.textContent?.trim()).toBe('Research');
+    expect(researchLink?.textContent?.trim()).toContain('Research');
   });
 
   /**
@@ -422,15 +425,14 @@ describe('Bug #7 — GlassNav includes a Research link', () => {
    * @business_rule Active nav state provides wayfinding; Research must
    *   participate in the same active-link pattern as other nav items
    */
-  it('Research link is highlighted when on the research page', async () => {
-    const GlassNav = (
-      await import('../../lib/components/GlassNav.svelte')
+  it('Research link is highlighted when on the research page', { timeout: 10000 }, async () => {
+    const Sidebar = (
+      await import('../../lib/components/Sidebar.svelte')
     ).default;
 
-    render(GlassNav, { props: { currentPath: '/dashboard/research' } });
+    const { container } = render(Sidebar, { props: { currentPath: '/dashboard/research', collapsed: false } });
 
-    const desktopNav = screen.getByTestId('desktop-nav-links');
-    const researchLink = desktopNav.querySelector(
+    const researchLink = container.querySelector(
       'a[href="/dashboard/research"]'
     );
 

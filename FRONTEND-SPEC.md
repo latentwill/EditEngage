@@ -7,7 +7,7 @@
 ## Project Setup
 
 **Framework:** SvelteKit 2.x with Svelte 5 (runes mode — use `$state`, `$derived`, `$effect`)
-**Components:** shadcn-svelte (Svelte port of shadcn/ui)
+**Components:** DaisyUI (Tailwind CSS component library)
 **Styling:** Tailwind CSS 3.4+
 **Icons:** Lucide Svelte
 **Auth/DB:** Supabase JS client (@supabase/supabase-js)
@@ -17,7 +17,7 @@
 ```bash
 bunx sv create editengage --template skeleton --types typescript
 cd editengage
-bunx shadcn-svelte@latest init
+bun add daisyui
 bun add @supabase/supabase-js lucide-svelte
 ```
 
@@ -218,21 +218,39 @@ Props: `variant` (default, elevated, flat), `hover` (boolean), `padding` (sm, md
 " />
 ```
 
-### GlassNav
+### Sidebar
 
-Fixed top navigation bar with blur effect:
+Collapsible sidebar navigation replacing the fixed top GlassNav:
 
-```svelte
-<nav class="
-  fixed top-0 left-0 right-0 z-40
-  backdrop-blur-[20px]
-  bg-black/40
-  border-b border-white/[0.08]
-  px-6 py-3
-">
-  <!-- Logo | Nav Links | Theme Toggle | User Avatar -->
-</nav>
-```
+- **Expanded width:** 240px (w-60), **Collapsed width:** 64px (w-16)
+- **Background:** DaisyUI `bg-base-200` with `border-r border-base-300`
+- **Sections (top to bottom):**
+  1. Project Switcher area (hidden when collapsed)
+  2. Navigation menu (DaisyUI `menu menu-sm`)
+  3. Collapse toggle button (chevrons left/right)
+  4. Bottom section: ThemeToggle + User avatar
+- **Collapse/expand:** Button at bottom, state persisted to localStorage
+- **Navigation items:**
+  - Dashboard (`/dashboard`) — LayoutDashboard icon
+  - Workflows (`/dashboard/workflows`) — GitBranch icon
+  - Write (expandable) — PenTool icon
+    - Content Library (`/dashboard/write/content`) — FileText icon
+    - Topics (`/dashboard/write/topics`) — ListChecks icon
+  - Research (`/dashboard/research`) — Search icon
+  - Publish (`/dashboard/publish`) — Send icon
+  - Settings (`/dashboard/settings`) — Settings icon
+- **Active state:** DaisyUI `active` class on current route link
+- **Collapsed mode:** Icons only with DaisyUI tooltip showing label
+- **Mobile:** Rendered inside a SidebarDrawer (overlay drawer component)
+
+### SidebarDrawer
+
+Mobile navigation wrapper for the Sidebar:
+
+- Overlay drawer that slides in from the left
+- Hamburger menu button triggers open
+- Click outside or close button dismisses
+- Contains the full Sidebar component inside
 
 ---
 
@@ -247,24 +265,34 @@ src/routes/
 │   ├── signup/+page.svelte               # Registration
 │   └── callback/+page.server.ts          # Supabase auth callback
 ├── dashboard/
-│   ├── +layout.svelte                    # Dashboard shell (GlassNav, Ticker, auth guard)
+│   ├── +layout.svelte                    # Dashboard shell (Sidebar, Ticker, auth guard)
 │   ├── +page.svelte                      # Dashboard overview
+│   ├── workflows/
+│   │   ├── +page.svelte                  # Workflow list
+│   │   ├── new/+page.svelte              # Create workflow wizard
+│   │   └── [id]/+page.svelte             # Workflow detail (runs, config, manual run)
+│   ├── write/
+│   │   ├── content/
+│   │   │   ├── +page.svelte              # Content library (filterable list)
+│   │   │   └── [id]/+page.svelte         # Content detail/editor (review, approve/reject)
+│   │   └── topics/
+│   │       └── +page.svelte              # Topic queue + variety memory
+│   ├── research/
+│   │   └── +page.svelte                  # Research tools (coming soon)
+│   ├── publish/
+│   │   └── +page.svelte                  # Publishing management (coming soon)
+│   ├── content/+page.server.ts           # 301 redirect → /dashboard/write/content
+│   ├── topics/+page.server.ts            # 301 redirect → /dashboard/write/topics
 │   ├── pipelines/
-│   │   ├── +page.svelte                  # Pipeline list
-│   │   ├── new/+page.svelte              # Create pipeline wizard
-│   │   └── [id]/+page.svelte             # Pipeline detail (runs, config, manual run)
-│   ├── content/
-│   │   ├── +page.svelte                  # Content library (filterable list)
-│   │   └── [id]/+page.svelte             # Content detail/editor (review, approve/reject)
-│   ├── topics/
-│   │   └── +page.svelte                  # Topic queue + variety memory
+│   │   ├── +page.server.ts              # 301 redirect → /dashboard/workflows
+│   │   └── [id]/+page.server.ts         # 301 redirect → /dashboard/workflows/[id]
 │   ├── programmatic/
 │   │   ├── +page.svelte                  # Template list
 │   │   ├── [id]/+page.svelte             # Template editor + generated pages
 │   │   └── new/+page.svelte              # Create template
 │   └── settings/
 │       ├── +page.svelte                  # Project settings
-│       ├── destinations/+page.svelte     # Manage Ghost/PostBridge/Webhook destinations
+│       ├── destinations/+page.svelte     # Manage destinations
 │       ├── styles/+page.svelte           # Writing styles
 │       ├── api-keys/+page.svelte         # API key management
 │       └── team/+page.svelte             # Team members
@@ -295,28 +323,28 @@ src/routes/
 - Section heading: "Everything you need to automate content"
 - Two-column layout (lg): Left sticky header + description, Right scrolling icon grid
 - 6 feature cards (GlassCard with icon + title + description):
-  1. Pipeline Builder — "Compose AI agent workflows"
+  1. Workflow Builder — "Compose AI agent workflows"
   2. SEO Writer — "Generate optimized articles"
   3. Variety Engine — "Never repeat content"
   4. Multi-Channel — "Ghost, social, email, research"
   5. Content Review — "Human-in-the-loop approval"
   6. Programmatic SEO — "Scale landing pages"
-- Below grid: A "display card" showing a mock pipeline (Topic Queue -> Variety Engine -> Writer -> Publisher)
+- Below grid: A "display card" showing a mock workflow (Topic Queue -> Variety Engine -> Writer -> Publisher)
 
 #### 1c. Productivity Block
 - Dark section (bg-tertiary with grain)
 - Three numbered steps (01, 02, 03):
-  1. "Configure your pipeline" — Select agents, set schedule
+  1. "Configure your workflow" — Select agents, set schedule
   2. "Let AI create content" — Watch it generate in real-time
   3. "Review and publish" — Approve, edit, or auto-publish
 - Right side: 3D-perspective mockup window showing the dashboard UI
-- Mockup has a title bar with traffic light dots, shows a pipeline running
+- Mockup has a title bar with traffic light dots, shows a workflow running
 
 #### 1d. Pricing Bento Grid
 - Section heading: "Simple, transparent pricing"
 - Three-column bento layout (stacked on mobile):
-  1. **Starter** (free) — 1 project, 5 pipeline runs/month, 1 destination
-  2. **Pro** ($29/mo) — Unlimited projects, unlimited runs, all destinations, research agents
+  1. **Starter** (free) — 1 project, 5 workflow runs/month, 1 destination
+  2. **Pro** ($29/mo) — Unlimited projects, unlimited workflow runs, all destinations, research agents
   3. **Team** ($79/mo) — Everything in Pro + team members, priority support, API access
 - Each card: GlassCard with plan name, price, feature list, CTA button
 - Pro card is highlighted (emerald border, "Most Popular" badge)
@@ -338,7 +366,7 @@ src/routes/
 
 ### 2. Auth Pages (`/auth/login`, `/auth/signup`)
 
-**Layout:** Centered card on gradient background. No GlassNav — standalone page.
+**Layout:** Centered card on gradient background. No Sidebar — standalone page.
 
 **Login Page:**
 - GlassCard (max-w-md centered)
@@ -382,23 +410,32 @@ const { data, error } = await supabase.auth.signUp({
 
 **Structure:**
 ```
-┌────────────────────────────────────────────────┐
-│ GlassNav (fixed top)                            │
-│ Logo | Project Switcher | Dashboard | Pipelines │
-│ | Content | Topics | Settings | Theme | Avatar  │
-├────────────────────────────────────────────────┤
-│                                                  │
-│  <slot /> (page content, padded)                │
-│  pt-20 px-6 pb-16 max-w-7xl mx-auto            │
-│                                                  │
-├────────────────────────────────────────────────┤
-│ Command Ticker (fixed bottom)                    │
-│ ● Latest event text · 3s ago          [expand]  │
-└────────────────────────────────────────────────┘
+┌───────────┬────────────────────────────────────────┐
+│ Sidebar   │                                        │
+│           │  <slot /> (page content, padded)       │
+│ Dashboard │  p-6 max-w-7xl                        │
+│ Workflows │                                        │
+│ Write ▾   │                                        │
+│  Content  │                                        │
+│  Topics   │                                        │
+│ Research  │                                        │
+│ Publish   │                                        │
+│ Settings  │                                        │
+│           │                                        │
+│ ◀ Collapse├────────────────────────────────────────┤
+│ 🌙 👤    │ Command Ticker (fixed bottom)          │
+└───────────┴────────────────────────────────────────┘
 ```
 
+**Layout:** Flex row with Sidebar on the left and main content area as flex-1.
+
+**Sidebar Navigation:**
+- Collapsible sidebar (see Sidebar component above)
+- Project Switcher rendered inside sidebar header
+- Theme toggle and user avatar in sidebar footer
+
 **Project Switcher:**
-- Dropdown in the nav (shadcn-svelte Select or Popover)
+- Dropdown in the sidebar header (DaisyUI dropdown)
 - Shows current project name + icon
 - Lists all projects in the user's org
 - "Create Project" option at bottom
@@ -414,7 +451,7 @@ const { data, error } = await supabase.auth.signUp({
 - Fixed bottom bar (h-10, z-30)
 - Glass background (bg-black/60, backdrop-blur)
 - Left: status dot (green = recent success, red = failure, yellow = in progress)
-- Center: event text with timestamp ("Pipeline 'Extndly SEO' completed - 1,842 words - 3s ago")
+- Center: event text with timestamp ("Workflow 'Extndly SEO' completed - 1,842 words - 3s ago")
 - Right: expand chevron icon
 - Scroll animation: new events slide in from bottom, old slides out
 - Click: opens notification center (slide-up panel)
@@ -435,24 +472,24 @@ const { data, error } = await supabase.auth.signUp({
   1. Total Content (FileText icon)
   2. Published This Week (Globe icon)
   3. Pending Review (Clock icon)
-  4. Active Pipelines (Zap icon)
+  4. Active Workflows (Zap icon)
 
 **Row 2: Two columns (lg)**
 
-**Left: Recent Pipeline Runs**
+**Left: Recent Workflow Runs**
 - GlassCard with header "Recent Runs"
 - Table/list of last 5 runs:
-  - Pipeline name
+  - Workflow name
   - Status badge (queued=gray, running=yellow/pulse, completed=green, failed=red)
   - Duration
   - Output link (if completed)
-- "View All" link -> /dashboard/pipelines
+- "View All" link -> /dashboard/workflows
 
 **Right: Content Awaiting Review**
 - GlassCard with header "Needs Review" + count badge
 - List of content items with status "in_review":
   - Title (truncated)
-  - Pipeline source
+  - Workflow source
   - Created date
   - Quick actions: Approve (checkmark), Reject (X), View (eye)
 - Empty state: "No content awaiting review" with check icon
@@ -465,19 +502,19 @@ const { data, error } = await supabase.auth.signUp({
   - Event icon (color-coded by type)
   - Description text
   - Relative timestamp ("3 minutes ago")
-  - Event types: pipeline.started, pipeline.completed, pipeline.failed, content.created, content.published, topic.added
+  - Event types: workflow.started, workflow.completed, workflow.failed, content.created, content.published, topic.added
 - **Real-time:** New events appear at top via Supabase subscription
 - Load more button at bottom (pagination)
 
 ---
 
-### 5. Pipelines Page (`/dashboard/pipelines`)
+### 5. Workflows Page (`/dashboard/workflows`)
 
-**Pipeline List:**
-- Header: "Pipelines" + "Create Pipeline" button (primary)
-- Grid of pipeline cards (2 columns lg, 1 mobile):
-  - GlassCard per pipeline
-  - Pipeline name (text-lg, font-semibold)
+**Workflow List:**
+- Header: "Workflows" + "Create Workflow" button (primary)
+- Grid of workflow cards (2 columns lg, 1 mobile):
+  - GlassCard per workflow
+  - Workflow name (text-lg, font-semibold)
   - Description (text-sm, text-muted, 2-line clamp)
   - Agent badges: small pills showing agent types in order (e.g., "Topic Queue -> Variety -> Writer -> Ghost")
   - Schedule: cron description or "Manual only"
@@ -485,11 +522,11 @@ const { data, error } = await supabase.auth.signUp({
   - Last run: status + timestamp
   - Actions: "Run Now" button, Edit (pencil icon), Delete (trash icon with confirmation)
 
-**Empty State:** Illustration + "Create your first pipeline" + button
+**Empty State:** Illustration + "Create your first workflow" + button
 
 ---
 
-### 6. Create Pipeline Wizard (`/dashboard/pipelines/new`)
+### 6. Create Workflow Wizard (`/dashboard/workflows/new`)
 
 **Multi-step wizard inside a centered GlassCard (max-w-2xl)**
 
@@ -536,23 +573,23 @@ const { data, error } = await supabase.auth.signUp({
 **Step 5: Review & Save**
 - Summary of all selections:
   - Name + description
-  - Agent pipeline (visual step list)
+  - Agent workflow (visual step list)
   - Schedule
   - Review mode
   - Destination
-- "Create Pipeline" button (primary)
-- On save: POST /api/v1/projects/:projectId/pipelines
+- "Create Workflow" button (primary)
+- On save: POST /api/v1/projects/:projectId/workflows
 
 ---
 
-### 7. Pipeline Detail (`/dashboard/pipelines/[id]`)
+### 7. Workflow Detail (`/dashboard/workflows/[id]`)
 
-**Header:** Pipeline name + status badge + "Run Now" button + Edit + Pause/Resume toggle
+**Header:** Workflow name + status badge + "Run Now" button + Edit + Pause/Resume toggle
 
 **Tabs: "Runs" | "Configuration"**
 
 **Runs Tab:**
-- Table of all pipeline runs:
+- Table of all workflow runs:
   - Status (badge with color)
   - Started at
   - Duration
@@ -564,18 +601,18 @@ const { data, error } = await supabase.auth.signUp({
 
 **Configuration Tab:**
 - Read-only view of current config
-- "Edit Pipeline" button -> opens wizard pre-filled with current values
+- "Edit Workflow" button -> opens wizard pre-filled with current values
 
 ---
 
-### 8. Content Library (`/dashboard/content`)
+### 8. Content Library (`/dashboard/write/content`)
 
 **Header:** "Content" + filter controls
 
 **Filters (row of dropdowns/pills):**
 - Status: All, Draft, In Review, Approved, Published, Rejected
 - Type: All, Article, Landing Page, Social Post
-- Pipeline: All, [list of pipelines]
+- Workflow: All, [list of workflows]
 - Sort: Newest, Oldest, Recently Published
 
 **Content List:**
@@ -583,7 +620,7 @@ const { data, error } = await supabase.auth.signUp({
   - Title (clickable -> detail page)
   - Type badge (article, landing_page, social_post)
   - Status badge (color-coded: draft=gray, in_review=yellow, approved=blue, published=green, rejected=red)
-  - Pipeline source (or "Manual")
+  - Workflow source (or "Manual")
   - Created date
   - Published URL (if published — external link icon)
 - Bulk actions bar (appears when checkboxes selected): Approve All, Reject All
@@ -591,7 +628,7 @@ const { data, error } = await supabase.auth.signUp({
 
 ---
 
-### 9. Content Detail (`/dashboard/content/[id]`)
+### 9. Content Detail (`/dashboard/write/content/[id]`)
 
 **Layout:** Two-column (lg) — editor left, metadata right
 
@@ -602,7 +639,7 @@ const { data, error } = await supabase.auth.signUp({
 
 **Right: Metadata Panel (GlassCard, sticky top)**
 - Status badge (large)
-- Pipeline source + link
+- Workflow source + link
 - Created / Updated dates
 - Meta description (editable textarea)
 - Tags (editable tag input)
@@ -615,7 +652,7 @@ const { data, error } = await supabase.auth.signUp({
 
 ---
 
-### 10. Topics Page (`/dashboard/topics`)
+### 10. Topics Page (`/dashboard/write/topics`)
 
 **Tabs: "Queue" | "Variety Memory"**
 
@@ -641,7 +678,31 @@ const { data, error } = await supabase.auth.signUp({
 
 ---
 
-### 11. Programmatic SEO (`/dashboard/programmatic`)
+### 11. Research Page (`/dashboard/research`)
+
+**Status:** Coming soon (placeholder)
+
+**Layout:** Centered content with heading and description
+- Heading: "Research" (text-2xl, font-bold)
+- Description: "Research tools are coming soon"
+- Search icon illustration
+- Uses DaisyUI alert component for the coming soon message
+
+---
+
+### 12. Publish Page (`/dashboard/publish`)
+
+**Status:** Coming soon (placeholder)
+
+**Layout:** Centered content with heading and description
+- Heading: "Publish" (text-2xl, font-bold)
+- Description: "Publishing tools are coming soon"
+- Send icon illustration
+- Uses DaisyUI alert component for the coming soon message
+
+---
+
+### 13. Programmatic SEO (`/dashboard/programmatic`)
 
 **Template List:**
 - Header: "Programmatic SEO" + "Create Template" button
@@ -677,11 +738,11 @@ const { data, error } = await supabase.auth.signUp({
   - Published URL
   - Actions: Publish, Unpublish, View
 - Bulk actions: Select all + Publish Selected / Unpublish Selected
-- "Generate Pages" button (triggers pipeline run)
+- "Generate Pages" button (triggers workflow run)
 
 ---
 
-### 12. Settings Pages (`/dashboard/settings/...`)
+### 14. Settings Pages (`/dashboard/settings/...`)
 
 All settings pages share a sidebar layout:
 
@@ -743,9 +804,9 @@ All settings pages share a sidebar layout:
 
 ---
 
-### 13. Notification Center
+### 15. Notification Center
 
-**Triggered by:** Clicking the bell icon in GlassNav OR clicking the Command Ticker
+**Triggered by:** Clicking the Command Ticker
 
 **Layout:** Slide-up panel from bottom (or slide-in from right on desktop)
 
@@ -779,15 +840,15 @@ All settings pages share a sidebar layout:
 | POST | `/api/v1/projects` | Create project |
 | PATCH | `/api/v1/projects/:id` | Update project settings |
 | DELETE | `/api/v1/projects/:id` | Delete project |
-| GET | `/api/v1/projects/:id/pipelines` | Pipeline list |
-| POST | `/api/v1/projects/:id/pipelines` | Create pipeline |
-| GET | `/api/v1/pipelines/:id` | Pipeline detail |
-| PATCH | `/api/v1/pipelines/:id` | Update pipeline |
-| DELETE | `/api/v1/pipelines/:id` | Delete pipeline |
-| POST | `/api/v1/pipelines/:id/run` | Trigger pipeline run -> returns `{ jobId }` |
+| GET | `/api/v1/projects/:id/workflows` | Workflow list |
+| POST | `/api/v1/projects/:id/workflows` | Create workflow |
+| GET | `/api/v1/workflows/:id` | Workflow detail |
+| PATCH | `/api/v1/workflows/:id` | Update workflow |
+| DELETE | `/api/v1/workflows/:id` | Delete workflow |
+| POST | `/api/v1/workflows/:id/run` | Trigger workflow run -> returns `{ jobId }` |
 | GET | `/api/v1/jobs/:id/status` | Poll job status |
-| GET | `/api/v1/projects/:id/pipeline-runs` | Run history |
-| GET | `/api/v1/projects/:id/content` | Content library (filterable) |
+| GET | `/api/v1/projects/:id/workflow-runs` | Run history |
+| GET | `/api/v1/projects/:id/content` | Content library |
 | GET | `/api/v1/content/:id` | Content detail |
 | PATCH | `/api/v1/content/:id` | Update content (edit, approve, reject) |
 | POST | `/api/v1/content/:id/publish` | Publish approved content |
@@ -891,7 +952,7 @@ Use Svelte 5 runes (`$state`, `$derived`, `$effect`) and SvelteKit's built-in `l
 - Skip link at top of page ("Skip to main content")
 - ARIA landmarks: nav, main, aside, footer
 - ARIA labels on all icon-only buttons
-- Modal focus trapping (shadcn-svelte handles this)
+- Modal focus trapping
 - Keyboard navigable: Tab through all interactive elements
 - Reduced motion: `prefers-reduced-motion` disables all animations
 - Screen reader: All images have alt text, status changes announced via live region
@@ -914,7 +975,7 @@ Use Svelte 5 runes (`$state`, `$derived`, `$effect`) and SvelteKit's built-in `l
 ```
 
 **ThemeToggle component:**
-- Sun/Moon icon button in GlassNav
+- Sun/Moon icon button in Sidebar footer
 - Toggles `dark`/`light` class on `<html>`
 - Persists to `localStorage`
 - 300ms transition on `background-color`, `color`, `border-color`
@@ -952,8 +1013,8 @@ Every data-dependent section shows a skeleton loader while data is loading:
 ## Build Phases
 
 ### Phase 1: Foundation
-- SvelteKit project setup + Tailwind + shadcn-svelte
-- Design system components: GlassCard, GlassButton, GlassInput, GlassNav, GrainOverlay
+- SvelteKit project setup + Tailwind + DaisyUI
+- Design system components: GlassCard, GlassButton, GlassInput, Sidebar, GrainOverlay
 - ThemeToggle with persistence + no-FOUC
 - Landing page (all 5 sections)
 - Auth pages (login, signup, magic link, callback)
@@ -961,7 +1022,7 @@ Every data-dependent section shows a skeleton loader while data is loading:
 - Responsive at all breakpoints
 
 ### Phase 2: Dashboard Shell + Data Layer
-- Dashboard layout (GlassNav, Command Ticker, Project Switcher)
+- Dashboard layout (Sidebar, Command Ticker, Project Switcher)
 - Dashboard overview page (stat cards, recent runs, content review, activity feed)
 - Supabase real-time subscriptions
 - Notification center
@@ -969,9 +1030,9 @@ Every data-dependent section shows a skeleton loader while data is loading:
 - Project CRUD
 
 ### Phase 3: Core Features
-- Pipeline list + detail pages
-- Create Pipeline wizard (5-step)
-- Pipeline execution (manual run, status polling, live progress)
+- Workflow list + detail pages
+- Create Workflow wizard (5-step)
+- Workflow execution (manual run, status polling, live progress)
 - Content library (filterable, sortable)
 - Content detail/editor (review, approve, reject, edit)
 - Bulk actions
@@ -986,7 +1047,8 @@ Every data-dependent section shows a skeleton loader while data is loading:
 
 ---
 
-*Spec version: 1.0*
+*Spec version: 1.1*
 *Created: 2026-02-14*
+*Updated: 2026-02-19 — Sidebar navigation, Workflows rename, route restructuring*
 *Source: DESIGN.md, REQUIREMENTS.md, API-DESIGN.md, DATA-MODEL.md*
-*Target: SvelteKit 2.x + Svelte 5 + shadcn-svelte + Tailwind CSS + Supabase*
+*Target: SvelteKit 2.x + Svelte 5 + DaisyUI + Tailwind CSS + Supabase*

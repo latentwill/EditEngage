@@ -1,21 +1,21 @@
 /**
- * @behavior CircuitWizard renders a multi-step wizard (Steps 1-2) for creating
- * a content circuit. Step 1 collects name/description with validation. Step 2
+ * @behavior WorkflowWizard renders a multi-step wizard (Steps 1-2) for creating
+ * a content workflow. Step 1 collects name/description with validation. Step 2
  * lets users select and reorder agent types.
- * @business_rule A circuit must have a name before proceeding. At least one
+ * @business_rule A workflow must have a name before proceeding. At least one
  * agent must be selected to move past Step 2. Agent ordering determines
  * execution sequence.
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CircuitWizard from './CircuitWizard.svelte';
+import WorkflowWizard from './WorkflowWizard.svelte';
 
-describe('CircuitWizard — Step 1: Name & Description', () => {
+describe('WorkflowWizard — Step 1: Name & Description', () => {
   it('renders name and description inputs with validation', () => {
-    render(CircuitWizard);
+    render(WorkflowWizard);
 
-    const nameInput = screen.getByTestId('pipeline-name-input');
-    const descInput = screen.getByTestId('pipeline-description-input');
+    const nameInput = screen.getByTestId('workflow-name-input');
+    const descInput = screen.getByTestId('workflow-description-input');
     const nextBtn = screen.getByTestId('wizard-next-btn');
 
     expect(nameInput).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe('CircuitWizard — Step 1: Name & Description', () => {
   });
 
   it('blocks progression when name is empty', async () => {
-    render(CircuitWizard);
+    render(WorkflowWizard);
 
     const nextBtn = screen.getByTestId('wizard-next-btn');
     await fireEvent.click(nextBtn);
@@ -39,12 +39,12 @@ describe('CircuitWizard — Step 1: Name & Description', () => {
   });
 });
 
-describe('CircuitWizard — Step 2: Agent Selection', () => {
+describe('WorkflowWizard — Step 2: Agent Selection', () => {
   async function goToStep2() {
-    render(CircuitWizard);
+    render(WorkflowWizard);
 
     // Fill in name to pass step 1 validation
-    const nameInput = screen.getByTestId('pipeline-name-input');
+    const nameInput = screen.getByTestId('workflow-name-input');
     await fireEvent.input(nameInput, { target: { value: 'My Pipeline' } });
 
     // Navigate to step 2

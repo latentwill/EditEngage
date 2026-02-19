@@ -82,7 +82,10 @@
       <label class="block text-sm text-base-content/80 mb-1" for="style-example">Example Content</label>
       <textarea id="style-example" class="textarea textarea-bordered w-full" bind:value={exampleContent}></textarea>
 
-      <button type="submit" class="btn btn-primary">Save Style</button>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Save Style</button>
+        <button type="button" class="btn btn-ghost" onclick={() => { showForm = false; }}>Cancel</button>
+      </div>
     </form>
   {/if}
 </div>

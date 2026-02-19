@@ -1,25 +1,25 @@
 /**
- * @behavior Steps 3-5 of the CircuitWizard handle agent configuration,
+ * @behavior Steps 3-5 of the WorkflowWizard handle agent configuration,
  * scheduling, and destination selection. The final step saves the complete
- * circuit via POST /api/v1/circuits.
+ * workflow via POST /api/v1/workflows.
  * @business_rule Each agent must have valid config before proceeding. Schedule
  * defaults to draft_for_review review mode. The save action assembles all
  * wizard state into a single API call.
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import CircuitWizard from '../CircuitWizard.svelte';
+import WorkflowWizard from '../WorkflowWizard.svelte';
 
 // Helper to navigate through steps 1 and 2
 async function navigateToStep(targetStep: number) {
-  render(CircuitWizard);
+  render(WorkflowWizard);
 
   // Step 1: fill name
-  const nameInput = screen.getByTestId('pipeline-name-input');
-  await fireEvent.input(nameInput, { target: { value: 'Test Pipeline' } });
+  const nameInput = screen.getByTestId('workflow-name-input');
+  await fireEvent.input(nameInput, { target: { value: 'Test Workflow' } });
 
-  const descInput = screen.getByTestId('pipeline-description-input');
-  await fireEvent.input(descInput, { target: { value: 'A test pipeline' } });
+  const descInput = screen.getByTestId('workflow-description-input');
+  await fireEvent.input(descInput, { target: { value: 'A test workflow' } });
 
   let nextBtn = screen.getByTestId('wizard-next-btn');
   await fireEvent.click(nextBtn);
@@ -49,7 +49,7 @@ async function navigateToStep(targetStep: number) {
   await fireEvent.click(nextBtn);
 }
 
-describe('CircuitWizard — Step 3: Agent Configuration', () => {
+describe('WorkflowWizard — Step 3: Agent Configuration', () => {
   it('renders agent-specific config forms based on agent type', async () => {
     await navigateToStep(3);
 
@@ -83,7 +83,7 @@ describe('CircuitWizard — Step 3: Agent Configuration', () => {
   });
 });
 
-describe('CircuitWizard — Step 4: Schedule', () => {
+describe('WorkflowWizard — Step 4: Schedule', () => {
   it('renders cron schedule input and review mode toggle', async () => {
     await navigateToStep(4);
 
@@ -106,7 +106,7 @@ describe('CircuitWizard — Step 4: Schedule', () => {
   });
 });
 
-describe('CircuitWizard — Step 5: Destination & Save', () => {
+describe('WorkflowWizard — Step 5: Destination & Save', () => {
   it('renders available destinations and save button', async () => {
     await navigateToStep(5);
 
@@ -123,7 +123,7 @@ describe('CircuitWizard — Step 5: Destination & Save', () => {
     expect(saveBtn).toBeInTheDocument();
   });
 
-  it('save calls POST /api/v1/circuits with complete pipeline config', async () => {
+  it('save calls POST /api/v1/workflows with complete workflow config', async () => {
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ id: 'new-pipeline-id' })
@@ -142,13 +142,13 @@ describe('CircuitWizard — Step 5: Destination & Save', () => {
 
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
-        '/api/v1/circuits',
+        '/api/v1/workflows',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json'
           }),
-          body: expect.stringContaining('Test Pipeline')
+          body: expect.stringContaining('Test Workflow')
         })
       );
     });
@@ -156,8 +156,8 @@ describe('CircuitWizard — Step 5: Destination & Save', () => {
     // Verify the body contains expected fields
     const callArgs = fetchSpy.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.name).toBe('Test Pipeline');
-    expect(body.description).toBe('A test pipeline');
+    expect(body.name).toBe('Test Workflow');
+    expect(body.description).toBe('A test workflow');
     expect(body.steps).toHaveLength(1);
     expect(body.steps[0].agentType).toBe('seo_writer');
     expect(body.review_mode).toBe('draft_for_review');

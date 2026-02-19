@@ -131,7 +131,10 @@
         <p data-testid="validation-error" class="text-error text-sm">{error}</p>
       {/each}
 
-      <button type="submit" class="btn btn-primary">Save Destination</button>
+      <div class="flex gap-2">
+        <button type="submit" class="btn btn-primary">Save Destination</button>
+        <button type="button" class="btn btn-ghost" onclick={() => { showForm = false; }}>Cancel</button>
+      </div>
     </form>
   {/if}
 </div>

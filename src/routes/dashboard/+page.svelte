@@ -6,8 +6,8 @@
       totalContent: number;
       publishedThisWeek: number;
       pendingReview: number;
-      activePipelines: number;
-      recentPipelineRuns: Array<{
+      activeWorkflows: number;
+      recentWorkflowRuns: Array<{
         id: string;
         pipeline_name: string;
         status: string;
@@ -43,19 +43,19 @@
     <StatCard label="Total Content" value={String(data.totalContent)} />
     <StatCard label="Published This Week" value={String(data.publishedThisWeek)} />
     <StatCard label="Pending Review" value={String(data.pendingReview)} />
-    <StatCard label="Active Circuits" value={String(data.activePipelines)} />
+    <StatCard label="Active Workflows" value={String(data.activeWorkflows)} />
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Recent Pipeline Runs -->
+    <!-- Recent Workflow Runs -->
     <div
-      data-testid="recent-pipeline-runs"
+      data-testid="recent-workflow-runs"
       class="card bg-base-200 rounded-xl p-4"
     >
-      <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Recent Circuit Runs</h2>
+      <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Recent Workflow Runs</h2>
       <div class="space-y-2">
-        {#each data.recentPipelineRuns.slice(0, 5) as run}
-          <div data-testid="pipeline-run-item" class="flex items-center justify-between py-2 border-b border-base-300 last:border-0">
+        {#each data.recentWorkflowRuns.slice(0, 5) as run}
+          <div data-testid="workflow-run-item" class="flex items-center justify-between py-2 border-b border-base-300 last:border-0">
             <span class="text-sm text-base-content/80">{run.pipeline_name}</span>
             <span
               data-testid="run-status-badge"

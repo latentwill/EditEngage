@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PipelineReviewMode, DestinationType } from '$lib/types/database';
+  import type { WorkflowReviewMode, DestinationType } from '$lib/types/database';
   import StepName from './wizard/StepName.svelte';
   import StepAgents from './wizard/StepAgents.svelte';
   import StepConfig from './wizard/StepConfig.svelte';
@@ -50,12 +50,12 @@
   };
 
   let currentStep = $state(1);
-  let pipelineName = $state('');
-  let pipelineDescription = $state('');
+  let workflowName = $state('');
+  let workflowDescription = $state('');
   let selectedAgents = $state<AgentOption[]>([]);
   let agentConfigs = $state<Record<string, Record<string, string>>>({});
   let schedule = $state('');
-  let reviewMode = $state<PipelineReviewMode>('draft_for_review');
+  let reviewMode = $state<WorkflowReviewMode>('draft_for_review');
   let selectedDestination = $state<DestinationType | null>(null);
 
   let nameError = $state<string | null>(null);
@@ -64,8 +64,8 @@
 
   function validateStep(): boolean {
     if (currentStep === 1) {
-      if (!pipelineName.trim()) {
-        nameError = 'Circuit name is required';
+      if (!workflowName.trim()) {
+        nameError = 'Workflow name is required';
         return false;
       }
       nameError = null;
@@ -144,8 +144,8 @@
 
   async function handleSave() {
     const body = {
-      name: pipelineName,
-      description: pipelineDescription,
+      name: workflowName,
+      description: workflowDescription,
       steps: selectedAgents.map((agent) => ({
         agentType: agent.type,
         config: agentConfigs[agent.type] ?? {}
@@ -155,7 +155,7 @@
       destination: selectedDestination
     };
 
-    await fetch('/api/v1/circuits', {
+    await fetch('/api/v1/workflows', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -164,7 +164,7 @@
 </script>
 
 <div
-  data-testid="pipeline-wizard"
+  data-testid="workflow-wizard"
   class="card bg-base-200 border border-base-300 rounded-xl p-6 max-w-2xl mx-auto"
 >
   <!-- Step Indicator -->
@@ -181,10 +181,10 @@
   <!-- Step Content -->
   {#if currentStep === 1}
     <StepName
-      name={pipelineName}
-      description={pipelineDescription}
-      onNameChange={(v) => { pipelineName = v; nameError = null; }}
-      onDescriptionChange={(v) => { pipelineDescription = v; }}
+      name={workflowName}
+      description={workflowDescription}
+      onNameChange={(v) => { workflowName = v; nameError = null; }}
+      onDescriptionChange={(v) => { workflowDescription = v; }}
       validationError={nameError}
     />
   {:else if currentStep === 2}
@@ -248,7 +248,7 @@
         onclick={handleSave}
         class="btn btn-primary"
       >
-        Save Circuit
+        Save Workflow
       </button>
     {/if}
   </div>
