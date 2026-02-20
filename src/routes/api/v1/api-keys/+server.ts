@@ -69,7 +69,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     return json({ error: `Invalid provider. Must be one of: ${VALID_PROVIDERS.join(', ')}` }, { status: 400 });
   }
 
-  const encryptedKey = encryptApiKey(api_key);
+  let encryptedKey: string;
+  try {
+    encryptedKey = encryptApiKey(api_key);
+  } catch (err) {
+    console.error('api-keys POST: encrypt error', err);
+    return json({ error: 'Server configuration error - please contact support' }, { status: 500 });
+  }
 
   const { data, error } = await supabase
     .from('api_keys')

@@ -13,7 +13,6 @@
     Search,
     Send,
     Settings,
-    Plug,
     ChevronDown,
     ChevronRight,
     ChevronsLeft,
@@ -65,16 +64,7 @@
         { href: '/dashboard/publish/destinations', label: 'Destinations', testId: 'nav-link-publish-destinations', icon: Send },
       ]
     },
-    {
-      href: '/dashboard/settings',
-      label: 'Settings',
-      testId: 'nav-link-settings',
-      icon: Settings,
-      children: [
-        { href: '/dashboard/settings', label: 'General', testId: 'nav-link-settings-general', icon: Settings },
-        { href: '/dashboard/settings/connections', label: 'Connections', testId: 'nav-link-settings-connections', icon: Plug },
-      ]
-    },
+    { href: '/dashboard/settings', label: 'Settings', testId: 'nav-link-settings', icon: Settings },
   ];
 
   function isActive(href: string): boolean {
