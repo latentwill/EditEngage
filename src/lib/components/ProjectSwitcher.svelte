@@ -64,19 +64,24 @@
     newProjectName = '';
     createError = '';
     modalOpen = true;
-    // Use setTimeout to ensure the dialog is in the DOM before calling showModal
     setTimeout(() => { try { dialogEl?.showModal(); } catch { /* jsdom */ } }, 0);
   }
 
   function closeCreateModal() {
     modalOpen = false;
-    try { dialogEl?.close(); } catch { /* jsdom doesn't implement dialog.close */ }
+    try { dialogEl?.close(); } catch { /* jsdom */ }
     newProjectName = '';
     createError = '';
+    submitting = false;
   }
 
   async function submitNewProject() {
-    if (!newProjectName.trim() || !orgId) return;
+    if (!newProjectName.trim()) return;
+
+    if (!orgId) {
+      createError = 'No organisation found. Please refresh and try again.';
+      return;
+    }
 
     submitting = true;
     createError = '';
@@ -110,59 +115,61 @@
   }
 </script>
 
-<div class="dropdown" bind:this={containerEl}>
+<div bind:this={containerEl} class="dropdown relative">
   <button
     data-testid="project-switcher-trigger"
     onclick={toggle}
-    aria-expanded={open}
-    aria-haspopup="listbox"
-    class="btn btn-ghost btn-sm"
+    class="btn btn-ghost btn-sm w-full justify-between"
   >
-    {#if displaySelected}
-      <span>{displaySelected.name}</span>
-    {:else}
-      <span>Select project</span>
-    {/if}
-    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <span class="truncate">
+      {displaySelected ? displaySelected.name : 'Select project'}
+    </span>
+    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
       <polyline points="6 9 12 15 18 9"/>
     </svg>
   </button>
 
   {#if open}
-    <div
+    <ul
       data-testid="project-switcher-dropdown"
-      class="dropdown-content menu bg-base-200 rounded-box z-50 w-56 p-2 shadow-xl"
+      class="absolute left-0 top-full z-50 mt-1 w-56 rounded-box bg-base-100 border border-base-300 shadow-xl menu menu-sm p-2"
     >
       {#if showSearch}
-        <li class="border-b border-base-300 pb-2 mb-1">
-          <input
-            data-testid="project-search"
-            type="text"
-            placeholder="Search projects..."
-            bind:value={search}
-            class="input input-bordered input-sm w-full"
-          />
+        <li class="mb-1">
+          <div class="p-0">
+            <input
+              data-testid="project-search"
+              type="text"
+              placeholder="Search projects..."
+              bind:value={search}
+              class="input input-bordered input-sm w-full"
+            />
+          </div>
         </li>
       {/if}
-      <div class="max-h-60 overflow-y-auto">
-        {#each filtered as project}
-          <li>
-            <button
-              onclick={() => selectProject(project)}
-              class={displaySelected?.id === project.id ? 'active' : ''}
-            >
-              {project.name}
-            </button>
-          </li>
-        {/each}
-      </div>
-      <li class="border-t border-base-300 pt-2 mt-1">
+
+      {#if filtered.length === 0}
+        <li><span class="text-base-content/50 text-xs">No projects found</span></li>
+      {:else}
+        <div class="max-h-52 overflow-y-auto">
+          {#each filtered as project}
+            <li>
+              <button
+                onclick={() => selectProject(project)}
+                class:active={displaySelected?.id === project.id}
+              >
+                {project.name}
+              </button>
+            </li>
+          {/each}
+        </div>
+      {/if}
+
+      <li class="border-t border-base-300 mt-1 pt-1">
         <button
           data-testid="new-project-btn"
           onclick={openCreateModal}
-          disabled={!orgId}
-          class="btn btn-ghost btn-sm w-full"
-          title={!orgId ? 'No organisation found' : 'Create a new project'}
+          class="text-primary"
         >
           <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -171,11 +178,11 @@
           New Project
         </button>
       </li>
-    </div>
+    </ul>
   {/if}
 </div>
 
-<!-- New Project Modal (renders outside dropdown, escapes overflow constraints) -->
+<!-- New Project Modal — renders at component root, escapes sidebar overflow -->
 {#if modalOpen}
   <dialog
     data-testid="new-project-modal"
@@ -190,6 +197,7 @@
         onsubmit={(e) => { e.preventDefault(); submitNewProject(); }}
         class="flex flex-col gap-3"
       >
+        <!-- svelte-ignore a11y_autofocus -->
         <input
           data-testid="new-project-name-input"
           type="text"

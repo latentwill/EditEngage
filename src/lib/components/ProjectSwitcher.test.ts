@@ -114,14 +114,24 @@ describe('ProjectSwitcher', () => {
       expect(newProjectBtn.textContent).toContain('New Project');
     });
 
-    it('New Project button is disabled when orgId is not provided', async () => {
+    it('New Project button is always clickable — shows error in modal when orgId is missing', async () => {
       render(ProjectSwitcher, { props: { projects: twoProjects } });
 
       const trigger = screen.getByTestId('project-switcher-trigger');
       await fireEvent.click(trigger);
 
       const newProjectBtn = screen.getByTestId('new-project-btn');
-      expect(newProjectBtn).toBeDisabled();
+      expect(newProjectBtn).not.toBeDisabled();
+
+      // Clicking opens the modal even without orgId
+      await fireEvent.click(newProjectBtn);
+      expect(screen.getByTestId('new-project-modal')).toBeInTheDocument();
+
+      // Submitting with a name but no orgId shows an error
+      await fireEvent.input(screen.getByTestId('new-project-name-input'), { target: { value: 'Test' } });
+      await fireEvent.click(screen.getByTestId('new-project-submit-btn'));
+      const error = screen.getByTestId('new-project-error');
+      expect(error.textContent).toContain('No organisation found');
     });
 
     it('opens a modal dialog when New Project is clicked', async () => {
