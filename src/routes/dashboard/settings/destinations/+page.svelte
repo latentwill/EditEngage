@@ -21,6 +21,7 @@
   let postbridgeAccountId = $state('');
   let validationErrors = $state<string[]>([]);
   let testingId = $state<string | null>(null);
+  let testResults = $state<Record<string, { status: 'healthy' | 'unhealthy'; message: string }>>({});
 
   function openForm() {
     showForm = true;
@@ -71,9 +72,15 @@
 
   async function testConnection(destId: string) {
     testingId = destId;
-    await fetch(`/api/v1/destinations/${destId}/health`, {
-      method: 'POST'
-    });
+    try {
+      const res = await fetch(`/api/v1/destinations/${destId}/health`, {
+        method: 'POST'
+      });
+      const result = await res.json();
+      testResults[destId] = result;
+    } catch {
+      testResults[destId] = { status: 'unhealthy', message: 'Request failed' };
+    }
     testingId = null;
   }
 </script>
@@ -88,8 +95,15 @@
           <span class="text-base-content font-medium">{dest.name}</span>
           <span class="text-base-content/60 text-sm">{dest.type}</span>
           <span class={dest.is_active ? 'badge badge-success' : 'badge badge-ghost'}>{dest.is_active ? 'active' : 'inactive'}</span>
+          {#if testResults[dest.id]}
+            <span class={testResults[dest.id].status === 'healthy' ? 'badge badge-success' : 'badge badge-error'}>
+              {testResults[dest.id].status === 'healthy' ? '✓ Connected' : '✗ ' + testResults[dest.id].message}
+            </span>
+          {/if}
         </div>
-        <button class="btn btn-ghost" onclick={() => testConnection(dest.id)}>Test Connection</button>
+        <button class="btn btn-ghost" onclick={() => testConnection(dest.id)} disabled={testingId === dest.id}>
+          {testingId === dest.id ? 'Testing…' : 'Test Connection'}
+        </button>
       </div>
     {/each}
   </div>
