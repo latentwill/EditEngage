@@ -1,8 +1,10 @@
 /**
  * @behavior Sidebar renders a vertical navigation menu with all dashboard links,
- * collapsible Write and Settings sub-menus, active state highlighting, icons, and utility slots.
+ * collapsible Write sub-menu, active state highlighting, icons, and utility slots.
+ * Settings is a direct link — sub-navigation for settings is handled by the settings layout.
  * @business_rule Navigation provides consistent wayfinding across all dashboard
- * pages with support for nested routes under Write and Settings.
+ * pages with support for nested routes under Write. Settings uses its own
+ * dedicated sub-navigation panel to avoid duplicate navigation.
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -174,45 +176,47 @@ describe('Sidebar — Write Sub-Menu includes Writing Styles', () => {
   });
 });
 
-describe('Sidebar — Settings Expandable Section', () => {
-  it('should render Settings as expandable section with General and Connections sub-items', () => {
-    render(Sidebar, { props: { currentPath: '/dashboard/settings' } });
-
-    const settingsItem = screen.getByTestId('nav-link-settings');
-    expect(settingsItem).toBeInTheDocument();
-
-    const settingsSubmenu = screen.getByTestId('settings-submenu');
-    expect(settingsSubmenu).toBeInTheDocument();
-
-    expect(screen.getByTestId('nav-link-settings-general')).toBeInTheDocument();
-    expect(screen.getByTestId('nav-link-settings-connections')).toBeInTheDocument();
-  });
-
-  it('should have correct hrefs for Settings sub-items', () => {
-    render(Sidebar, { props: { currentPath: '/dashboard/settings' } });
-
-    const generalLink = screen.getByTestId('nav-link-settings-general');
-    expect(generalLink.getAttribute('href')).toBe('/dashboard/settings');
-
-    const connectionsLink = screen.getByTestId('nav-link-settings-connections');
-    expect(connectionsLink.getAttribute('href')).toBe('/dashboard/settings/connections');
-  });
-
-  it('should toggle Settings sub-menu on click', async () => {
+describe('Sidebar — Settings Direct Link', () => {
+  it('should render Settings as a direct anchor link, not an expandable button', () => {
     render(Sidebar, { props: { currentPath: '/dashboard' } });
 
     const settingsItem = screen.getByTestId('nav-link-settings');
+    expect(settingsItem).toBeInTheDocument();
+    expect(settingsItem.tagName).toBe('A');
+  });
 
-    // Settings submenu should be collapsed by default when not on settings path
+  it('Settings link should point to /dashboard/settings', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard' } });
+
+    const settingsLink = screen.getByTestId('nav-link-settings');
+    expect(settingsLink.getAttribute('href')).toBe('/dashboard/settings');
+  });
+
+  it('should NOT render a settings-submenu in the sidebar', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/settings' } });
+
     expect(screen.queryByTestId('settings-submenu')).not.toBeInTheDocument();
+  });
 
-    // Click to expand
-    await fireEvent.click(settingsItem);
-    expect(screen.getByTestId('settings-submenu')).toBeInTheDocument();
+  it('should NOT render settings-general or settings-connections links in the sidebar', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/settings' } });
 
-    // Click to collapse
-    await fireEvent.click(settingsItem);
-    expect(screen.queryByTestId('settings-submenu')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('nav-link-settings-general')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('nav-link-settings-connections')).not.toBeInTheDocument();
+  });
+
+  it('should mark Settings link as active when on a settings route', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/settings' } });
+
+    const settingsLink = screen.getByTestId('nav-link-settings');
+    expect(settingsLink.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('should mark Settings link as active when on a settings sub-route', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/settings/connections' } });
+
+    const settingsLink = screen.getByTestId('nav-link-settings');
+    expect(settingsLink.getAttribute('aria-current')).toBe('page');
   });
 });
 
@@ -255,33 +259,31 @@ describe('Sidebar — Publish Expandable Section', () => {
 });
 
 describe('Sidebar — Multiple Expandable Sections Independent', () => {
-  it('should allow Write, Settings, and Publish sections to be independently expanded', async () => {
+  it('should allow Write and Publish sections to be independently expanded', async () => {
     render(Sidebar, { props: { currentPath: '/dashboard' } });
 
-    const settingsItem = screen.getByTestId('nav-link-settings');
     const publishItem = screen.getByTestId('nav-link-publish');
 
-    // Write is open by default, Settings and Publish are closed
+    // Write is open by default, Publish is closed, no settings submenu exists
     expect(screen.getByTestId('write-submenu')).toBeInTheDocument();
+    expect(screen.queryByTestId('publish-submenu')).not.toBeInTheDocument();
     expect(screen.queryByTestId('settings-submenu')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('publish-submenu')).not.toBeInTheDocument();
 
-    // Open Settings - Write should stay open
-    await fireEvent.click(settingsItem);
-    expect(screen.getByTestId('write-submenu')).toBeInTheDocument();
-    expect(screen.getByTestId('settings-submenu')).toBeInTheDocument();
-    expect(screen.queryByTestId('publish-submenu')).not.toBeInTheDocument();
-
-    // Open Publish - Write and Settings should stay open
+    // Open Publish - Write should stay open
     await fireEvent.click(publishItem);
     expect(screen.getByTestId('write-submenu')).toBeInTheDocument();
-    expect(screen.getByTestId('settings-submenu')).toBeInTheDocument();
     expect(screen.getByTestId('publish-submenu')).toBeInTheDocument();
 
-    // Close Settings - Write and Publish should stay open
-    await fireEvent.click(settingsItem);
+    // Close Publish - Write should stay open
+    await fireEvent.click(publishItem);
     expect(screen.getByTestId('write-submenu')).toBeInTheDocument();
+    expect(screen.queryByTestId('publish-submenu')).not.toBeInTheDocument();
+  });
+
+  it('should never render a settings-submenu regardless of navigation state', async () => {
+    render(Sidebar, { props: { currentPath: '/dashboard' } });
+
+    // Settings is a direct link — there is never a settings submenu
     expect(screen.queryByTestId('settings-submenu')).not.toBeInTheDocument();
-    expect(screen.getByTestId('publish-submenu')).toBeInTheDocument();
   });
 });
