@@ -142,11 +142,13 @@ describe('Onboarding page action (POST)', () => {
     serviceClient = {
       auth: { getUser: vi.fn() },
       from: vi.fn()
-        // 1st: idempotency check — no existing membership
+        // 1st: member idempotency check — no membership
         .mockReturnValueOnce(chain({ data: null, error: null }))
-        // 2nd: org insert
-        .mockReturnValueOnce(chain({ data: { id: newOrgId, name: "test@example.com's Workspace" }, error: null }))
-        // 3rd: membership insert
+        // 2nd: org existence check — no existing org
+        .mockReturnValueOnce(chain({ data: null, error: null }))
+        // 3rd: org insert
+        .mockReturnValueOnce(chain({ data: { id: newOrgId }, error: null }))
+        // 4th: membership insert
         .mockReturnValueOnce(chain({ data: { id: 'mem-1', org_id: newOrgId }, error: null }))
     };
 
@@ -159,6 +161,33 @@ describe('Onboarding page action (POST)', () => {
     expect(serviceClient.from).toHaveBeenCalledWith('organization_members');
     expect(serviceClient.from).toHaveBeenCalledWith('organizations');
     expect(anonClient.from).not.toHaveBeenCalled();
+  });
+
+  it('attaches membership to existing org when DB trigger created org but not membership', async () => {
+    const existingOrgId = 'trigger-org-1';
+    anonClient = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: mockUser }, error: null }) },
+      from: vi.fn()
+    };
+    serviceClient = {
+      auth: { getUser: vi.fn() },
+      from: vi.fn()
+        // 1st: member idempotency check — no membership
+        .mockReturnValueOnce(chain({ data: null, error: null }))
+        // 2nd: org existence check — org EXISTS (from DB trigger)
+        .mockReturnValueOnce(chain({ data: { id: existingOrgId }, error: null }))
+        // 3rd: membership insert (no org insert needed)
+        .mockReturnValueOnce(chain({ data: { id: 'mem-1', org_id: existingOrgId }, error: null }))
+    };
+
+    const { actions } = await import('./+page.server.js');
+
+    await expect(
+      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+    ).rejects.toMatchObject({ status: 303, location: '/dashboard' });
+
+    // Should not create a duplicate org
+    expect(serviceClient.from).toHaveBeenCalledTimes(3);
   });
 
   it('redirects to /dashboard immediately when membership already exists (idempotency)', async () => {
@@ -191,9 +220,11 @@ describe('Onboarding page action (POST)', () => {
     serviceClient = {
       auth: { getUser: vi.fn() },
       from: vi.fn()
-        // Idempotency check — no existing membership
+        // 1st: member idempotency check — no membership
         .mockReturnValueOnce(chain({ data: null, error: null }))
-        // Org insert fails
+        // 2nd: org existence check — no existing org
+        .mockReturnValueOnce(chain({ data: null, error: null }))
+        // 3rd: org insert fails
         .mockReturnValueOnce(chain({ data: null, error: { message: 'DB error' } }))
     };
 
@@ -214,13 +245,15 @@ describe('Onboarding page action (POST)', () => {
     serviceClient = {
       auth: { getUser: vi.fn() },
       from: vi.fn()
-        // 1st: idempotency check — no membership
+        // 1st: member idempotency check — no membership
         .mockReturnValueOnce(chain({ data: null, error: null }))
-        // 2nd: org insert succeeds
+        // 2nd: org existence check — no existing org
+        .mockReturnValueOnce(chain({ data: null, error: null }))
+        // 3rd: org insert succeeds
         .mockReturnValueOnce(chain({ data: { id: newOrgId }, error: null }))
-        // 3rd: membership insert fails
+        // 4th: membership insert fails
         .mockReturnValueOnce(chain({ data: null, error: { message: 'constraint violation' } }))
-        // 4th: rollback delete
+        // 5th: rollback delete
         .mockReturnValueOnce(chain({ data: null, error: null }))
     };
 
@@ -231,6 +264,6 @@ describe('Onboarding page action (POST)', () => {
     ).rejects.toMatchObject({ status: 500 });
 
     expect(serviceClient.from).toHaveBeenCalledWith('organizations');
-    expect(serviceClient.from).toHaveBeenCalledTimes(4);
+    expect(serviceClient.from).toHaveBeenCalledTimes(5);
   });
 });
