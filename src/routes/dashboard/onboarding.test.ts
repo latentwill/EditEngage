@@ -1,9 +1,9 @@
 /**
  * @behavior When a new user with no organization memberships loads the dashboard,
- * the layout auto-creates a default workspace and returns it alongside an empty
- * projects list. Existing users get their memberships returned normally.
+ * they are redirected to /onboarding where org creation occurs via service role.
+ * Existing users get their memberships and projects returned normally.
  * @business_rule Every user must belong to at least one organization to use the
- * dashboard. The system auto-provisions a workspace on first visit.
+ * dashboard. Org creation is handled exclusively by /onboarding, not this layout.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -15,6 +15,13 @@ vi.mock('$env/static/public', () => ({
 
 vi.mock('$env/static/private', () => ({
   SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
+}));
+
+vi.mock('@sveltejs/kit', () => ({
+  redirect: (status: number, location: string) => {
+    const err = { status, location };
+    throw err;
+  }
 }));
 
 // --- Supabase mock builder ---
@@ -33,12 +40,6 @@ function createChainMock(terminalValue: { data: unknown; error: unknown }) {
   return chain;
 }
 
-// --- State for mock routing ---
-
-let fromCallIndex: number;
-type FromHandler = (table: string) => ReturnType<typeof createChainMock>;
-let fromHandlers: FromHandler[];
-
 const mockUser = { id: 'user-1', email: 'new@example.com' };
 
 const mockSupabase = {
@@ -47,11 +48,7 @@ const mockSupabase = {
       Promise.resolve({ data: { user: mockUser }, error: null })
     )
   },
-  from: vi.fn((table: string) => {
-    const handler = fromHandlers[fromCallIndex] ?? fromHandlers[fromHandlers.length - 1];
-    fromCallIndex++;
-    return handler(table);
-  })
+  from: vi.fn()
 };
 
 vi.mock('$lib/server/supabase', () => ({
@@ -71,60 +68,42 @@ function makeCookies() {
   };
 }
 
-describe('Dashboard layout onboarding: auto-create organization', () => {
+describe('Dashboard layout: org membership check', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fromCallIndex = 0;
-    fromHandlers = [];
   });
 
-  it('creates an organization when user has no memberships and returns orgId', async () => {
-    const newOrgId = 'auto-org-1';
-
-    fromHandlers = [
-      // 1st call: query organization_members -> empty
-      (_table: string) =>
-        createChainMock({ data: [], error: null }),
-      // 2nd call: insert into organizations -> new org
-      (_table: string) =>
-        createChainMock({ data: { id: newOrgId, name: "new@example.com's Workspace" }, error: null }),
-      // 3rd call: insert into organization_members -> membership
-      (_table: string) =>
-        createChainMock({ data: { id: 'mem-1', org_id: newOrgId }, error: null }),
-      // 4th call: re-query organization_members -> now has one
-      (_table: string) =>
-        createChainMock({ data: [{ org_id: newOrgId }], error: null }),
-      // 5th call: query projects for the org
-      (_table: string) =>
-        createChainMock({ data: [], error: null })
-    ];
+  it('redirects to /onboarding when user has no org memberships', async () => {
+    mockSupabase.from.mockReturnValue(
+      createChainMock({ data: [], error: null })
+    );
 
     const { load } = await import('./+layout.server.js');
-    const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
 
-    expect(result.projects).toEqual([]);
-    expect(result.orgId).toBe(newOrgId);
-    expect(result.session.user.id).toBe('user-1');
+    await expect(
+      load({ cookies: makeCookies() } as Parameters<typeof load>[0])
+    ).rejects.toMatchObject({
+      status: 303,
+      location: '/onboarding'
+    });
 
-    // Verify organization was created
-    expect(mockSupabase.from).toHaveBeenCalledWith('organizations');
-    expect(mockSupabase.from).toHaveBeenCalledWith('organization_members');
+    // Must NOT attempt to create an org in this layout
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('organizations');
   });
 
   it('returns existing memberships and orgId without creating a new org', async () => {
     const existingOrgId = 'existing-org-1';
 
-    fromHandlers = [
-      // 1st call: query organization_members -> has membership
-      (_table: string) =>
-        createChainMock({ data: [{ org_id: existingOrgId }], error: null }),
-      // 2nd call: query projects
-      (_table: string) =>
+    mockSupabase.from
+      .mockReturnValueOnce(
+        createChainMock({ data: [{ org_id: existingOrgId }], error: null })
+      )
+      .mockReturnValueOnce(
         createChainMock({
           data: [{ id: 'proj-1', org_id: existingOrgId, name: 'My Project' }],
           error: null
         })
-    ];
+      );
 
     const { load } = await import('./+layout.server.js');
     const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
@@ -135,7 +114,7 @@ describe('Dashboard layout onboarding: auto-create organization', () => {
     expect(result.orgId).toBe(existingOrgId);
     expect(result.session.user.id).toBe('user-1');
 
-    // Should only call from() twice: once for memberships, once for projects
+    // Should only call from() twice: memberships + projects (no org creation)
     expect(mockSupabase.from).toHaveBeenCalledTimes(2);
   });
 });
