@@ -5,7 +5,7 @@
  * be able to switch quickly and have their choice remembered
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ProjectSwitcher from './ProjectSwitcher.svelte';
 
 function createMockStorage(): Storage {
@@ -99,6 +99,10 @@ describe('ProjectSwitcher', () => {
   });
 
   describe('Create Project', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
     it('renders "New Project" button in dropdown', async () => {
       render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
 
@@ -110,7 +114,17 @@ describe('ProjectSwitcher', () => {
       expect(newProjectBtn.textContent).toContain('New Project');
     });
 
-    it('shows input form when New Project is clicked', async () => {
+    it('New Project button is disabled when orgId is not provided', async () => {
+      render(ProjectSwitcher, { props: { projects: twoProjects } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      const newProjectBtn = screen.getByTestId('new-project-btn');
+      expect(newProjectBtn).toBeDisabled();
+    });
+
+    it('opens a modal dialog when New Project is clicked', async () => {
       render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
 
       const trigger = screen.getByTestId('project-switcher-trigger');
@@ -119,11 +133,83 @@ describe('ProjectSwitcher', () => {
       const newProjectBtn = screen.getByTestId('new-project-btn');
       await fireEvent.click(newProjectBtn);
 
+      const modal = screen.getByTestId('new-project-modal');
+      expect(modal).toBeInTheDocument();
+
       const nameInput = screen.getByTestId('new-project-name-input');
       expect(nameInput).toBeInTheDocument();
 
       const submitBtn = screen.getByTestId('new-project-submit-btn');
       expect(submitBtn).toBeInTheDocument();
+
+      const cancelBtn = screen.getByTestId('new-project-cancel-btn');
+      expect(cancelBtn).toBeInTheDocument();
+    });
+
+    it('cancel button closes the modal without creating a project', async () => {
+      render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      await fireEvent.click(screen.getByTestId('new-project-btn'));
+      expect(screen.getByTestId('new-project-modal')).toBeInTheDocument();
+
+      await fireEvent.click(screen.getByTestId('new-project-cancel-btn'));
+      expect(screen.queryByTestId('new-project-modal')).not.toBeInTheDocument();
+    });
+
+    it('Escape key closes the modal via oncancel handler', async () => {
+      render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      await fireEvent.click(screen.getByTestId('new-project-btn'));
+      const modal = screen.getByTestId('new-project-modal');
+      expect(modal).toBeInTheDocument();
+
+      // Simulate the browser's native cancel event (fired when Escape is pressed on a dialog)
+      await fireEvent(modal, new Event('cancel', { bubbles: false, cancelable: true }));
+      expect(screen.queryByTestId('new-project-modal')).not.toBeInTheDocument();
+    });
+
+    it('shows error message in modal when API call fails', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }));
+
+      render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1' } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      await fireEvent.click(screen.getByTestId('new-project-btn'));
+      await fireEvent.input(screen.getByTestId('new-project-name-input'), { target: { value: 'My Project' } });
+      await fireEvent.click(screen.getByTestId('new-project-submit-btn'));
+
+      const error = await screen.findByTestId('new-project-error');
+      expect(error).toBeInTheDocument();
+    });
+
+    it('creates project, selects it, and closes modal on success', async () => {
+      const newProj = { id: 'proj-new', name: 'My Project', icon: null, color: null };
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: newProj })
+      }));
+
+      const changeSpy = vi.fn();
+      render(ProjectSwitcher, { props: { projects: twoProjects, orgId: 'org-1', onprojectChanged: changeSpy } });
+
+      const trigger = screen.getByTestId('project-switcher-trigger');
+      await fireEvent.click(trigger);
+
+      await fireEvent.click(screen.getByTestId('new-project-btn'));
+      await fireEvent.input(screen.getByTestId('new-project-name-input'), { target: { value: 'My Project' } });
+      await fireEvent.click(screen.getByTestId('new-project-submit-btn'));
+
+      await screen.findByText('My Project');
+      expect(screen.queryByTestId('new-project-modal')).not.toBeInTheDocument();
+      expect(changeSpy).toHaveBeenCalledWith(expect.objectContaining({ id: 'proj-new' }));
     });
   });
 });
