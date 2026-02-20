@@ -8,6 +8,26 @@ import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Sidebar from './Sidebar.svelte';
 
+describe('Sidebar — Logo', () => {
+  it('should render a logo area at the top of the sidebar', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard' } });
+    expect(screen.getByTestId('sidebar-logo')).toBeInTheDocument();
+  });
+
+  it('should show the logo text when expanded', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
+    const logo = screen.getByTestId('sidebar-logo-text');
+    expect(logo).toBeInTheDocument();
+    expect(logo.classList.contains('hidden')).toBe(false);
+  });
+
+  it('should hide the logo text when collapsed', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard', collapsed: true } });
+    const logo = screen.getByTestId('sidebar-logo-text');
+    expect(logo.classList.contains('hidden')).toBe(true);
+  });
+});
+
 describe('Sidebar — Navigation Links', () => {
   it('should render all top-level navigation links', () => {
     render(Sidebar, { props: { currentPath: '/dashboard' } });

@@ -126,15 +126,23 @@
   data-testid="sidebar"
   class="flex flex-col h-full bg-base-200 border-r border-base-300 transition-[width] duration-300 {isCollapsed ? 'w-16' : 'w-60'}"
 >
+  <!-- Logo -->
+  <div data-testid="sidebar-logo" class="flex items-center gap-2 px-4 pt-4 pb-3">
+    <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+      <span aria-hidden="true" class="text-primary-content font-bold text-sm">E</span>
+    </div>
+    <span data-testid="sidebar-logo-text" class="font-semibold text-base-content text-sm tracking-tight {isCollapsed ? 'hidden' : ''}">editengage</span>
+  </div>
+
   <!-- Project Switcher Area -->
-  <div data-testid="sidebar-project-switcher" class="p-3 border-b border-base-300">
+  <div data-testid="sidebar-project-switcher" class="px-3 pb-3 border-b border-base-300">
     {#if projectSwitcher && !isCollapsed}
       {@render projectSwitcher()}
     {/if}
   </div>
 
   <!-- Navigation -->
-  <nav class="flex-1 overflow-y-auto py-2">
+  <nav class="flex-1 overflow-y-auto pt-3 pb-2">
     <ul class="menu menu-sm gap-1 px-2">
       {#each navItems as item}
         {#if item.children}
