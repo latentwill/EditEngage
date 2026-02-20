@@ -500,6 +500,41 @@ export interface Database {
           created_at?: string;
         };
       };
+      writing_agents: {
+        Row: {
+          id: string;
+          project_id: string;
+          name: string;
+          description: string | null;
+          model: string;
+          system_prompt: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          name: string;
+          description?: string | null;
+          model?: string;
+          system_prompt?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          name?: string;
+          description?: string | null;
+          model?: string;
+          system_prompt?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       api_keys: {
         Row: {
           id: string;
