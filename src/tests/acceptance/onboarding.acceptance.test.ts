@@ -183,11 +183,13 @@ describe('Onboarding page action: creates org and redirects to /dashboard', () =
     serviceClient = {
       auth: { getUser: vi.fn() },
       from: vi.fn()
-        // 1st: idempotency check — no existing membership
+        // 1st: member idempotency check — no membership
         .mockReturnValueOnce(chain({ data: null, error: null }))
-        // 2nd: org insert
+        // 2nd: org existence check — no existing org
+        .mockReturnValueOnce(chain({ data: null, error: null }))
+        // 3rd: org insert
         .mockReturnValueOnce(chain({ data: { id: newOrgId, name: "test@example.com's Workspace" }, error: null }))
-        // 3rd: membership insert
+        // 4th: membership insert
         .mockReturnValueOnce(chain({ data: { id: 'mem-1', org_id: newOrgId }, error: null }))
     };
 
@@ -217,9 +219,11 @@ describe('Onboarding page action: creates org and redirects to /dashboard', () =
     serviceClient = {
       auth: { getUser: vi.fn() },
       from: vi.fn()
-        // 1st: idempotency check — no existing membership
+        // 1st: member idempotency check — no membership
         .mockReturnValueOnce(chain({ data: null, error: null }))
-        // 2nd: org insert fails
+        // 2nd: org existence check — no existing org
+        .mockReturnValueOnce(chain({ data: null, error: null }))
+        // 3rd: org insert fails
         .mockReturnValueOnce(chain({ data: null, error: { message: 'DB error' } }))
     };
 
