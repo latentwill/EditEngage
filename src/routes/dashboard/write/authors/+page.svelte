@@ -14,6 +14,12 @@
     { value: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B' },
   ];
 
+  const MODEL_LABEL_MAP = new Map(AVAILABLE_MODELS.map((m) => [m.value, m.label]));
+
+  function modelLabel(modelValue: string): string {
+    return MODEL_LABEL_MAP.get(modelValue) ?? modelValue;
+  }
+
   let localAgents = $state<WritingAgent[]>(data.writingAgents);
   let showForm = $state(false);
   let agentName = $state('');
@@ -23,10 +29,7 @@
   let saving = $state(false);
   let errors = $state<string[]>([]);
   let toggleError = $state<string | null>(null);
-
-  function modelLabel(modelValue: string): string {
-    return AVAILABLE_MODELS.find((m) => m.value === modelValue)?.label ?? modelValue;
-  }
+  let togglingId = $state<string | null>(null);
 
   function openForm() {
     showForm = true;
@@ -76,6 +79,8 @@
   }
 
   async function toggleActive(agent: WritingAgent) {
+    if (togglingId) return;
+    togglingId = agent.id;
     toggleError = null;
     try {
       const res = await fetch(`/api/v1/writing-agents/${agent.id}`, {
@@ -95,6 +100,8 @@
       }
     } catch {
       toggleError = 'Request failed';
+    } finally {
+      togglingId = null;
     }
   }
 </script>
@@ -144,8 +151,9 @@
           <button
             class="btn btn-ghost btn-sm flex-shrink-0"
             onclick={() => toggleActive(agent)}
+            disabled={togglingId !== null}
           >
-            {agent.is_active ? 'Deactivate' : 'Activate'}
+            {togglingId === agent.id ? '…' : agent.is_active ? 'Deactivate' : 'Activate'}
           </button>
         </div>
       </div>
