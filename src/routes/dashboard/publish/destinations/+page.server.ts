@@ -20,6 +20,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
     .order('created_at', { ascending: false });
 
   return {
-    destinations: destinations ?? []
+    destinations: destinations ?? [],
+    projectId: activeProjectId
   };
 };
