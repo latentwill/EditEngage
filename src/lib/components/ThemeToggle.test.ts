@@ -35,15 +35,16 @@ describe('ThemeToggle', () => {
   });
 
   it('clicking toggles data-theme on document.documentElement', async () => {
-    document.documentElement.setAttribute('data-theme', 'editengage');
     render(ThemeToggle);
     const button = screen.getByRole('button');
 
-    await fireEvent.click(button);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-
+    // Default is light; first click switches to dark
     await fireEvent.click(button);
     expect(document.documentElement.getAttribute('data-theme')).toBe('editengage');
+
+    // Second click switches back to light
+    await fireEvent.click(button);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
   it('reads saved preference from localStorage on mount', () => {
@@ -52,9 +53,9 @@ describe('ThemeToggle', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
-  it('defaults to dark mode when no preference is saved', () => {
+  it('defaults to light mode when no preference is saved', () => {
     render(ThemeToggle);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('editengage');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
   });
 
   it('uses daisyUI btn class on the toggle button', () => {

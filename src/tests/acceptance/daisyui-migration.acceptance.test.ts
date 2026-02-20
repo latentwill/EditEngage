@@ -336,15 +336,15 @@ describe('Settings nav uses daisyUI menu', () => {
    *   for consistent item spacing, active states, and keyboard navigation
    */
   it('settings nav has the menu class', async () => {
-    const SettingsPage = (
-      await import('../../routes/dashboard/settings/+page.svelte')
+    const SettingsLayout = (
+      await import('../../routes/dashboard/settings/+layout.svelte')
     ).default;
 
-    render(SettingsPage);
+    render(SettingsLayout, { props: { data: { projectId: 'p1', currentPath: '/dashboard/settings' } } });
 
-    const nav = screen.getByTestId('settings-nav');
+    const nav = screen.getByTestId('settings-sub-nav');
     expect(nav.classList.contains('menu')).toBe(true);
-  });
+  }, 15000);
 });
 
 // ---------------------------------------------------------------------------

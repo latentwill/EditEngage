@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { untrack } from 'svelte';
   import ThemeToggle from './ThemeToggle.svelte';
   import {
     LayoutDashboard,
@@ -7,9 +8,11 @@
     PenTool,
     FileText,
     ListChecks,
+    Paintbrush,
     Search,
     Send,
     Settings,
+    Plug,
     ChevronDown,
     ChevronRight,
     ChevronsLeft,
@@ -47,11 +50,29 @@
       children: [
         { href: '/dashboard/write/content', label: 'Content Library', testId: 'nav-link-write-content', icon: FileText },
         { href: '/dashboard/write/topics', label: 'Topics', testId: 'nav-link-write-topics', icon: ListChecks },
+        { href: '/dashboard/write/styles', label: 'Writing Styles', testId: 'nav-link-write-styles', icon: Paintbrush },
       ]
     },
     { href: '/dashboard/research', label: 'Research', testId: 'nav-link-research', icon: Search },
-    { href: '/dashboard/publish', label: 'Publish', testId: 'nav-link-publish', icon: Send },
-    { href: '/dashboard/settings', label: 'Settings', testId: 'nav-link-settings', icon: Settings },
+    {
+      href: '/dashboard/publish',
+      label: 'Publish',
+      testId: 'nav-link-publish',
+      icon: Send,
+      children: [
+        { href: '/dashboard/publish/destinations', label: 'Destinations', testId: 'nav-link-publish-destinations', icon: Send },
+      ]
+    },
+    {
+      href: '/dashboard/settings',
+      label: 'Settings',
+      testId: 'nav-link-settings',
+      icon: Settings,
+      children: [
+        { href: '/dashboard/settings', label: 'General', testId: 'nav-link-settings-general', icon: Settings },
+        { href: '/dashboard/settings/connections', label: 'Connections', testId: 'nav-link-settings-connections', icon: Plug },
+      ]
+    },
   ];
 
   function isActive(href: string): boolean {
@@ -61,7 +82,40 @@
     return currentPath.startsWith(href);
   }
 
-  let writeOpen = $state(true);
+  let openSections = $state<Set<string>>(new Set(['write']));
+
+  function toggleSection(label: string) {
+    const key = label.toLowerCase();
+    const next = new Set(openSections);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    openSections = next;
+  }
+
+  // Auto-open sections when navigating to their children
+  $effect(() => {
+    const path = currentPath;
+    const keysToOpen: string[] = [];
+    for (const item of navItems) {
+      if (item.children && path.startsWith(item.href)) {
+        keysToOpen.push(item.label.toLowerCase());
+      }
+    }
+    untrack(() => {
+      let changed = false;
+      for (const key of keysToOpen) {
+        if (!openSections.has(key)) {
+          changed = true;
+        }
+      }
+      if (changed) {
+        openSections = new Set([...openSections, ...keysToOpen]);
+      }
+    });
+  });
 
   function toggleCollapse() {
     isCollapsed = !isCollapsed;
@@ -72,19 +126,27 @@
   data-testid="sidebar"
   class="flex flex-col h-full bg-base-200 border-r border-base-300 transition-[width] duration-300 {isCollapsed ? 'w-16' : 'w-60'}"
 >
+  <!-- Logo -->
+  <div data-testid="sidebar-logo" class="flex items-center gap-2 px-4 pt-4 pb-3">
+    <div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+      <span aria-hidden="true" class="text-primary-content font-bold text-sm">E</span>
+    </div>
+    <span data-testid="sidebar-logo-text" class="font-semibold text-base-content text-sm tracking-tight {isCollapsed ? 'hidden' : ''}">editengage</span>
+  </div>
+
   <!-- Project Switcher Area -->
-  <div data-testid="sidebar-project-switcher" class="p-3 border-b border-base-300">
+  <div data-testid="sidebar-project-switcher" class="px-3 pb-3 border-b border-base-300">
     {#if projectSwitcher && !isCollapsed}
       {@render projectSwitcher()}
     {/if}
   </div>
 
   <!-- Navigation -->
-  <nav class="flex-1 overflow-y-auto py-2">
+  <nav class="flex-1 overflow-y-auto pt-3 pb-2">
     <ul class="menu menu-sm gap-1 px-2">
       {#each navItems as item}
         {#if item.children}
-          <!-- Write with sub-menu -->
+          <!-- Expandable section (Write, Settings, etc.) -->
           <li>
             {#if isCollapsed}
               <div class="tooltip tooltip-right" data-tip={item.label} data-testid="nav-tooltip">
@@ -93,7 +155,7 @@
                   class="flex items-center justify-center"
                   class:active={isActive(item.href)}
                   aria-current={isActive(item.href) ? 'page' : null}
-                  onclick={() => { writeOpen = !writeOpen; }}
+                  onclick={() => { toggleSection(item.label); }}
                 >
                   <span data-testid="nav-icon">
                     <item.icon size={18} />
@@ -107,14 +169,14 @@
                 class="flex items-center gap-2"
                 class:active={isActive(item.href)}
                 aria-current={isActive(item.href) ? 'page' : null}
-                onclick={() => { writeOpen = !writeOpen; }}
+                onclick={() => { toggleSection(item.label); }}
               >
                 <span data-testid="nav-icon">
                   <item.icon size={18} />
                 </span>
                 <span data-testid="nav-label">{item.label}</span>
                 <span class="ml-auto">
-                  {#if writeOpen}
+                  {#if openSections.has(item.label.toLowerCase())}
                     <ChevronDown size={14} />
                   {:else}
                     <ChevronRight size={14} />
@@ -122,8 +184,8 @@
                 </span>
               </button>
             {/if}
-            {#if writeOpen && !isCollapsed}
-              <ul data-testid="write-submenu" class="menu menu-sm">
+            {#if openSections.has(item.label.toLowerCase()) && !isCollapsed}
+              <ul data-testid="{item.label.toLowerCase()}-submenu" class="menu menu-sm">
                 {#each item.children as child}
                   <li>
                     <a

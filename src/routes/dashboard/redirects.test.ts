@@ -62,4 +62,22 @@ describe('Route Redirects', () => {
 			location: '/dashboard/workflows/pipe-123'
 		});
 	});
+
+	it('/dashboard/settings/writing-styles redirects to /dashboard/write/styles', async () => {
+		const { load } = await import('./settings/writing-styles/+page.server.js');
+
+		await expect(load({} as never)).rejects.toMatchObject({
+			status: 301,
+			location: '/dashboard/write/styles'
+		});
+	});
+
+	it('/dashboard/settings/destinations redirects to /dashboard/publish/destinations', async () => {
+		const { load } = await import('./settings/destinations/+page.server.js');
+
+		await expect(load({} as never)).rejects.toMatchObject({
+			status: 301,
+			location: '/dashboard/publish/destinations'
+		});
+	});
 });

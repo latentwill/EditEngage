@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  let isDark = $state(true);
+  let isDark = $state(false);
 
   function getStorage(): Storage | null {
     try {
@@ -17,7 +17,7 @@
   onMount(() => {
     const storage = getStorage();
     const saved = storage?.getItem('theme') ?? null;
-    isDark = saved ? saved === 'dark' : true;
+    isDark = saved ? saved === 'dark' : false;
     document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'light');
   });
 

@@ -1,16 +1,17 @@
 <!doctype html>
-<html lang="en" data-theme="editengage">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%sveltekit.assets%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script>
-      // FOUC prevention: apply theme before first paint
+      // FOUC prevention: apply theme before first paint.
+      // DaisyUI uses data-theme (not classList.dark). 'editengage' = dark, 'light' = light.
       (function() {
-        const theme = localStorage.getItem('theme');
-        if (theme === 'light' || (!theme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
-          document.documentElement.classList.remove('dark');
-        }
+        try {
+          var theme = localStorage.getItem('theme');
+          document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'editengage' : 'light');
+        } catch (e) {}
       })();
     </script>
     %sveltekit.head%

@@ -12,7 +12,7 @@ export default {
   },
   plugins: [daisyui],
   daisyui: {
-    themes: [{
+    themes: ["light", {
       editengage: {
         "primary": "#34D399",
         "primary-content": "#000000",
