@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { Settings, Plug } from 'lucide-svelte';
+  import Icon from '@iconify/svelte';
 
   let {
     data,
@@ -14,8 +14,8 @@
   } = $props();
 
   const subNavItems = [
-    { href: '/dashboard/settings', label: 'General', icon: Settings },
-    { href: '/dashboard/settings/connections', label: 'Connections', icon: Plug },
+    { href: '/dashboard/settings', label: 'General', icon: 'iconoir:settings' },
+    { href: '/dashboard/settings/connections', label: 'Connections', icon: 'iconoir:ev-plug-xmark' },
   ];
 
   function isActive(href: string): boolean {
@@ -37,7 +37,7 @@
           class:active={isActive(item.href)}
           aria-current={isActive(item.href) ? 'page' : null}
         >
-          <item.icon size={16} />
+          <Icon icon={item.icon} width={16} />
           {item.label}
         </a>
       </li>

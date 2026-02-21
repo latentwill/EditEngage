@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Sidebar from './Sidebar.svelte';
-  import { Menu } from 'lucide-svelte';
+  import Icon from '@iconify/svelte';
 
   let {
     currentPath = '/dashboard',
@@ -34,7 +34,7 @@
         class="btn btn-ghost btn-sm"
         aria-label="Open navigation"
       >
-        <Menu size={20} />
+        <Icon icon="iconoir:menu-scale" width={20} />
       </label>
     </div>
 
