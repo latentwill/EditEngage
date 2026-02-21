@@ -51,7 +51,7 @@
         { href: '/dashboard/write/content', label: 'Content Library', testId: 'nav-link-write-content', icon: FileText },
         { href: '/dashboard/write/topics', label: 'Topics', testId: 'nav-link-write-topics', icon: ListChecks },
         { href: '/dashboard/write/styles', label: 'Writing Styles', testId: 'nav-link-write-styles', icon: Paintbrush },
-        { href: '/dashboard/write/authors', label: 'Authors', testId: 'nav-link-write-authors', icon: UserRound },
+        { href: '/dashboard/write/agents', label: 'Agents', testId: 'nav-link-write-agents', icon: UserRound },
       ]
     },
     { href: '/dashboard/research', label: 'Research', testId: 'nav-link-research', icon: Search },

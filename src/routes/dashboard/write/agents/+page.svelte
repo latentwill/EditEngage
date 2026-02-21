@@ -106,16 +106,16 @@
   }
 </script>
 
-<div data-testid="authors-page" class="space-y-6">
+<div data-testid="agents-page" class="space-y-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-base-content">Authors</h1>
+    <h1 class="text-2xl font-bold text-base-content">Agents</h1>
     {#if !showForm}
-      <button class="btn btn-primary btn-sm" onclick={openForm}>Add Author</button>
+      <button class="btn btn-primary btn-sm" onclick={openForm}>Add Agent</button>
     {/if}
   </div>
 
   <p class="text-sm text-base-content/60">
-    Writing agents are AI authors with a defined voice, model, and instructions. Select one when generating content.
+    Writing agents are AI personas with a defined voice, model, and instructions. Select one or more when generating content.
   </p>
 
   {#if toggleError}
@@ -161,7 +161,7 @@
 
     {#if localAgents.length === 0 && !showForm}
       <div class="py-12 text-center text-sm text-base-content/40">
-        No authors yet. Add one to get started.
+        No agents yet. Add one to get started.
       </div>
     {/if}
   </div>
@@ -172,7 +172,7 @@
       class="card bg-base-200 shadow-xl p-6 space-y-4"
       onsubmit={(e) => { e.preventDefault(); handleSave(); }}
     >
-      <h2 class="text-lg font-semibold text-base-content">New Author</h2>
+      <h2 class="text-lg font-semibold text-base-content">New Agent</h2>
 
       <div>
         <label class="block text-sm text-base-content/80 mb-1" for="agent-name">Name</label>
@@ -191,7 +191,7 @@
           id="agent-description"
           type="text"
           class="input input-bordered w-full"
-          placeholder="Brief description of this author's style"
+          placeholder="Brief description of this agent's style"
           bind:value={agentDescription}
         />
       </div>
@@ -224,7 +224,7 @@
 
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary" disabled={saving}>
-          {saving ? 'Saving…' : 'Save Author'}
+          {saving ? 'Saving…' : 'Save Agent'}
         </button>
         <button type="button" class="btn btn-ghost" onclick={closeForm}>Cancel</button>
       </div>
