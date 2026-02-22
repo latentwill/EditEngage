@@ -1,10 +1,14 @@
 <script lang="ts">
+  import SocialPostEditor from '$lib/components/SocialPostEditor.svelte';
+  import LandingPageEditor from '$lib/components/LandingPageEditor.svelte';
+  import EmailEditor from '$lib/components/EmailEditor.svelte';
+
   let { data }: {
     data: {
       content: {
         id: string;
         title: string;
-        body: { html: string } | null;
+        body: { html: string; sections?: Array<{ id: string; type: 'header' | 'body' | 'cta' | 'faq'; label: string; content: string; variables?: Record<string, string> }>; slug?: string } | null;
         meta_description: string | null;
         tags: string[];
         content_type: string;
@@ -26,6 +30,28 @@
   let rejecting = $state(false);
   let rejectReason = $state('');
   let status = $state(data.content.status);
+
+  function handleSocialContentChange(content: string) {
+    editBody = content;
+  }
+
+  function handleSectionChange(sectionId: string, content: string) {
+    const body = data.content.body as { html: string; sections?: Array<{ id: string; type: string; label: string; content: string }> } | null;
+    if (body?.sections) {
+      const section = body.sections.find(s => s.id === sectionId);
+      if (section) {
+        section.content = content;
+      }
+    }
+  }
+
+  function handleEmailSubjectChange(subject: string) {
+    editMeta = subject;
+  }
+
+  function handleEmailBodyChange(body: string) {
+    editBody = body;
+  }
 
   async function saveEdits() {
     const response = await fetch(`/api/v1/content/${data.content.id}`, {
@@ -161,19 +187,40 @@
         </button>
       </div>
     {:else}
-      <h1 data-testid="content-title" class="text-2xl font-bold text-base-content">{data.content.title}</h1>
-      {#if data.content.meta_description}
-        <p data-testid="content-meta" class="text-sm text-base-content/60">{data.content.meta_description}</p>
-      {/if}
-      <div data-testid="content-tags" class="flex gap-2 flex-wrap">
-        {#each data.content.tags as tag}
-          <span class="badge badge-ghost">{tag}</span>
-        {/each}
-      </div>
-      {#if data.content.body}
-        <div data-testid="content-body" class="prose prose-invert max-w-none">
-          {@html sanitizeHtml(data.content.body.html)}
+      {#if data.content.content_type === 'social_post'}
+        <SocialPostEditor
+          content={data.content.body?.html ?? ''}
+          platform="linkedin"
+          onContentChange={handleSocialContentChange}
+        />
+      {:else if data.content.content_type === 'landing_page'}
+        <LandingPageEditor
+          sections={data.content.body?.sections ?? []}
+          slug={data.content.body?.slug ?? ''}
+          onSectionChange={handleSectionChange}
+        />
+      {:else if data.content.content_type === 'email'}
+        <EmailEditor
+          subject={data.content.meta_description ?? ''}
+          body={data.content.body?.html ?? ''}
+          onSubjectChange={handleEmailSubjectChange}
+          onBodyChange={handleEmailBodyChange}
+        />
+      {:else}
+        <h1 data-testid="content-title" class="text-2xl font-bold text-base-content">{data.content.title}</h1>
+        {#if data.content.meta_description}
+          <p data-testid="content-meta" class="text-sm text-base-content/60">{data.content.meta_description}</p>
+        {/if}
+        <div data-testid="content-tags" class="flex gap-2 flex-wrap">
+          {#each data.content.tags as tag}
+            <span class="badge badge-ghost">{tag}</span>
+          {/each}
         </div>
+        {#if data.content.body}
+          <div data-testid="content-body" class="prose prose-invert max-w-none">
+            {@html sanitizeHtml(data.content.body.html)}
+          </div>
+        {/if}
       {/if}
     {/if}
   </div>

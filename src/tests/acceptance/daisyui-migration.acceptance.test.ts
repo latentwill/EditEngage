@@ -171,7 +171,7 @@ describe('GlassCard uses daisyUI card', () => {
 
     const { container } = render(GlassCard);
 
-    const card = container.querySelector('[data-testid="glass-card"]');
+    const card = container.querySelector('[data-testid="card"]');
     expect(card).not.toBeNull();
     expect(card!.classList.contains('card')).toBe(true);
   });

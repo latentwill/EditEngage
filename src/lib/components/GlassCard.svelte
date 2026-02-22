@@ -13,7 +13,7 @@
     children?: Snippet;
   } = $props();
 
-  const paddingMap = {
+  const paddingMap: Record<string, string> = {
     sm: 'p-3',
     md: 'p-4',
     lg: 'p-6'
@@ -27,14 +27,21 @@
     flat: 'shadow-none'
   };
 
-  const useCardBody = variant === 'default' || variant === 'elevated' || variant === 'flat';
+  const useCardBody = $derived(variant === 'default' || variant === 'elevated' || variant === 'flat');
+
+  const hoverClasses = $derived(
+    hover
+      ? 'hover:border-[--border-strong] hover:scale-[1.002] cursor-pointer transition-all'
+      : ''
+  );
 </script>
 
 <div
-  data-testid="glass-card"
+  data-testid="card"
   data-variant={variant}
-  class="card bg-base-200 shadow-xl {variantClasses[variant] ?? ''} {hover ? 'hover:bg-base-300 cursor-pointer transition-colors' : ''}"
+  class="card relative bg-base-200 border border-[--border] rounded-xl shadow-xl {variantClasses[variant] ?? ''} {hoverClasses}"
 >
+  <span data-testid="card-grid-tick" class="absolute top-2 right-2 text-xs opacity-30 font-mono select-none">+</span>
   {#if useCardBody}
     <div class="card-body {paddingMap[padding]}">
       {@render children?.()}
