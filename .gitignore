@@ -38,3 +38,4 @@ build
 
 # MCP config
 .mcp.json
+.claude/worktrees/
