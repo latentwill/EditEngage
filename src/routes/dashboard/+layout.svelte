@@ -23,7 +23,7 @@
       <ProjectSwitcher projects={data.projects} orgId={data.orgId} />
     {/snippet}
 
-    <main id="main-content" data-testid="dashboard-main" class="flex-1 px-6 pb-20">
+    <main id="main-content" data-testid="dashboard-main" class="flex-1 px-6 pt-6 pb-20">
       <div class="max-w-7xl mx-auto">
         {@render children?.()}
       </div>

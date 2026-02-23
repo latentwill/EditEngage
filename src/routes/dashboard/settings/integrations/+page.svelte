@@ -137,7 +137,7 @@
   }
 </script>
 
-<div data-testid="integrations-page" class="space-y-8">
+<div data-testid="integrations-page" class="space-y-8 py-6">
   <h1 class="text-2xl font-bold text-base-content">Integrations</h1>
 
   <!-- AI Providers Section -->

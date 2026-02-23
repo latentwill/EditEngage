@@ -19,11 +19,11 @@ export default {
     themes: [
       {
         "editengage": {
-          "primary": "#B87333",        // copper
+          "primary": "#818CF8",        // indigo
           "primary-content": "#FAF8F5",
-          "secondary": "#E8A87C",      // burnt sienna
+          "secondary": "#A78BFA",      // violet
           "secondary-content": "#1C1410",
-          "accent": "#E8A87C",
+          "accent": "#A78BFA",
           "accent-content": "#1C1410",
           "neutral": "#16162A",
           "neutral-content": "#F4F1EE",
@@ -41,11 +41,11 @@ export default {
           "error-content": "#FAF8F5",
         },
         "editengage-light": {
-          "primary": "#8B5A2B",        // dark copper
+          "primary": "#6366F1",        // indigo
           "primary-content": "#FAF8F5",
-          "secondary": "#6B3F1A",      // espresso
+          "secondary": "#7C3AED",      // violet
           "secondary-content": "#FAF8F5",
-          "accent": "#6B3F1A",
+          "accent": "#7C3AED",
           "accent-content": "#FAF8F5",
           "neutral": "#E8E0D5",
           "neutral-content": "#1C1410",

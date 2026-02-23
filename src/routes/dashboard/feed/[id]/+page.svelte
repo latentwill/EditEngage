@@ -177,7 +177,7 @@
     </div>
   </div>
 
-  <div class="border-t border-base-300 p-4 flex justify-end gap-3">
+  <div class="border-t border-base-300 px-6 py-4 flex justify-end gap-3">
     <button data-testid="editor-reject-btn" class="btn btn-error btn-outline" onclick={() => rejecting = true}>
       Reject
     </button>

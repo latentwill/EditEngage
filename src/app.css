@@ -23,7 +23,7 @@ textarea:focus-visible,
   }
 }
 
-/* Slate & Copper surface tokens */
+/* Slate & Indigo surface tokens */
 [data-theme="editengage"] {
   --surface-0: #080808;
   --surface-1: #0F0F1C;
@@ -43,9 +43,9 @@ textarea:focus-visible,
   --surface-3: #DDD5C8;
   --border: rgba(0, 0, 0, 0.08);
   --border-strong: rgba(0, 0, 0, 0.14);
-  --text-primary: #1C1410;
-  --text-muted: #5C4A38;
-  --text-subtle: #8B7560;
+  --text-primary: #1C1420;
+  --text-muted: #4A4865;
+  --text-subtle: #7A7890;
 }
 
 /* Spring transition utility */

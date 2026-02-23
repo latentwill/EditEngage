@@ -317,9 +317,9 @@ describe('Sidebar — Iconoir Icons', () => {
 });
 
 /**
- * @behavior Active nav items display a copper-colored left border column rule
+ * @behavior Active nav items display an indigo-colored left border column rule
  * instead of the DaisyUI background pill.
- * @business_rule Active state uses the brand copper color as a subtle left border
+ * @business_rule Active state uses the brand indigo color as a subtle left border
  * indicator, replacing the default DaisyUI active background.
  */
 describe('Sidebar — Active State Column Rule', () => {
@@ -348,38 +348,15 @@ describe('Sidebar — Active State Column Rule', () => {
 });
 
 /**
- * @behavior Active nav items display a pilcrow (¶) character before the label text
- * as an additional active state indicator.
- * @business_rule The pilcrow marker provides a typographic cue for the active section,
- * reinforcing the copper column rule with a secondary visual signal.
+ * @behavior Active nav items no longer display a pilcrow character.
+ * @business_rule The pilcrow was removed; active state is indicated by the primary-colored left border only.
  */
-describe('Sidebar — Pilcrow Active Marker', () => {
-  it('should show a pilcrow character before the active nav item label', () => {
+describe('Sidebar — No Pilcrow Marker', () => {
+  it('should NOT render any pilcrow elements', () => {
     render(Sidebar, { props: { currentPath: '/dashboard/workflows', collapsed: false } });
 
-    const pilcrows = screen.getAllByTestId('nav-pilcrow');
-    expect(pilcrows.length).toBeGreaterThanOrEqual(1);
-
-    // The pilcrow should contain the ¶ character
-    expect(pilcrows[0].textContent).toBe('¶');
-  });
-
-  it('should NOT show pilcrow on inactive nav items', () => {
-    render(Sidebar, { props: { currentPath: '/dashboard/workflows', collapsed: false } });
-
-    // Dashboard is inactive — it should not have a pilcrow
-    const dashboardLink = screen.getByTestId('nav-link-dashboard');
-    const pilcrowInDashboard = dashboardLink.querySelector('[data-testid="nav-pilcrow"]');
-    expect(pilcrowInDashboard).toBeNull();
-  });
-
-  it('should use data-testid="nav-pilcrow" for the pilcrow element', () => {
-    render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
-
-    // Dashboard is active when path is exactly /dashboard
-    const pilcrow = screen.getByTestId('nav-pilcrow');
-    expect(pilcrow).toBeInTheDocument();
-    expect(pilcrow.textContent).toBe('¶');
+    const pilcrows = screen.queryAllByTestId('nav-pilcrow');
+    expect(pilcrows.length).toBe(0);
   });
 });
 

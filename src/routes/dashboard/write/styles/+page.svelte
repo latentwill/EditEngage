@@ -44,7 +44,7 @@
   }
 </script>
 
-<div data-testid="writing-styles-page" class="space-y-6">
+<div data-testid="writing-styles-page" class="space-y-6 py-6">
   <h1 class="text-2xl font-bold text-base-content">Writing Styles</h1>
 
   <div class="grid gap-4">

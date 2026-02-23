@@ -33,10 +33,10 @@
       testId: 'nav-link-write',
       icon: 'iconoir:edit-pencil',
       children: [
+        { href: '/dashboard/write/agents', label: 'Agents', testId: 'nav-link-write-agents', icon: 'iconoir:cpu' },
         { href: '/dashboard/write/content', label: 'Content Library', testId: 'nav-link-write-content', icon: 'iconoir:journal' },
         { href: '/dashboard/write/topics', label: 'Topics', testId: 'nav-link-write-topics', icon: 'iconoir:list' },
         { href: '/dashboard/write/styles', label: 'Writing Styles', testId: 'nav-link-write-styles', icon: 'iconoir:suggestion' },
-        { href: '/dashboard/write/agents', label: 'Agents', testId: 'nav-link-write-agents', icon: 'iconoir:cpu' },
       ]
     },
     { href: '/dashboard/research', label: 'Research', testId: 'nav-link-research', icon: 'iconoir:search' },
@@ -184,7 +184,6 @@
                   <Icon icon={item.icon} width={18} height={18} />
                 </span>
                 <span data-testid="nav-label">
-                  {#if isActive(item.href)}<span data-testid="nav-pilcrow" class="font-mono text-primary text-xs">¶</span>{/if}
                   {item.label}
                 </span>
                 <span class="ml-auto">
@@ -244,7 +243,6 @@
                   <Icon icon={item.icon} width={18} height={18} />
                 </span>
                 <span data-testid="nav-label">
-                  {#if isActive(item.href) && !isCollapsed}<span data-testid="nav-pilcrow" class="font-mono text-primary text-xs">¶</span>{/if}
                   {item.label}
                 </span>
               </a>
