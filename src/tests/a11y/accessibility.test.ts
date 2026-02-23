@@ -18,8 +18,8 @@ describe('Task 40: Accessibility Audit - WCAG 2.1 AA', () => {
       const cssPath = path.resolve(__dirname, '../../../src/app.css');
       const css = fs.readFileSync(cssPath, 'utf-8');
 
-      // The daisyUI theme uses primary: #34D399 (emerald-400)
-      // Against a dark background (#0a0a0f), #34D399 has ~8.5:1 contrast
+      // The daisyUI theme uses Slate & Copper palette
+      // Copper primary #B87333 on dark obsidian #080808 meets WCAG AA contrast
       // Verify focus-visible styles exist in the CSS (daisyUI handles color tokens via config)
       expect(css).toContain(':focus-visible');
 
@@ -27,8 +27,8 @@ describe('Task 40: Accessibility Audit - WCAG 2.1 AA', () => {
       const tailwindPath = path.resolve(__dirname, '../../../tailwind.config.ts');
       const tailwindConfig = fs.readFileSync(tailwindPath, 'utf-8');
 
-      // Verify emerald primary color is used (high contrast on dark)
-      expect(tailwindConfig).toContain('"#34D399"');
+      // Verify copper primary color is used (Slate & Copper design system)
+      expect(tailwindConfig).toContain('"#B87333"');
 
       // Verify daisyUI theme defines accessible color tokens
       // The tailwind config should define base-content for text colors

@@ -2,22 +2,7 @@
   import type { Snippet } from 'svelte';
   import { untrack } from 'svelte';
   import ThemeToggle from './ThemeToggle.svelte';
-  import {
-    LayoutDashboard,
-    GitBranch,
-    PenTool,
-    FileText,
-    ListChecks,
-    Paintbrush,
-    UserRound,
-    Search,
-    Send,
-    Settings,
-    ChevronDown,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight
-  } from 'lucide-svelte';
+  import Icon from '@iconify/svelte';
 
   let {
     currentPath = '/dashboard',
@@ -35,36 +20,36 @@
     href: string;
     label: string;
     testId: string;
-    icon: typeof LayoutDashboard;
+    icon: string;
     children?: NavItem[];
   };
 
   const navItems: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', testId: 'nav-link-dashboard', icon: LayoutDashboard },
-    { href: '/dashboard/workflows', label: 'Workflows', testId: 'nav-link-workflows', icon: GitBranch },
+    { href: '/dashboard', label: 'Dashboard', testId: 'nav-link-dashboard', icon: 'iconoir:home-simple' },
+    { href: '/dashboard/workflows', label: 'Workflows', testId: 'nav-link-workflows', icon: 'iconoir:git-branch' },
     {
       href: '/dashboard/write',
       label: 'Write',
       testId: 'nav-link-write',
-      icon: PenTool,
+      icon: 'iconoir:edit-pencil',
       children: [
-        { href: '/dashboard/write/content', label: 'Content Library', testId: 'nav-link-write-content', icon: FileText },
-        { href: '/dashboard/write/topics', label: 'Topics', testId: 'nav-link-write-topics', icon: ListChecks },
-        { href: '/dashboard/write/styles', label: 'Writing Styles', testId: 'nav-link-write-styles', icon: Paintbrush },
-        { href: '/dashboard/write/agents', label: 'Agents', testId: 'nav-link-write-agents', icon: UserRound },
+        { href: '/dashboard/write/content', label: 'Content Library', testId: 'nav-link-write-content', icon: 'iconoir:journal' },
+        { href: '/dashboard/write/topics', label: 'Topics', testId: 'nav-link-write-topics', icon: 'iconoir:list' },
+        { href: '/dashboard/write/styles', label: 'Writing Styles', testId: 'nav-link-write-styles', icon: 'iconoir:suggestion' },
+        { href: '/dashboard/write/agents', label: 'Agents', testId: 'nav-link-write-agents', icon: 'iconoir:cpu' },
       ]
     },
-    { href: '/dashboard/research', label: 'Research', testId: 'nav-link-research', icon: Search },
+    { href: '/dashboard/research', label: 'Research', testId: 'nav-link-research', icon: 'iconoir:search' },
     {
       href: '/dashboard/publish',
       label: 'Publish',
       testId: 'nav-link-publish',
-      icon: Send,
+      icon: 'iconoir:send-diagonal',
       children: [
-        { href: '/dashboard/publish/destinations', label: 'Destinations', testId: 'nav-link-publish-destinations', icon: Send },
+        { href: '/dashboard/publish/destinations', label: 'Destinations', testId: 'nav-link-publish-destinations', icon: 'iconoir:position' },
       ]
     },
-    { href: '/dashboard/settings', label: 'Settings', testId: 'nav-link-settings', icon: Settings },
+    { href: '/dashboard/settings', label: 'Settings', testId: 'nav-link-settings', icon: 'iconoir:settings' },
   ];
 
   function isActive(href: string): boolean {
@@ -112,6 +97,39 @@
   function toggleCollapse() {
     isCollapsed = !isCollapsed;
   }
+
+  /** Collect all top-level nav testIds for keyboard navigation ordering */
+  const topLevelTestIds = navItems.map(item => item.testId);
+
+  function handleNavKeydown(event: KeyboardEvent) {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+
+    const activeEl = document.activeElement;
+    if (!activeEl) return;
+
+    const currentTestId = activeEl.getAttribute('data-testid');
+    if (!currentTestId) return;
+
+    const currentIndex = topLevelTestIds.indexOf(currentTestId);
+    if (currentIndex === -1) return;
+
+    event.preventDefault();
+
+    let nextIndex: number;
+    if (event.key === 'ArrowDown') {
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= topLevelTestIds.length) return;
+    } else {
+      nextIndex = currentIndex - 1;
+      if (nextIndex < 0) return;
+    }
+
+    const nextTestId = topLevelTestIds[nextIndex];
+    const nextEl = document.querySelector(`[data-testid="${nextTestId}"]`) as HTMLElement | null;
+    if (nextEl) {
+      nextEl.focus();
+    }
+  }
 </script>
 
 <aside
@@ -135,22 +153,22 @@
 
   <!-- Navigation -->
   <nav class="flex-1 overflow-y-auto pt-3 pb-2">
-    <ul class="menu menu-sm gap-1 px-2">
+    <!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
+    <ul class="menu menu-sm gap-1 px-2" role="listbox" onkeydown={handleNavKeydown}>
       {#each navItems as item}
         {#if item.children}
-          <!-- Expandable section (Write, Settings, etc.) -->
+          <!-- Expandable section (Write, Publish, etc.) -->
           <li>
             {#if isCollapsed}
               <div class="tooltip tooltip-right" data-tip={item.label} data-testid="nav-tooltip">
                 <button
                   data-testid={item.testId}
-                  class="flex items-center justify-center"
-                  class:active={isActive(item.href)}
+                  class="flex items-center justify-center {isActive(item.href) ? 'border-l-2 border-primary' : ''}"
                   aria-current={isActive(item.href) ? 'page' : null}
                   onclick={() => { toggleSection(item.label); }}
                 >
                   <span data-testid="nav-icon">
-                    <item.icon size={18} />
+                    <Icon icon={item.icon} width={18} height={18} />
                   </span>
                   <span data-testid="nav-label" class="hidden">{item.label}</span>
                 </button>
@@ -158,20 +176,22 @@
             {:else}
               <button
                 data-testid={item.testId}
-                class="flex items-center gap-2"
-                class:active={isActive(item.href)}
+                class="flex items-center gap-2 {isActive(item.href) ? 'border-l-2 border-primary' : ''}"
                 aria-current={isActive(item.href) ? 'page' : null}
                 onclick={() => { toggleSection(item.label); }}
               >
                 <span data-testid="nav-icon">
-                  <item.icon size={18} />
+                  <Icon icon={item.icon} width={18} height={18} />
                 </span>
-                <span data-testid="nav-label">{item.label}</span>
+                <span data-testid="nav-label">
+                  {#if isActive(item.href)}<span data-testid="nav-pilcrow" class="font-mono text-primary text-xs">¶</span>{/if}
+                  {item.label}
+                </span>
                 <span class="ml-auto">
                   {#if openSections.has(item.label.toLowerCase())}
-                    <ChevronDown size={14} />
+                    <Icon icon="iconoir:nav-arrow-down" width={14} height={14} />
                   {:else}
-                    <ChevronRight size={14} />
+                    <Icon icon="iconoir:nav-arrow-right" width={14} height={14} />
                   {/if}
                 </span>
               </button>
@@ -183,12 +203,11 @@
                     <a
                       href={child.href}
                       data-testid={child.testId}
-                      class="flex items-center gap-2"
-                      class:active={isActive(child.href)}
+                      class="flex items-center gap-2 {isActive(child.href) ? 'border-l-2 border-primary' : ''}"
                       aria-current={isActive(child.href) ? 'page' : null}
                     >
                       <span data-testid="nav-icon">
-                        <child.icon size={16} />
+                        <Icon icon={child.icon} width={16} height={16} />
                       </span>
                       <span data-testid="nav-label">{child.label}</span>
                     </a>
@@ -205,12 +224,11 @@
                 <a
                   href={item.href}
                   data-testid={item.testId}
-                  class="flex items-center justify-center"
-                  class:active={isActive(item.href)}
+                  class="flex items-center justify-center {isActive(item.href) ? 'border-l-2 border-primary' : ''}"
                   aria-current={isActive(item.href) ? 'page' : null}
                 >
                   <span data-testid="nav-icon">
-                    <item.icon size={18} />
+                    <Icon icon={item.icon} width={18} height={18} />
                   </span>
                   <span data-testid="nav-label" class="hidden">{item.label}</span>
                 </a>
@@ -219,14 +237,16 @@
               <a
                 href={item.href}
                 data-testid={item.testId}
-                class="flex items-center gap-2"
-                class:active={isActive(item.href)}
+                class="flex items-center gap-2 {isActive(item.href) ? 'border-l-2 border-primary' : ''}"
                 aria-current={isActive(item.href) ? 'page' : null}
               >
                 <span data-testid="nav-icon">
-                  <item.icon size={18} />
+                  <Icon icon={item.icon} width={18} height={18} />
                 </span>
-                <span data-testid="nav-label">{item.label}</span>
+                <span data-testid="nav-label">
+                  {#if isActive(item.href) && !isCollapsed}<span data-testid="nav-pilcrow" class="font-mono text-primary text-xs">¶</span>{/if}
+                  {item.label}
+                </span>
               </a>
             {/if}
           </li>
@@ -244,9 +264,9 @@
       aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
     >
       {#if isCollapsed}
-        <ChevronsRight size={18} />
+        <Icon icon="iconoir:fast-arrow-right" width={18} height={18} />
       {:else}
-        <ChevronsLeft size={18} />
+        <Icon icon="iconoir:fast-arrow-left" width={18} height={18} />
       {/if}
     </button>
   </div>

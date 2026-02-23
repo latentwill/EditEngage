@@ -287,3 +287,147 @@ describe('Sidebar — Multiple Expandable Sections Independent', () => {
     expect(screen.queryByTestId('settings-submenu')).not.toBeInTheDocument();
   });
 });
+
+/**
+ * @behavior Each nav item renders an Iconoir icon via @iconify/svelte Icon component.
+ * @business_rule Consistent icon library across the app using Iconoir icon set.
+ */
+describe('Sidebar — Iconoir Icons', () => {
+  it('should render an icon wrapper for each nav item using @iconify/svelte', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard' } });
+
+    // Each nav item should have an icon wrapper with content inside
+    const icons = screen.getAllByTestId('nav-icon');
+    expect(icons.length).toBeGreaterThanOrEqual(6);
+
+    // Each icon wrapper should contain rendered content (not be empty)
+    icons.forEach(iconWrapper => {
+      expect(iconWrapper.innerHTML.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('should not contain any lucide-svelte class signatures in rendered icons', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard' } });
+
+    // Lucide icons render with class="lucide" — verify none exist
+    const sidebar = screen.getByTestId('sidebar');
+    const lucideElements = sidebar.querySelectorAll('.lucide');
+    expect(lucideElements.length).toBe(0);
+  });
+});
+
+/**
+ * @behavior Active nav items display a copper-colored left border column rule
+ * instead of the DaisyUI background pill.
+ * @business_rule Active state uses the brand copper color as a subtle left border
+ * indicator, replacing the default DaisyUI active background.
+ */
+describe('Sidebar — Active State Column Rule', () => {
+  it('should apply border-l-2 and border-primary classes to the active nav item', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/workflows' } });
+
+    const workflowsLink = screen.getByTestId('nav-link-workflows');
+    expect(workflowsLink.classList.contains('border-l-2')).toBe(true);
+    expect(workflowsLink.classList.contains('border-primary')).toBe(true);
+  });
+
+  it('should NOT apply the DaisyUI active class to nav items', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/workflows' } });
+
+    const workflowsLink = screen.getByTestId('nav-link-workflows');
+    expect(workflowsLink.classList.contains('active')).toBe(false);
+  });
+
+  it('should NOT apply border-l-2 border-primary to inactive nav items', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/workflows' } });
+
+    const dashboardLink = screen.getByTestId('nav-link-dashboard');
+    expect(dashboardLink.classList.contains('border-l-2')).toBe(false);
+    expect(dashboardLink.classList.contains('border-primary')).toBe(false);
+  });
+});
+
+/**
+ * @behavior Active nav items display a pilcrow (¶) character before the label text
+ * as an additional active state indicator.
+ * @business_rule The pilcrow marker provides a typographic cue for the active section,
+ * reinforcing the copper column rule with a secondary visual signal.
+ */
+describe('Sidebar — Pilcrow Active Marker', () => {
+  it('should show a pilcrow character before the active nav item label', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/workflows', collapsed: false } });
+
+    const pilcrows = screen.getAllByTestId('nav-pilcrow');
+    expect(pilcrows.length).toBeGreaterThanOrEqual(1);
+
+    // The pilcrow should contain the ¶ character
+    expect(pilcrows[0].textContent).toBe('¶');
+  });
+
+  it('should NOT show pilcrow on inactive nav items', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard/workflows', collapsed: false } });
+
+    // Dashboard is inactive — it should not have a pilcrow
+    const dashboardLink = screen.getByTestId('nav-link-dashboard');
+    const pilcrowInDashboard = dashboardLink.querySelector('[data-testid="nav-pilcrow"]');
+    expect(pilcrowInDashboard).toBeNull();
+  });
+
+  it('should use data-testid="nav-pilcrow" for the pilcrow element', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
+
+    // Dashboard is active when path is exactly /dashboard
+    const pilcrow = screen.getByTestId('nav-pilcrow');
+    expect(pilcrow).toBeInTheDocument();
+    expect(pilcrow.textContent).toBe('¶');
+  });
+});
+
+/**
+ * @behavior Arrow keys navigate between top-level nav items when focused.
+ * @business_rule Keyboard navigation follows accessibility best practices,
+ * allowing users to move between nav items using ArrowUp/ArrowDown.
+ */
+describe('Sidebar — Keyboard Navigation', () => {
+  it('should have a nav list with role="listbox" or role="menu"', () => {
+    render(Sidebar, { props: { currentPath: '/dashboard' } });
+
+    const sidebar = screen.getByTestId('sidebar');
+    const navList = sidebar.querySelector('ul[role="listbox"], ul[role="menu"]');
+    expect(navList).not.toBeNull();
+  });
+
+  it('should move focus to the next nav item when ArrowDown is pressed', async () => {
+    render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
+
+    const dashboardLink = screen.getByTestId('nav-link-dashboard');
+    const workflowsLink = screen.getByTestId('nav-link-workflows');
+
+    // Focus the dashboard link
+    dashboardLink.focus();
+    expect(document.activeElement).toBe(dashboardLink);
+
+    // Press ArrowDown
+    await fireEvent.keyDown(dashboardLink, { key: 'ArrowDown' });
+
+    // Focus should move to workflows
+    expect(document.activeElement).toBe(workflowsLink);
+  });
+
+  it('should move focus to the previous nav item when ArrowUp is pressed', async () => {
+    render(Sidebar, { props: { currentPath: '/dashboard', collapsed: false } });
+
+    const dashboardLink = screen.getByTestId('nav-link-dashboard');
+    const workflowsLink = screen.getByTestId('nav-link-workflows');
+
+    // Focus the workflows link
+    workflowsLink.focus();
+    expect(document.activeElement).toBe(workflowsLink);
+
+    // Press ArrowUp
+    await fireEvent.keyDown(workflowsLink, { key: 'ArrowUp' });
+
+    // Focus should move to dashboard
+    expect(document.activeElement).toBe(dashboardLink);
+  });
+});

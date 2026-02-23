@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ApiProvider } from '$lib/types/database.js';
-  import { Eye, EyeOff } from 'lucide-svelte';
+  import Icon from '@iconify/svelte';
 
   type ApiKeyRow = {
     id: string;
@@ -88,9 +88,9 @@
             aria-label={showKey[provider.id] ? 'Hide API key' : 'Show API key'}
           >
             {#if showKey[provider.id]}
-              <EyeOff size={16} />
+              <Icon icon="iconoir:eye-off" width={16} />
             {:else}
-              <Eye size={16} />
+              <Icon icon="iconoir:eye" width={16} />
             {/if}
           </button>
           <button

@@ -1,18 +1,89 @@
-<div data-testid="research-page" class="space-y-8 py-6">
+<script lang="ts">
+  import ResearchQueryCard from '$lib/components/ResearchQueryCard.svelte';
+  import { createResearchStore } from '$lib/stores/researchStore';
+  import { createProjectStore } from '$lib/stores/projectStore';
+  import { createSupabaseClient } from '$lib/supabase';
+
+  const client = createSupabaseClient();
+  const researchStore = createResearchStore(client);
+  const projectStore = createProjectStore();
+
+  const providers = ['perplexity', 'tavily', 'openai', 'serper', 'exa', 'brave', 'openrouter'] as const;
+
+  function handleSearch(event: Event) {
+    const target = event.target as HTMLInputElement;
+    researchStore.searchQueries(target.value);
+  }
+
+  function handleProviderFilter(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const value = target.value || null;
+    researchStore.filterByProvider(value);
+  }
+
+  function handleViewBriefs(queryId: string) {
+    window.location.href = `/dashboard/research/${queryId}`;
+  }
+
+  function handleRunNow(queryId: string) {
+    researchStore.runQuery(queryId);
+  }
+</script>
+
+<div data-testid="research-page" class="space-y-6 py-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-base-content">Research</h1>
+    <h1 data-testid="research-heading" class="text-2xl font-bold text-base-content">Research</h1>
+    <button data-testid="new-query-btn" class="btn btn-primary btn-sm">+ New Query</button>
   </div>
 
-  <div class="flex flex-col items-center justify-center py-16 text-center">
-    <div class="bg-base-200 rounded-full p-6 mb-6">
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-base-content/40">
-        <circle cx="11" cy="11" r="8"></circle>
-        <path d="m21 21-4.3-4.3"></path>
-      </svg>
-    </div>
-    <h2 class="text-lg font-semibold text-base-content mb-2">Coming Soon</h2>
-    <p class="text-sm text-base-content/60 max-w-md">
-      Multi-provider research queries with automated briefing and topic generation. Connect providers like Perplexity, Tavily, and more.
-    </p>
+  <div class="flex gap-3">
+    <input
+      data-testid="research-search-input"
+      type="text"
+      placeholder="Search queries..."
+      class="input input-bordered input-sm flex-1"
+      oninput={handleSearch}
+    />
+    <select
+      data-testid="research-provider-filter"
+      class="select select-bordered select-sm"
+      onchange={handleProviderFilter}
+    >
+      <option value="">All Providers</option>
+      {#each providers as provider}
+        <option value={provider}>{provider}</option>
+      {/each}
+    </select>
   </div>
+
+  {#if researchStore.loading}
+    <div data-testid="research-loading" class="flex flex-col gap-4">
+      {#each [1, 2, 3] as _}
+        <div class="skeleton h-32 w-full rounded-xl"></div>
+      {/each}
+    </div>
+  {:else if researchStore.queries.length === 0}
+    <div data-testid="research-empty-state" class="text-center py-12 text-base-content/60">
+      <p>No research queries found. Create your first query to get started.</p>
+    </div>
+  {:else}
+    <div data-testid="research-query-list" class="flex flex-col gap-4">
+      {#each researchStore.queries as query (query.id)}
+        <ResearchQueryCard
+          query={{
+            id: query.id,
+            name: query.name,
+            status: query.status,
+            provider_chain: query.provider_chain,
+            schedule: query.schedule,
+            last_run_at: query.last_run_at,
+            brief_count: query.brief_count,
+            pipeline_name: null
+          }}
+          onviewbriefs={handleViewBriefs}
+          onrunnow={handleRunNow}
+        />
+      {/each}
+    </div>
+  {/if}
 </div>

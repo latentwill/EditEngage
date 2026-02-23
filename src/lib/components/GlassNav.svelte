@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import ThemeToggle from './ThemeToggle.svelte';
+  import ProjectSelector from './ProjectSelector.svelte';
+  import { createProjectStore } from '$lib/stores/projectStore';
 
   let {
     currentPath = '/dashboard',
@@ -12,11 +14,13 @@
 
   let mobileMenuOpen = $state(false);
 
+  const store = createProjectStore();
+
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/dashboard/workflows', label: 'Workflows' },
-    { href: '/dashboard/content', label: 'Content' },
-    { href: '/dashboard/topics', label: 'Topics' },
+    { href: '/dashboard/feed', label: 'Feed' },
+    { href: '/dashboard/pipelines', label: 'Pipelines' },
+    { href: '/dashboard/research', label: 'Research' },
     { href: '/dashboard/settings', label: 'Settings' }
   ];
 
@@ -34,12 +38,14 @@
 
 <nav
   data-testid="glass-nav"
+  data-selected-project={store.selectedProjectId}
   class="navbar bg-base-100/80 backdrop-blur-lg fixed top-0 z-40 border-b border-base-300 px-6"
 >
   <div class="flex items-center justify-between max-w-7xl mx-auto">
-    <!-- Logo -->
+    <!-- Logo + ProjectSelector -->
     <div class="flex items-center gap-4">
       <a href="/" class="text-lg font-bold text-white">EditEngage</a>
+      <ProjectSelector />
       <div data-testid="project-switcher-slot">
         {#if children}
           {@render children()}

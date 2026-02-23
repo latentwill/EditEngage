@@ -66,7 +66,7 @@ describe('CommandTicker', () => {
     render(CommandTicker);
 
     await vi.waitFor(() => {
-      const ticker = screen.getByTestId('command-ticker');
+      const ticker = screen.getByTestId('ticker');
       expect(ticker.textContent).toContain('Workflow "SEO Articles" started');
     });
 
@@ -105,13 +105,13 @@ describe('CommandTicker', () => {
     render(CommandTicker);
 
     await vi.waitFor(() => {
-      expect(screen.getByTestId('command-ticker')).toBeDefined();
+      expect(screen.getByTestId('ticker')).toBeDefined();
     });
 
     const handler = vi.fn();
     window.addEventListener('openNotificationCenter', handler);
 
-    const ticker = screen.getByTestId('command-ticker');
+    const ticker = screen.getByTestId('ticker');
     await fireEvent.click(ticker);
 
     expect(handler).toHaveBeenCalled();
@@ -134,16 +134,78 @@ describe('CommandTicker', () => {
     expect(mockSubscribe).toHaveBeenCalled();
   });
 
-  it('shows status dot that is green when active and gray when idle', async () => {
+  it('shows status dot with primary color when active', async () => {
     render(CommandTicker);
 
     await vi.waitFor(() => {
-      const ticker = screen.getByTestId('command-ticker');
+      const ticker = screen.getByTestId('ticker');
       expect(ticker.textContent).toContain('Workflow "SEO Articles" started');
     });
 
-    const dot = screen.getByTestId('status-dot');
-    // With a recent event (30s ago), dot should be green/active
-    expect(dot.className).toContain('bg-emerald');
+    const dot = screen.getByTestId('ticker-status-dot');
+    expect(dot.className).toContain('bg-primary');
+  });
+
+  // --- NEW TESTS (T12) ---
+
+  it('renders caret prefix in ticker prompt', async () => {
+    render(CommandTicker);
+
+    await vi.waitFor(() => {
+      const ticker = screen.getByTestId('ticker');
+      expect(ticker.textContent).toContain('Workflow "SEO Articles" started');
+    });
+
+    const prompt = screen.getByTestId('ticker-prompt');
+    expect(prompt.textContent).toContain('^');
+  });
+
+  it('renders timestamp in HH:MM:SS format', async () => {
+    render(CommandTicker);
+
+    await vi.waitFor(() => {
+      const ticker = screen.getByTestId('ticker');
+      expect(ticker.textContent).toContain('Workflow "SEO Articles" started');
+    });
+
+    const time = screen.getByTestId('ticker-time');
+    // Should match pattern like [14:30:05]
+    expect(time.textContent).toMatch(/\[\d{2}:\d{2}:\d{2}\]/);
+  });
+
+  it('shows pulse ring on status dot when active', async () => {
+    render(CommandTicker);
+
+    await vi.waitFor(() => {
+      const ticker = screen.getByTestId('ticker');
+      expect(ticker.textContent).toContain('Workflow "SEO Articles" started');
+    });
+
+    const dot = screen.getByTestId('ticker-status-dot');
+    expect(dot.className).toContain('ring-');
+    expect(dot.className).toContain('animate-pulse');
+  });
+
+  it('ticker is fixed to bottom of viewport', async () => {
+    render(CommandTicker);
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('ticker')).toBeDefined();
+    });
+
+    const ticker = screen.getByTestId('ticker');
+    expect(ticker.className).toContain('fixed');
+    expect(ticker.className).toContain('bottom-0');
+  });
+
+  it('ticker uses monospace font', async () => {
+    render(CommandTicker);
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('ticker')).toBeDefined();
+    });
+
+    const ticker = screen.getByTestId('ticker');
+    expect(ticker.className).toContain('font-mono');
   });
 });

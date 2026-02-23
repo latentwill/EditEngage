@@ -14,6 +14,10 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@iconify-json/iconoir": "^1.2.3",
+    "@iconify/svelte": "^4.0.2",
+    "@melt-ui/pp": "^0.3.2",
+    "@melt-ui/svelte": "^0.86.3",
     "@playwright/test": "^1.45.0",
     "@sveltejs/adapter-node": "^5.2.0",
     "@sveltejs/kit": "^2.5.0",
@@ -38,7 +42,6 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.49.0",
     "bullmq": "^5.69.2",
-    "ioredis": "^5.9.3",
-    "lucide-svelte": "^0.460.0"
+    "ioredis": "^5.9.3"
   }
 }

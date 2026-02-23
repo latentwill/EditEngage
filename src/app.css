@@ -22,3 +22,50 @@ textarea:focus-visible,
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Slate & Copper surface tokens */
+[data-theme="editengage"] {
+  --surface-0: #080808;
+  --surface-1: #0F0F1C;
+  --surface-2: #16162A;
+  --surface-3: #1E1E35;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-subtle: rgba(255, 255, 255, 0.25);
+}
+
+[data-theme="editengage-light"] {
+  --surface-0: #FAF8F5;
+  --surface-1: #F2EDE6;
+  --surface-2: #E8E0D5;
+  --surface-3: #DDD5C8;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.14);
+  --text-primary: #1C1410;
+  --text-muted: #5C4A38;
+  --text-subtle: #8B7560;
+}
+
+/* Spring transition utility */
+.transition-spring {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Pulse ring animation for CommandTicker */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* JetBrains Mono utility */
+.font-ticker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
