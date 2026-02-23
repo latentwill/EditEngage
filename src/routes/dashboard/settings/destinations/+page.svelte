@@ -85,7 +85,7 @@
   }
 </script>
 
-<div data-testid="destinations-page" class="space-y-6">
+<div data-testid="destinations-page" class="space-y-6 py-6">
   <h1 class="text-2xl font-bold text-base-content">Destinations</h1>
 
   <div class="grid gap-4">

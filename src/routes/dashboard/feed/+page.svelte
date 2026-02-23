@@ -28,7 +28,7 @@
   });
 </script>
 
-<div data-testid="feed-page">
+<div data-testid="feed-page" class="space-y-6 py-6">
   <FeedFilterBar pipelines={[]} onFilterChange={(filters) => feedStore.setFilters(filters)} />
 
   {#if feedStore.loading}

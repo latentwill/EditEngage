@@ -84,7 +84,7 @@
 					data-testid="palette-group-header"
 					class="px-3 py-2 font-mono text-xs uppercase tracking-widest text-primary"
 				>
-					¶ {group.group}
+					{group.group}
 				</div>
 				{#each group.items as item}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->

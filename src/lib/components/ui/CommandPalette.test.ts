@@ -47,12 +47,12 @@ describe('CommandPalette', () => {
 		expect(prompt.textContent).toContain('^');
 	});
 
-	it('renders group headers with pilcrow', async () => {
+	it('renders group headers without pilcrow', async () => {
 		render(CommandPalette, { props: { commands: testCommands } });
 		await fireEvent.keyDown(document, { key: 'k', metaKey: true });
 		const headers = screen.getAllByTestId('palette-group-header');
 		expect(headers.length).toBe(2);
-		expect(headers[0].textContent).toContain('¶');
+		expect(headers[0].textContent).not.toContain('¶');
 		expect(headers[0].textContent).toContain('Navigation');
 	});
 
