@@ -34,6 +34,14 @@ export type GeneratedPageStatus = 'draft' | 'published' | 'archived';
 
 export type ApiProvider = 'openrouter' | 'perplexity' | 'tavily' | 'openai' | 'serpapi';
 
+export type ResearchProvider = 'perplexity' | 'tavily' | 'openai' | 'serper' | 'exa' | 'brave' | 'openrouter';
+
+export type ResearchProviderRole = 'discovery' | 'analysis' | 'citation';
+
+export type ResearchQueryStatus = 'active' | 'running' | 'idle' | 'error';
+
+export type SynthesisMode = 'unified' | 'per_provider' | 'comparative';
+
 // -- Database Type ------------------------------------------------------------
 
 export interface Database {
@@ -594,6 +602,115 @@ export interface Database {
           title?: string;
           message?: string;
           is_read?: boolean;
+          created_at?: string;
+        };
+      };
+    };
+      research_providers: {
+        Row: {
+          id: string;
+          project_id: string;
+          provider: ResearchProvider;
+          name: string;
+          api_key: string;
+          config: Record<string, unknown>;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          provider: ResearchProvider;
+          name: string;
+          api_key: string;
+          config?: Record<string, unknown>;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          provider?: ResearchProvider;
+          name?: string;
+          api_key?: string;
+          config?: Record<string, unknown>;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      research_queries: {
+        Row: {
+          id: string;
+          project_id: string;
+          name: string;
+          prompt_template: string;
+          provider_chain: Array<{ provider: ResearchProvider; role: ResearchProviderRole }>;
+          synthesis_mode: SynthesisMode;
+          auto_generate_topics: boolean;
+          schedule: string | null;
+          pipeline_id: string | null;
+          status: ResearchQueryStatus;
+          last_run_at: string | null;
+          brief_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          project_id: string;
+          name: string;
+          prompt_template: string;
+          provider_chain: Array<{ provider: ResearchProvider; role: ResearchProviderRole }>;
+          synthesis_mode?: SynthesisMode;
+          auto_generate_topics?: boolean;
+          schedule?: string | null;
+          pipeline_id?: string | null;
+          status?: ResearchQueryStatus;
+          last_run_at?: string | null;
+          brief_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          project_id?: string;
+          name?: string;
+          prompt_template?: string;
+          provider_chain?: Array<{ provider: ResearchProvider; role: ResearchProviderRole }>;
+          synthesis_mode?: SynthesisMode;
+          auto_generate_topics?: boolean;
+          schedule?: string | null;
+          pipeline_id?: string | null;
+          status?: ResearchQueryStatus;
+          last_run_at?: string | null;
+          brief_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      research_briefs: {
+        Row: {
+          id: string;
+          query_id: string;
+          summary: string;
+          findings: Array<{ provider: ResearchProvider; content: string; sources: Array<{ url: string; title: string }> }>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          query_id: string;
+          summary: string;
+          findings: Array<{ provider: ResearchProvider; content: string; sources: Array<{ url: string; title: string }> }>;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          query_id?: string;
+          summary?: string;
+          findings?: Array<{ provider: ResearchProvider; content: string; sources: Array<{ url: string; title: string }> }>;
           created_at?: string;
         };
       };
