@@ -142,7 +142,8 @@ describe('Topics Page', () => {
       props: {
         data: {
           topics: mockTopics,
-          varietyMemory: mockVarietyMemory
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
         }
       }
     });
@@ -163,7 +164,8 @@ describe('Topics Page', () => {
       props: {
         data: {
           topics: mockTopics,
-          varietyMemory: mockVarietyMemory
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
         }
       }
     });
@@ -331,7 +333,8 @@ describe('Topics Page', () => {
       props: {
         data: {
           topics: mockTopics,
-          varietyMemory: mockVarietyMemory
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
         }
       }
     });

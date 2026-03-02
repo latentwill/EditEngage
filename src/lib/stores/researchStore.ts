@@ -77,10 +77,17 @@ export function createResearchStore(client: Client): ResearchStore {
   }
 
   async function runQuery(queryId: string): Promise<void> {
-    await client
-      .from('research_queries')
-      .update({ status: 'running' as ResearchQueryStatus })
-      .eq('id', queryId);
+    const response = await fetch(`/api/v1/research/${queryId}/run`, {
+      method: 'POST'
+    });
+
+    if (response.ok) {
+      // Optimistically update local state
+      allQueries = allQueries.map(q =>
+        q.id === queryId ? { ...q, status: 'running' as ResearchQueryStatus } : q
+      );
+      applyFilters();
+    }
   }
 
   return {

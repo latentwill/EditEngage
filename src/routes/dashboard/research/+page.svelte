@@ -33,13 +33,55 @@
   function handleRunNow(queryId: string) {
     researchStore.runQuery(queryId);
   }
+
+  let showNewQueryForm = false;
+  let newQueryName = '';
+
+  function handleNewQueryClick() {
+    showNewQueryForm = true;
+  }
+
+  function handleNewQueryCancel() {
+    showNewQueryForm = false;
+    newQueryName = '';
+  }
+
+  async function handleNewQuerySave() {
+    const response = await fetch('/api/v1/research', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newQueryName })
+    });
+
+    if (response.ok) {
+      showNewQueryForm = false;
+      newQueryName = '';
+      researchStore.loadQueries();
+    }
+  }
 </script>
 
 <div data-testid="research-page" class="space-y-6 py-6">
   <div class="flex items-center justify-between">
     <h1 data-testid="research-heading" class="text-2xl font-bold text-base-content">Research</h1>
-    <button data-testid="new-query-btn" class="btn btn-primary btn-sm">+ New Query</button>
+    <button data-testid="new-query-btn" class="btn btn-primary btn-sm" onclick={handleNewQueryClick}>+ New Query</button>
   </div>
+
+  {#if showNewQueryForm}
+    <div data-testid="new-query-form" class="card bg-base-200 p-4 space-y-3">
+      <input
+        data-testid="new-query-name-input"
+        type="text"
+        placeholder="Query name..."
+        class="input input-bordered input-sm w-full"
+        bind:value={newQueryName}
+      />
+      <div class="flex gap-2 justify-end">
+        <button data-testid="new-query-cancel-btn" class="btn btn-ghost btn-sm" onclick={handleNewQueryCancel}>Cancel</button>
+        <button data-testid="new-query-save-btn" class="btn btn-primary btn-sm" onclick={handleNewQuerySave}>Save</button>
+      </div>
+    </div>
+  {/if}
 
   <div class="flex gap-3">
     <input

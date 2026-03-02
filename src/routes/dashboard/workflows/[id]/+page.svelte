@@ -39,6 +39,24 @@
 
   let workflow = $derived(data.workflow);
   let runs = $state(data.runs);
+  let runLoading = $state(false);
+  let runError = $state<string | null>(null);
+
+  async function handleRunNow() {
+    runLoading = true;
+    runError = null;
+    try {
+      const res = await fetch(`/api/v1/workflows/${workflow.id}/run`, { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json();
+        runError = body.error || 'Failed to start run';
+      }
+    } catch (err) {
+      runError = 'Failed to start run';
+    } finally {
+      runLoading = false;
+    }
+  }
 
   const statusColors: Record<string, string> = {
     active: 'badge-success',
@@ -63,17 +81,16 @@
 
   // Subscribe to real-time updates for workflow runs
   const supabase = createSupabaseClient();
-  const channel = supabase
-    .channel(`workflow-runs-${workflow.id}`)
-    .on('postgres_changes' as any, {
-      event: '*',
-      schema: 'public',
-      table: 'pipeline_runs',
-      filter: `pipeline_id=eq.${workflow.id}`
-    }, (payload: { new: WorkflowRun }) => {
-      const updated = payload.new;
-      runs = runs.map(r => r.id === updated.id ? updated : r);
-    })
+  const channel = supabase.channel(`workflow-runs-${workflow.id}`);
+  channel
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'pipeline_runs', filter: `pipeline_id=eq.${workflow.id}` },
+      (payload) => {
+        const updated = payload.new as WorkflowRun;
+        runs = runs.map(r => r.id === updated.id ? updated : r);
+      }
+    )
     .subscribe();
 </script>
 
@@ -99,10 +116,16 @@
       <button
         data-testid="workflow-detail-run-button"
         class="btn btn-primary btn-sm"
+        disabled={runLoading}
+        onclick={handleRunNow}
       >
-        Run Now
+        {runLoading ? 'Running...' : 'Run Now'}
       </button>
     </div>
+
+    {#if runError}
+      <p data-testid="run-error" class="text-sm text-error mt-2">{runError}</p>
+    {/if}
 
     {#if workflow.description}
       <p class="text-sm text-base-content/60 mt-2">{workflow.description}</p>
