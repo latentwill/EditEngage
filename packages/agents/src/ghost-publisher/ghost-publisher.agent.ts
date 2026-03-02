@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { AgentType, type Agent, type AgentConfig, type ValidationResult } from '../types.js';
 
 export class GhostPublisherError extends Error {
@@ -47,21 +48,24 @@ type FetchFn = (url: string, init?: RequestInit) => Promise<{
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 100;
+const JWT_EXPIRY_SECONDS = 300;
 
-// TODO: Replace with proper HMAC-SHA256 JWT signing using 'jose' library before production use
-function createJwt(apiKey: string): string {
+export function createJwt(apiKey: string): string {
   const [id, secret] = apiKey.split(':');
 
-  // Create a simple JWT header and payload (mocked in tests, real impl would use crypto)
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: id }));
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT', kid: id })).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
-  const payload = btoa(JSON.stringify({ iat: now, exp: now + 300, aud: '/admin/' }));
+  const payload = Buffer.from(JSON.stringify({
+    iat: now,
+    exp: now + JWT_EXPIRY_SECONDS,
+    aud: '/admin/'
+  })).toString('base64url');
 
-  // PLACEHOLDER: This is NOT a valid HMAC-SHA256 signature.
-  // In production, use the 'jose' library to create a proper JWT with HMAC-SHA256 signing.
-  const signature = btoa(secret.slice(0, 32));
+  const signingInput = `${header}.${payload}`;
+  const secretBuffer = Buffer.from(secret, 'hex');
+  const signature = crypto.createHmac('sha256', secretBuffer).update(signingInput).digest('base64url');
 
-  return `${header}.${payload}.${signature}`;
+  return `${signingInput}.${signature}`;
 }
 
 function delay(ms: number): Promise<void> {
@@ -81,7 +85,11 @@ export class GhostPublisherAgent implements Agent<GhostPublisherInput, GhostPubl
     input: GhostPublisherInput,
     config?: GhostPublisherConfig
   ): Promise<GhostPublisherOutput> {
-    const cfg = config ?? { apiUrl: '', adminApiKey: ':', reviewMode: 'draft_for_review' };
+    const cfg = config ?? {
+      apiUrl: '',
+      adminApiKey: ':',  // id:secret format -- empty fallback
+      reviewMode: 'draft_for_review' as const
+    };
 
     const token = createJwt(cfg.adminApiKey);
     const status = cfg.reviewMode === 'auto_publish' ? 'published' : 'draft';
@@ -130,20 +138,20 @@ export class GhostPublisherAgent implements Agent<GhostPublisherInput, GhostPubl
         throw new GhostPublisherError('Ghost API authentication failed');
       }
 
-      // Retry on 5xx errors
+      const errorData = await response.json() as GhostErrorResponse;
+      const errorMessage = errorData.errors?.[0]?.message ?? 'Unknown error';
+      const apiError = new GhostPublisherError(
+        `Ghost API error (${response.status}): ${errorMessage}`
+      );
+
+      // Retry on 5xx server errors only
       if (response.status >= 500) {
-        const errorData = await response.json() as GhostErrorResponse;
-        lastError = new GhostPublisherError(
-          `Ghost API error (${response.status}): ${errorData.errors?.[0]?.message ?? 'Unknown error'}`
-        );
+        lastError = apiError;
         continue;
       }
 
-      // Non-retryable error
-      const errorData = await response.json() as GhostErrorResponse;
-      throw new GhostPublisherError(
-        `Ghost API error (${response.status}): ${errorData.errors?.[0]?.message ?? 'Unknown error'}`
-      );
+      // Non-retryable client error
+      throw apiError;
     }
 
     throw lastError ?? new GhostPublisherError('Ghost API request failed after retries');

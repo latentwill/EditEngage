@@ -28,7 +28,7 @@ const mockWritingStyle = {
   name: 'Professional',
   tone: 'authoritative',
   avoid_phrases: ['in conclusion', 'it is important to note', 'as we all know'],
-  guidelines: 'Write in active voice. Keep paragraphs short.'
+  voice_guidelines: 'Write in active voice. Keep paragraphs short.'
 };
 
 const mockArticleResponse = {
@@ -178,6 +178,20 @@ describe('SeoWriterAgent', () => {
     const body = JSON.parse((openRouterCall as [string, RequestInit])[1].body as string);
     const prompt = body.messages[0].content as string;
     expect(prompt).toContain('1725');
+  });
+
+  it('includes voice_guidelines from writing style in the LLM prompt', async () => {
+    await agent.execute(
+      { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
+      { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+    );
+
+    const openRouterCall = mockFetch.mock.calls.find(
+      (call: [string]) => call[0].includes('openrouter.ai')
+    );
+    const body = JSON.parse((openRouterCall as [string, RequestInit])[1].body as string);
+    const prompt = body.messages[0].content as string;
+    expect(prompt).toContain('Write in active voice. Keep paragraphs short.');
   });
 
   it('avoids phrases listed in writing style avoid_phrases', async () => {

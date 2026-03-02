@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import IORedis from 'ioredis';
 import { createWorker } from './worker';
+import { createQueue } from './queue';
+import { Scheduler } from './scheduler';
 import { checkHealth } from './health';
 import { writeFileSync } from 'fs';
 
@@ -38,6 +40,10 @@ redis.on('error', (err) => {
 
 createWorker(supabase);
 console.log(`[worker] BullMQ worker started, listening for jobs`);
+
+const queue = createQueue();
+const scheduler = new Scheduler(queue);
+console.log(`[worker] Scheduler initialized`);
 
 // Health check heartbeat
 setInterval(async () => {
