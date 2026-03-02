@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import ResearchQueryCard from '$lib/components/ResearchQueryCard.svelte';
   import { createResearchStore } from '$lib/stores/researchStore';
   import { createProjectStore } from '$lib/stores/projectStore';
@@ -7,6 +8,10 @@
   const client = createSupabaseClient();
   const researchStore = createResearchStore(client);
   const projectStore = createProjectStore();
+
+  onMount(() => {
+    researchStore.loadQueries();
+  });
 
   const providers = ['perplexity', 'tavily', 'openai', 'serper', 'exa', 'brave', 'openrouter'] as const;
 
@@ -74,7 +79,7 @@
             id: query.id,
             name: query.name,
             status: query.status,
-            provider_chain: query.provider_chain,
+            provider_chain: query.provider_chain as { provider: string; role: string }[],
             schedule: query.schedule,
             last_run_at: query.last_run_at,
             brief_count: query.brief_count,

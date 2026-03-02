@@ -81,7 +81,7 @@ describe('Dashboard layout: org membership check', () => {
     const { load } = await import('./+layout.server.js');
 
     await expect(
-      load({ cookies: makeCookies() } as Parameters<typeof load>[0])
+      load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0])
     ).rejects.toMatchObject({
       status: 303,
       location: '/onboarding'
@@ -106,13 +106,13 @@ describe('Dashboard layout: org membership check', () => {
       );
 
     const { load } = await import('./+layout.server.js');
-    const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
+    const result = await load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0]);
 
     expect(result.projects).toEqual([
       { id: 'proj-1', org_id: existingOrgId, name: 'My Project' }
     ]);
     expect(result.orgId).toBe(existingOrgId);
-    expect(result.session.user.id).toBe('user-1');
+    expect(result.session!.user.id).toBe('user-1');
 
     // Should only call from() twice: memberships + projects (no org creation)
     expect(mockSupabase.from).toHaveBeenCalledTimes(2);

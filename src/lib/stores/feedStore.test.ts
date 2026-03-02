@@ -197,7 +197,7 @@ describe('Feed Store', () => {
     // "All Projects" -- no project_id filter applied
     await store.loadFeed({});
     const eqCallsBefore = mock.calls.eq.filter(
-      (args) => args[0] === 'project_id'
+      (args) => (args as unknown[])[0] === 'project_id'
     );
     expect(eqCallsBefore).toHaveLength(0);
 

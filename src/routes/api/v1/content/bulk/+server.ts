@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { ContentStatus } from '$lib/types/database.js';
 
 const VALID_ACTIONS = ['approve', 'reject'] as const;
 const MAX_BULK_IDS = 100;
@@ -28,7 +29,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     return json({ error: `ids must not exceed ${MAX_BULK_IDS} items` }, { status: 400 });
   }
 
-  const statusMap: Record<string, string> = {
+  const statusMap: Record<string, ContentStatus> = {
     approve: 'approved',
     reject: 'rejected'
   };

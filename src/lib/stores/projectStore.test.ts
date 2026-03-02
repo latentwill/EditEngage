@@ -155,7 +155,7 @@ describe('projectStore', () => {
     const { mockClient } = createMockSupabaseClient({ projects: allProjects });
 
     const { createSupabaseClient } = await import('$lib/supabase');
-    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as ReturnType<typeof createSupabaseClient>);
+    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createSupabaseClient>);
 
     const { createProjectStore, resetProjectStore } = await import('./projectStore.js');
     resetProjectStore();
@@ -176,7 +176,7 @@ describe('projectStore', () => {
     });
 
     const { createSupabaseClient } = await import('$lib/supabase');
-    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as ReturnType<typeof createSupabaseClient>);
+    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createSupabaseClient>);
 
     const { createProjectStore, resetProjectStore } = await import('./projectStore.js');
     resetProjectStore();
@@ -196,7 +196,7 @@ describe('projectStore', () => {
     });
 
     const { createSupabaseClient } = await import('$lib/supabase');
-    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as ReturnType<typeof createSupabaseClient>);
+    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createSupabaseClient>);
 
     const { createProjectStore, resetProjectStore } = await import('./projectStore.js');
     resetProjectStore();
@@ -217,7 +217,7 @@ describe('projectStore', () => {
     const { mockClient } = createMockSupabaseClient({ projects: allProjects });
 
     const { createSupabaseClient } = await import('$lib/supabase');
-    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as ReturnType<typeof createSupabaseClient>);
+    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createSupabaseClient>);
 
     const { createProjectStore, resetProjectStore } = await import('./projectStore.js');
     resetProjectStore();
@@ -241,7 +241,7 @@ describe('projectStore', () => {
     });
 
     const { createSupabaseClient } = await import('$lib/supabase');
-    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as ReturnType<typeof createSupabaseClient>);
+    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createSupabaseClient>);
 
     const { createProjectStore, resetProjectStore } = await import('./projectStore.js');
     resetProjectStore();
@@ -256,7 +256,7 @@ describe('projectStore', () => {
     const { mockClient } = createMockSupabaseClient({ projects: allProjects });
 
     const { createSupabaseClient } = await import('$lib/supabase');
-    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as ReturnType<typeof createSupabaseClient>);
+    vi.mocked(createSupabaseClient).mockReturnValue(mockClient as unknown as ReturnType<typeof createSupabaseClient>);
 
     const { createProjectStore, resetProjectStore } = await import('./projectStore.js');
     resetProjectStore();

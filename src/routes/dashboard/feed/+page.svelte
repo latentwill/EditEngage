@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import FeedCard from '$lib/components/FeedCard.svelte';
   import FeedFilterBar from '$lib/components/FeedFilterBar.svelte';
   import { createFeedStore } from '$lib/stores/feedStore';
@@ -8,6 +9,10 @@
   const client = createSupabaseClient();
   const feedStore = createFeedStore(client);
   const projectStore = createProjectStore();
+
+  onMount(() => {
+    feedStore.loadFeed();
+  });
 
   const showProjectBadge = $derived(projectStore.selectedProjectId === 'all');
 
@@ -51,7 +56,7 @@
         content={{
           id: item.id,
           title: item.title,
-          body: item.body,
+          body: item.body as { html: string; text?: string },
           tags: item.tags,
           status: item.status,
           content_type: item.content_type,

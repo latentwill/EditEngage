@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '$lib/server/supabase';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { TopicStatus } from '$lib/types/database.js';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
   const supabase = createServerSupabaseClient(cookies);
@@ -24,7 +25,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
     .order('created_at', { ascending: false });
 
   if (status) {
-    query = query.eq('status', status);
+    query = query.eq('status', status as TopicStatus);
   }
 
   const { data, error } = await query;

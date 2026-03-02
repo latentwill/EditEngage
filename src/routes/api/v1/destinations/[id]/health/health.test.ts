@@ -2,7 +2,7 @@
  * @behavior POST /api/v1/destinations/[id]/health checks connectivity to the destination
  * @business_rule Test Connection button must give immediate feedback on whether credentials work
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 
 vi.mock('$env/static/public', () => ({
   PUBLIC_SUPABASE_URL: 'http://localhost:54321',
@@ -23,9 +23,9 @@ vi.mock('$lib/server/supabase', () => ({
 }));
 
 import { POST } from './+server.js';
-import type { RequestEvent } from '@sveltejs/kit';
 
-function makeEvent(id: string, cookies = {}): RequestEvent {
+
+function makeEvent(id: string, cookies = {}): Parameters<typeof POST>[0] {
   return {
     params: { id },
     cookies,
@@ -39,7 +39,7 @@ function makeEvent(id: string, cookies = {}): RequestEvent {
     setHeaders: vi.fn(),
     isDataRequest: false,
     isSubRequest: false,
-  } as unknown as RequestEvent;
+  } as unknown as Parameters<typeof POST>[0];
 }
 
 const ghostContentDest = {
@@ -55,11 +55,11 @@ const ghostAdminDest = {
 };
 
 describe('POST /api/v1/destinations/[id]/health', () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>;
+  let fetchSpy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    fetchSpy = vi.spyOn(globalThis, 'fetch');
+    fetchSpy = vi.spyOn(globalThis, 'fetch') as unknown as MockInstance;
   });
 
   afterEach(() => {

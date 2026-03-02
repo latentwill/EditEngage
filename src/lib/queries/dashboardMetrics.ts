@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../types/database.js';
+import type { Database, Json } from '../types/database.js';
 
 type Client = SupabaseClient<Database>;
 
@@ -59,7 +59,7 @@ export async function fetchWordsGenerated(
   const { data, error } = await query;
   if (error || !data) return 0;
 
-  return data.reduce((sum: number, row: { body: Record<string, unknown> | null }) => {
+  return data.reduce((sum: number, row: { body: Json | null }) => {
     if (!row.body || typeof row.body !== 'object') return sum;
     const text = (row.body as { text?: string }).text;
     if (typeof text !== 'string') return sum;

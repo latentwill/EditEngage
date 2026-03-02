@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import EditorNavBar from '$lib/components/EditorNavBar.svelte';
   import SocialPostEditor from '$lib/components/SocialPostEditor.svelte';
@@ -23,6 +24,10 @@
 
   const client = createSupabaseClient();
   const editor = createEditorStore(client);
+
+  onMount(() => {
+    editor.loadContent(data.content.id);
+  });
 
   // Extract initial values from server data (intentionally captured once)
   const initialContent = data.content;

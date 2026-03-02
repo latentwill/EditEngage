@@ -98,7 +98,7 @@ const mockWorkflowRuns = [
   {
     id: 'run-1',
     pipeline_id: 'wf-1',
-    status: 'completed',
+    status: 'completed' as const,
     current_step: 3,
     total_steps: 3,
     started_at: '2025-01-10T10:00:00Z',
@@ -111,7 +111,7 @@ const mockWorkflowRuns = [
   {
     id: 'run-2',
     pipeline_id: 'wf-1',
-    status: 'failed',
+    status: 'failed' as const,
     current_step: 2,
     total_steps: 3,
     started_at: '2025-01-09T08:00:00Z',
@@ -124,7 +124,7 @@ const mockWorkflowRuns = [
   {
     id: 'run-3',
     pipeline_id: 'wf-1',
-    status: 'completed',
+    status: 'completed' as const,
     current_step: 3,
     total_steps: 3,
     started_at: '2025-01-08T14:00:00Z',
