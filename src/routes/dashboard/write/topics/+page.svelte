@@ -27,6 +27,7 @@
     data: {
       topics: TopicItem[];
       varietyMemory: VarietyMemoryItem[];
+      projectId: string;
     };
   } = $props();
 
@@ -67,7 +68,8 @@
       body: JSON.stringify({
         title: newTitle,
         keywords,
-        notes: newNotes || undefined
+        notes: newNotes || undefined,
+        project_id: data.projectId
       })
     });
 
@@ -107,6 +109,7 @@
 
     const formData = new FormData();
     formData.append('file', importFile);
+    formData.append('project_id', data.projectId);
 
     const response = await fetch('/api/v1/topics/import', {
       method: 'POST',

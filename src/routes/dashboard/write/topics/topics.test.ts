@@ -5,7 +5,8 @@
  * @business_rule Users manage their topic queue to control which content
  * gets produced — topics can be added manually or via CSV import,
  * skipped to remove from active queue, and variety memory prevents
- * duplicate content lines
+ * duplicate content lines. All mutations require project_id to scope
+ * topics to the correct project.
  */
 import { render, screen, fireEvent, within } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -17,6 +18,44 @@ vi.mock('$env/static/public', () => ({
 
 vi.mock('$env/static/private', () => ({
   SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
+}));
+
+// --- Supabase mock builder for server loader tests ---
+
+function createChainMock(terminalValue: { data: unknown; error: unknown }) {
+  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+  chain.select = vi.fn().mockReturnValue(chain);
+  chain.insert = vi.fn().mockReturnValue(chain);
+  chain.eq = vi.fn().mockReturnValue(chain);
+  chain.order = vi.fn().mockReturnValue(chain);
+  chain.limit = vi.fn().mockReturnValue(chain);
+  chain.single = vi.fn().mockResolvedValue(terminalValue);
+  chain.then = vi.fn((resolve: (v: unknown) => void) => resolve(terminalValue));
+  return chain;
+}
+
+let mockTopicChain: ReturnType<typeof createChainMock>;
+let mockVarietyChain: ReturnType<typeof createChainMock>;
+let mockAuthUser: { id: string } | null = { id: 'user-1' };
+let mockInsertChain: ReturnType<typeof createChainMock>;
+
+const mockSupabase = {
+  auth: {
+    getUser: vi.fn(() => Promise.resolve({
+      data: { user: mockAuthUser },
+      error: mockAuthUser ? null : { message: 'Not authenticated' }
+    }))
+  },
+  from: vi.fn((table: string) => {
+    if (table === 'topic_queue') return mockTopicChain;
+    if (table === 'variety_memory') return mockVarietyChain;
+    return mockTopicChain;
+  })
+};
+
+vi.mock('$lib/server/supabase', () => ({
+  createServerSupabaseClient: vi.fn(() => mockSupabase),
+  createServiceRoleClient: vi.fn(() => mockSupabase)
 }));
 
 const mockTopics = [
@@ -147,7 +186,7 @@ describe('Topics Page', () => {
     expect(badges[0]).toHaveTextContent('pending');
   });
 
-  it('"Add Topic" form creates topic with title, keywords, and notes', async () => {
+  it('"Add Topic" form sends project_id in POST body', async () => {
     const TopicsPage = (await import('./+page.svelte')).default;
 
     const fetchSpy = vi.fn().mockResolvedValue({
@@ -174,7 +213,8 @@ describe('Topics Page', () => {
       props: {
         data: {
           topics: mockTopics,
-          varietyMemory: mockVarietyMemory
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
         }
       }
     });
@@ -196,30 +236,37 @@ describe('Topics Page', () => {
     const submitButton = screen.getByTestId('topic-submit-button');
     await fireEvent.click(submitButton);
 
-    // Verify fetch was called with correct data
+    // Verify fetch was called with project_id included
     expect(fetchSpy).toHaveBeenCalledWith('/api/v1/topics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: 'New Topic Title',
         keywords: ['keyword1', 'keyword2'],
-        notes: 'Some notes'
+        notes: 'Some notes',
+        project_id: 'proj-1'
       })
     });
   });
 
-  it('CSV import uploads file and adds valid topics with import summary', async () => {
+  it('CSV import sends project_id in FormData alongside the file', async () => {
     const TopicsPage = (await import('./+page.svelte')).default;
 
-    const fetchSpy = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        data: {
-          imported: 3,
-          skipped: 1,
-          errors: ['Row 4: missing title']
-        }
-      })
+    let capturedFormData: FormData | null = null;
+    const fetchSpy = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      if (init.body instanceof FormData) {
+        capturedFormData = init.body;
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            imported: 3,
+            skipped: 1,
+            errors: ['Row 4: missing title']
+          }
+        })
+      });
     });
     vi.stubGlobal('fetch', fetchSpy);
 
@@ -227,7 +274,8 @@ describe('Topics Page', () => {
       props: {
         data: {
           topics: mockTopics,
-          varietyMemory: mockVarietyMemory
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
         }
       }
     });
@@ -256,6 +304,11 @@ describe('Topics Page', () => {
         method: 'POST'
       })
     );
+
+    // Verify project_id was included in FormData
+    expect(capturedFormData).not.toBeNull();
+    expect(capturedFormData!.get('project_id')).toBe('proj-1');
+    expect(capturedFormData!.get('file')).toBeInstanceOf(File);
 
     // Import summary should be displayed
     expect(screen.getByTestId('import-summary')).toBeInTheDocument();
@@ -305,7 +358,8 @@ describe('Topics Page', () => {
       props: {
         data: {
           topics: mockTopics,
-          varietyMemory: mockVarietyMemory
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
         }
       }
     });
@@ -331,5 +385,148 @@ describe('Topics Page', () => {
       'As businesses continue to embrace AI-powered solutions'
     );
     expect(within(secondItem).queryByTestId('content-link')).not.toBeInTheDocument();
+  });
+});
+
+describe('Topics Server Loader', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser = { id: 'user-1' };
+    mockTopicChain = createChainMock({ data: mockTopics, error: null });
+    mockVarietyChain = createChainMock({ data: mockVarietyMemory, error: null });
+  });
+
+  it('returns projectId alongside topics and varietyMemory', async () => {
+    const { load } = await import('./+page.server.js');
+
+    const mockCookies = {
+      getAll: vi.fn().mockReturnValue([]),
+      set: vi.fn()
+    };
+
+    const result = await load({
+      parent: () => Promise.resolve({ projects: [{ id: 'proj-1' }] }),
+      cookies: mockCookies
+    } as never);
+
+    expect(result).toHaveProperty('projectId', 'proj-1');
+    expect(result).toHaveProperty('topics');
+    expect(result).toHaveProperty('varietyMemory');
+  });
+
+  it('returns empty projectId when no projects exist', async () => {
+    const { load } = await import('./+page.server.js');
+
+    const mockCookies = {
+      getAll: vi.fn().mockReturnValue([]),
+      set: vi.fn()
+    };
+
+    const result = await load({
+      parent: () => Promise.resolve({ projects: [] }),
+      cookies: mockCookies
+    } as never);
+
+    expect(result).toHaveProperty('projectId', '');
+    expect(result).toHaveProperty('topics', []);
+    expect(result).toHaveProperty('varietyMemory', []);
+  });
+});
+
+describe('POST /api/v1/topics/import', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser = { id: 'user-1' };
+    mockInsertChain = createChainMock({ data: [{ id: 'topic-new' }], error: null });
+    mockTopicChain = mockInsertChain;
+  });
+
+  /** Creates a File-like object with working .text() for jsdom compatibility */
+  function makeTextFile(content: string, name: string): File {
+    const file = new File([content], name, { type: 'text/csv' });
+    // jsdom File doesn't implement .text(), so we add it
+    if (typeof file.text !== 'function') {
+      Object.defineProperty(file, 'text', {
+        value: () => Promise.resolve(content)
+      });
+    }
+    return file;
+  }
+
+  function makeFormDataRequest(formData: FormData): Request {
+    // jsdom's Request doesn't auto-set multipart Content-Type from FormData,
+    // so we create a request with a working formData() method
+    const request = new Request('http://localhost/api/v1/topics/import', {
+      method: 'POST'
+    });
+    // Override formData() to return our prepared FormData
+    Object.defineProperty(request, 'formData', {
+      value: () => Promise.resolve(formData)
+    });
+    return request;
+  }
+
+  it('parses CSV and creates topics with provided project_id', async () => {
+    const { POST } = await import('../../../api/v1/topics/import/+server.js');
+
+    const csvContent = 'title,keywords,notes\nTopic A,"kw1,kw2",note A\nTopic B,kw3,';
+    const file = makeTextFile(csvContent, 'topics.csv');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('project_id', 'proj-1');
+
+    const request = makeFormDataRequest(formData);
+
+    const response = await POST({
+      request,
+      cookies: { getAll: vi.fn().mockReturnValue([]), set: vi.fn() }
+    } as never);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data).toHaveProperty('imported');
+    expect(json.data.imported).toBe(2);
+  });
+
+  it('returns 400 when project_id is missing from FormData', async () => {
+    const { POST } = await import('../../../api/v1/topics/import/+server.js');
+
+    const csvContent = 'title,keywords,notes\nTopic A,kw1,note';
+    const file = makeTextFile(csvContent, 'topics.csv');
+    const formData = new FormData();
+    formData.append('file', file);
+    // No project_id appended
+
+    const request = makeFormDataRequest(formData);
+
+    const response = await POST({
+      request,
+      cookies: { getAll: vi.fn().mockReturnValue([]), set: vi.fn() }
+    } as never);
+
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toContain('project_id');
+  });
+
+  it('returns 401 when user is not authenticated', async () => {
+    mockAuthUser = null;
+
+    const { POST } = await import('../../../api/v1/topics/import/+server.js');
+
+    const csvContent = 'title,keywords,notes\nTopic A,kw1,note';
+    const file = makeTextFile(csvContent, 'topics.csv');
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('project_id', 'proj-1');
+
+    const request = makeFormDataRequest(formData);
+
+    const response = await POST({
+      request,
+      cookies: { getAll: vi.fn().mockReturnValue([]), set: vi.fn() }
+    } as never);
+
+    expect(response.status).toBe(401);
   });
 });
