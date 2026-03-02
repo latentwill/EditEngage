@@ -9,6 +9,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
 
   if (!activeProjectId) {
     return {
+      projectId: '',
       writingStyles: []
     };
   }
@@ -20,6 +21,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
     .order('created_at', { ascending: false });
 
   return {
+    projectId: activeProjectId,
     writingStyles: writingStyles ?? []
   };
 };

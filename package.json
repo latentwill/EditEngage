@@ -42,6 +42,7 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.49.0",
     "bullmq": "^5.69.2",
-    "ioredis": "^5.9.3"
+    "ioredis": "^5.9.3",
+    "isomorphic-dompurify": "^3.0.0"
   }
 }

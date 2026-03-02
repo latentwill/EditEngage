@@ -10,7 +10,8 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
   if (!activeProjectId) {
     return {
       topics: [],
-      varietyMemory: []
+      varietyMemory: [],
+      projectId: ''
     };
   }
 
@@ -30,6 +31,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
 
   return {
     topics: topics ?? [],
-    varietyMemory: varietyMemory ?? []
+    varietyMemory: varietyMemory ?? [],
+    projectId: activeProjectId
   };
 };

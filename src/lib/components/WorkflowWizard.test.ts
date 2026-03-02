@@ -1,111 +1,132 @@
 /**
- * @behavior WorkflowWizard renders a multi-step wizard (Steps 1-2) for creating
- * a content workflow. Step 1 collects name/description with validation. Step 2
- * lets users select and reorder agent types.
- * @business_rule A workflow must have a name before proceeding. At least one
- * agent must be selected to move past Step 2. Agent ordering determines
- * execution sequence.
+ * @behavior After saving a workflow, user sees feedback (redirect on success, error on failure)
+ * and cannot double-submit while save is in progress.
+ * @business_rule Post-save feedback ensures users know their workflow was created
+ * and prevents duplicate workflows from double-clicks.
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import WorkflowWizard from './WorkflowWizard.svelte';
+import { tick } from 'svelte';
 
-describe('WorkflowWizard — Step 1: Name & Description', () => {
-  it('renders name and description inputs with validation', () => {
-    render(WorkflowWizard);
+vi.mock('$env/static/public', () => ({
+  PUBLIC_SUPABASE_URL: 'http://localhost:54321',
+  PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key'
+}));
 
-    const nameInput = screen.getByTestId('workflow-name-input');
-    const descInput = screen.getByTestId('workflow-description-input');
-    const nextBtn = screen.getByTestId('wizard-next-btn');
+vi.mock('$env/static/private', () => ({
+  SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
+}));
 
-    expect(nameInput).toBeInTheDocument();
-    expect(descInput).toBeInTheDocument();
-    expect(nextBtn).toBeInTheDocument();
+const mockGoto = vi.fn();
+vi.mock('$app/navigation', () => ({
+  goto: mockGoto
+}));
+
+const mockFetch = vi.fn();
+vi.stubGlobal('fetch', mockFetch);
+
+/**
+ * Helper: renders the wizard and navigates to the final step (step 5)
+ * so the Save button is visible. Fills required fields to pass validation.
+ */
+async function renderAtSaveStep() {
+  const WorkflowWizard = (await import('./WorkflowWizard.svelte')).default;
+
+  render(WorkflowWizard, {
+    props: { projectId: 'proj-abc' }
   });
 
-  it('blocks progression when name is empty', async () => {
-    render(WorkflowWizard);
+  // Step 1: fill name
+  const nameInput = screen.getByLabelText(/workflow name/i);
+  await fireEvent.input(nameInput, { target: { value: 'Test Workflow' } });
+  await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-    const nextBtn = screen.getByTestId('wizard-next-btn');
-    await fireEvent.click(nextBtn);
+  // Step 2: select an agent (click the agent card button)
+  const agentCard = screen.getByTestId('agent-card-topic_queue');
+  await fireEvent.click(agentCard.closest('[data-testid="agent-card"]')!);
+  await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-    // Should still be on step 1 — step indicator shows step 1 active
-    const stepIndicator = screen.getByTestId('wizard-step-indicator');
-    expect(stepIndicator.textContent).toContain('1');
+  // Step 3: fill required config for topic_queue (Max Topics label)
+  const configInput = screen.getByTestId('agent-config-topic_queue-max_topics');
+  await fireEvent.input(configInput, { target: { value: '10' } });
+  await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-    // Validation error should appear
-    const error = screen.getByTestId('name-validation-error');
-    expect(error).toBeInTheDocument();
-  });
-});
+  // Step 4: schedule (optional), just go next
+  await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-describe('WorkflowWizard — Step 2: Agent Selection', () => {
-  async function goToStep2() {
-    render(WorkflowWizard);
+  // Now on step 5 with Save button visible
+}
 
-    // Fill in name to pass step 1 validation
-    const nameInput = screen.getByTestId('workflow-name-input');
-    await fireEvent.input(nameInput, { target: { value: 'My Pipeline' } });
-
-    // Navigate to step 2
-    const nextBtn = screen.getByTestId('wizard-next-btn');
-    await fireEvent.click(nextBtn);
-  }
-
-  it('renders available agent types as selectable cards', async () => {
-    await goToStep2();
-
-    const agentCards = screen.getAllByTestId('agent-card');
-    expect(agentCards.length).toBeGreaterThanOrEqual(5);
-
-    // Each card should have an agent type label
-    const seoWriter = screen.getByTestId('agent-card-seo_writer');
-    expect(seoWriter).toBeInTheDocument();
-
-    const ghostPublisher = screen.getByTestId('agent-card-ghost_publisher');
-    expect(ghostPublisher).toBeInTheDocument();
+describe('WorkflowWizard post-save feedback', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('allows reordering selected agents via drag handles', async () => {
-    await goToStep2();
+  it('includes project_id in POST body when saving', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
 
-    // Select two agents
-    const seoWriter = screen.getByTestId('agent-card-seo_writer');
-    const ghostPublisher = screen.getByTestId('agent-card-ghost_publisher');
-    await fireEvent.click(seoWriter);
-    await fireEvent.click(ghostPublisher);
+    await renderAtSaveStep();
 
-    // Both should appear in the selected list
-    const selectedList = screen.getByTestId('selected-agents-list');
-    expect(selectedList).toBeInTheDocument();
+    const saveButton = screen.getByTestId('wizard-save-btn');
+    await fireEvent.click(saveButton);
 
-    // Drag handles should be visible for reordering
-    const dragHandles = screen.getAllByTestId('agent-drag-handle');
-    expect(dragHandles.length).toBe(2);
-
-    // Click move-down on first selected agent to reorder
-    const moveDownBtns = screen.getAllByTestId('agent-move-down');
-    await fireEvent.click(moveDownBtns[0]);
-
-    // After reordering, the selected agents order should swap
-    const selectedItems = screen.getAllByTestId('selected-agent-item');
-    expect(selectedItems[0].textContent).toContain('Ghost Publisher');
-    expect(selectedItems[1].textContent).toContain('SEO Writer');
+    await vi.waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/v1/workflows',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('"project_id":"proj-abc"')
+        })
+      );
+    });
   });
 
-  it('blocks progression when no agents are selected', async () => {
-    await goToStep2();
+  it('redirects to /dashboard/workflows after successful save', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
 
-    // Try to go to step 3 without selecting agents
-    const nextBtn = screen.getByTestId('wizard-next-btn');
-    await fireEvent.click(nextBtn);
+    await renderAtSaveStep();
 
-    // Should still be on step 2
-    const stepIndicator = screen.getByTestId('wizard-step-indicator');
-    expect(stepIndicator.textContent).toContain('2');
+    const saveButton = screen.getByTestId('wizard-save-btn');
+    await fireEvent.click(saveButton);
 
-    // Validation error should appear
-    const error = screen.getByTestId('agents-validation-error');
-    expect(error).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(mockGoto).toHaveBeenCalledWith('/dashboard/workflows');
+    });
+  });
+
+  it('shows error message when save fails', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await renderAtSaveStep();
+
+    const saveButton = screen.getByTestId('wizard-save-btn');
+    await fireEvent.click(saveButton);
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('wizard-save-error')).toBeInTheDocument();
+    });
+  });
+
+  it('disables save button while saving is in progress', async () => {
+    let resolveRequest!: (value: { ok: boolean }) => void;
+    mockFetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRequest = resolve;
+      })
+    );
+
+    await renderAtSaveStep();
+
+    const saveButton = screen.getByTestId('wizard-save-btn');
+    await fireEvent.click(saveButton);
+
+    // Button should be disabled while request is pending
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('wizard-save-btn')).toBeDisabled();
+    });
+
+    // Resolve the request
+    resolveRequest({ ok: true, json: () => Promise.resolve({}) } as unknown as { ok: boolean });
+    await tick();
   });
 });

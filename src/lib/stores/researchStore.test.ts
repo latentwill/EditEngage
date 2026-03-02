@@ -160,7 +160,13 @@ describe('Research Store', () => {
     expect(store.providerFilter).toBe('perplexity');
   });
 
-  it('should update query status to running on runQuery', async () => {
+  it('should call fetch POST to /api/v1/research/:id/run on runQuery', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ jobId: 'job-1' })
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
     mock.mockResolvedData([]);
 
     const { createResearchStore } = await import('./researchStore.js');
@@ -168,8 +174,56 @@ describe('Research Store', () => {
 
     await store.runQuery('q-99');
 
-    expect(mock.from).toHaveBeenCalledWith('research_queries');
-    expect(mock.chain.update).toHaveBeenCalledWith({ status: 'running' });
-    expect(mock.chain.eq).toHaveBeenCalledWith('id', 'q-99');
+    expect(mockFetch).toHaveBeenCalledWith('/api/v1/research/q-99/run', {
+      method: 'POST'
+    });
+  });
+
+  it('should optimistically set local query status to running on runQuery', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ jobId: 'job-1' })
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const queries = [
+      fakeQuery({ id: 'q-1', name: 'SEO Research', status: 'active' as ResearchQueryStatus }),
+      fakeQuery({ id: 'q-2', name: 'Competitor Analysis', status: 'idle' as ResearchQueryStatus }),
+    ];
+    mock.mockResolvedData(queries);
+
+    const { createResearchStore } = await import('./researchStore.js');
+    const store = createResearchStore(mock.client);
+    await store.loadQueries();
+
+    expect(store.queries[0].status).toBe('active');
+
+    await store.runQuery('q-1');
+
+    const updatedQuery = store.queries.find(q => q.id === 'q-1');
+    expect(updatedQuery?.status).toBe('running');
+  });
+
+  it('should not update local state when runQuery fetch fails', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: () => Promise.resolve({ error: 'Server error' })
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    const queries = [
+      fakeQuery({ id: 'q-1', name: 'SEO Research', status: 'active' as ResearchQueryStatus }),
+    ];
+    mock.mockResolvedData(queries);
+
+    const { createResearchStore } = await import('./researchStore.js');
+    const store = createResearchStore(mock.client);
+    await store.loadQueries();
+
+    await store.runQuery('q-1');
+
+    const query = store.queries.find(q => q.id === 'q-1');
+    expect(query?.status).toBe('active');
   });
 });

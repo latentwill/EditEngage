@@ -3,6 +3,7 @@
  * Destination management has been moved to Publish section.
  * @business_rule Users manage AI provider API keys (1:1 per provider) from the
  * Connections page. This page replaces the old Integrations page.
+ * The loader returns projectId so the component can send it in API requests.
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -13,8 +14,30 @@ vi.mock('$env/static/public', () => ({
   PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key'
 }));
 
+vi.mock('$env/static/private', () => ({
+  SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
+}));
+
 vi.mock('$lib/supabase', () => ({
   createSupabaseClient: vi.fn(() => ({}))
+}));
+
+const mockLoaderSelect = vi.fn();
+const mockLoaderEq = vi.fn();
+const mockLoaderOrder = vi.fn();
+
+const mockLoaderSupabase = {
+  from: vi.fn(() => ({
+    select: mockLoaderSelect
+  }))
+};
+
+mockLoaderSelect.mockReturnValue({ eq: mockLoaderEq });
+mockLoaderEq.mockReturnValue({ order: mockLoaderOrder });
+
+vi.mock('$lib/server/supabase', () => ({
+  createServerSupabaseClient: vi.fn(() => mockLoaderSupabase),
+  createServiceRoleClient: vi.fn()
 }));
 
 // Mock fetch for API calls
@@ -41,6 +64,75 @@ const mockApiKeys = [
     updated_at: '2024-01-02T00:00:00Z'
   }
 ];
+
+describe('Connections Page Loader', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoaderSupabase.from.mockReturnValue({ select: mockLoaderSelect });
+    mockLoaderSelect.mockReturnValue({ eq: mockLoaderEq });
+    mockLoaderEq.mockReturnValue({ order: mockLoaderOrder });
+  });
+
+  it('returns empty apiKeys without projectId when no active project', async () => {
+    const { load } = await import('./+page.server');
+
+    const result = await load({
+      parent: vi.fn().mockResolvedValue({ projects: [] }),
+      cookies: {} as never
+    } as never);
+
+    expect(result).toEqual({
+      apiKeys: []
+    });
+    expect(mockLoaderSupabase.from).not.toHaveBeenCalled();
+  });
+
+  it('returns projectId alongside apiKeys for the active project', async () => {
+    const mockApiKeysData = [
+      {
+        id: 'key-1',
+        provider: 'openrouter',
+        api_key: 'sk-***',
+        project_id: 'proj-1',
+        is_active: true,
+        created_at: '2024-01-01',
+        updated_at: '2024-01-01'
+      }
+    ];
+
+    mockLoaderOrder.mockResolvedValueOnce({ data: mockApiKeysData });
+
+    const { load } = await import('./+page.server');
+
+    const result = await load({
+      parent: vi.fn().mockResolvedValue({ projects: [{ id: 'proj-1' }] }),
+      cookies: {} as never
+    } as never);
+
+    expect(mockLoaderSupabase.from).toHaveBeenCalledWith('api_keys');
+    expect(mockLoaderEq).toHaveBeenCalledWith('project_id', 'proj-1');
+    expect(result).toEqual({
+      projectId: 'proj-1',
+      apiKeys: mockApiKeysData
+    });
+  });
+
+  it('returns empty apiKeys array when query returns null data', async () => {
+    mockLoaderOrder.mockResolvedValueOnce({ data: null });
+
+    const { load } = await import('./+page.server');
+
+    const result = await load({
+      parent: vi.fn().mockResolvedValue({ projects: [{ id: 'proj-1' }] }),
+      cookies: {} as never
+    } as never);
+
+    expect(result).toEqual({
+      projectId: 'proj-1',
+      apiKeys: []
+    });
+  });
+});
 
 describe('Connections Page', () => {
   beforeEach(() => {

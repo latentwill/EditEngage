@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import type { WorkflowReviewMode, DestinationType } from '$lib/types/database';
   import StepName from './wizard/StepName.svelte';
   import StepAgents from './wizard/StepAgents.svelte';
@@ -61,6 +62,8 @@
   let nameError = $state<string | null>(null);
   let agentsError = $state<string | null>(null);
   let configError = $state<string | null>(null);
+  let saveError = $state<string | null>(null);
+  let saving = $state(false);
 
   function validateStep(): boolean {
     if (currentStep === 1) {
@@ -143,7 +146,11 @@
   }
 
   async function handleSave() {
+    saveError = null;
+    saving = true;
+
     const body = {
+      project_id: projectId,
       name: workflowName,
       description: workflowDescription,
       steps: selectedAgents.map((agent) => ({
@@ -155,11 +162,23 @@
       destination: selectedDestination
     };
 
-    await fetch('/api/v1/workflows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    try {
+      const response = await fetch('/api/v1/workflows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        await goto('/dashboard/workflows');
+      } else {
+        saveError = 'Failed to save workflow. Please try again.';
+        saving = false;
+      }
+    } catch {
+      saveError = 'Failed to save workflow. Please try again.';
+      saving = false;
+    }
   }
 </script>
 
@@ -246,10 +265,17 @@
         type="button"
         data-testid="wizard-save-btn"
         onclick={handleSave}
+        disabled={saving}
         class="btn btn-primary"
       >
-        Save Workflow
+        {saving ? 'Saving...' : 'Save Workflow'}
       </button>
     {/if}
   </div>
+
+  {#if saveError}
+    <div data-testid="wizard-save-error" class="text-red-400 text-sm mt-2">
+      {saveError}
+    </div>
+  {/if}
 </div>

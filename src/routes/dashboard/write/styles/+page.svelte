@@ -1,5 +1,5 @@
 <script lang="ts">
-  let { data }: { data: { writingStyles: Array<{
+  let { data }: { data: { projectId: string; writingStyles: Array<{
     id: string;
     project_id: string;
     name: string;
@@ -36,7 +36,8 @@
         tone,
         voice_guidelines: voiceGuidelines,
         avoid_phrases: phrasesArray,
-        example_content: exampleContent
+        example_content: exampleContent,
+        project_id: data.projectId
       })
     });
 

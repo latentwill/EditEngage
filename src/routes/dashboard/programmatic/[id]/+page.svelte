@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import DOMPurify from 'isomorphic-dompurify';
+
   type DataSource = {
     columns: string[];
     rows: Record<string, string>[];
@@ -27,6 +30,8 @@
   let variables = $state<string[]>(data.template?.variables ?? []);
   let dataSource = $state<DataSource | null>(data.template?.data_source ?? null);
   let slugError = $state('');
+  let saveError = $state('');
+  let saving = $state(false);
   let showPreview = $state(false);
 
   const slugPlaceholder = 'e.g. /best-{service}-in-{city}';
@@ -84,11 +89,14 @@
 
   async function handleSave() {
     slugError = '';
+    saveError = '';
 
     if (!validateSlugPattern(slugPattern)) {
       slugError = slugErrorMessage;
       return;
     }
+
+    saving = true;
 
     const payload = {
       name,
@@ -102,19 +110,23 @@
       } : undefined
     };
 
-    await fetch('/api/v1/templates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  }
+    try {
+      const response = await fetch('/api/v1/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-  function sanitizeHtml(html: string): string {
-    return html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
-      .replace(/on\w+\s*=\s*'[^']*'/gi, '')
-      .replace(/javascript:/gi, '');
+      if (response.ok) {
+        await goto('/dashboard/programmatic');
+      } else {
+        saveError = 'Failed to save template. Please try again.';
+        saving = false;
+      }
+    } catch {
+      saveError = 'Failed to save template. Please try again.';
+      saving = false;
+    }
   }
 
   let previewHtml = $derived(
@@ -205,11 +217,18 @@
       </button>
       <button
         onclick={handleSave}
+        disabled={saving}
         class="btn btn-primary btn-sm"
       >
-        Save Template
+        {saving ? 'Saving...' : 'Save Template'}
       </button>
     </div>
+
+    {#if saveError}
+      <div data-testid="template-save-error" class="text-red-400 text-sm mt-2">
+        {saveError}
+      </div>
+    {/if}
   </div>
 
   {#if showPreview}
@@ -219,7 +238,7 @@
     >
       <h2 class="text-sm font-semibold text-base-content/60 uppercase tracking-wide mb-3">Preview</h2>
       <div class="prose prose-invert text-sm">
-        {@html sanitizeHtml(previewHtml)}
+        {@html DOMPurify.sanitize(previewHtml)}
       </div>
     </div>
   {/if}
