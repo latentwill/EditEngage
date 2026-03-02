@@ -29,7 +29,7 @@ interface WritingStyle {
   name: string;
   tone: string;
   avoid_phrases: string[];
-  guidelines: string;
+  voice_guidelines: string;
 }
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
@@ -43,6 +43,9 @@ interface SupabaseClient {
     };
   };
 }
+
+const OPENROUTER_COMPLETIONS_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-20250514';
 
 export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
   type = AgentType.SEO_WRITER;
@@ -59,7 +62,11 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
     input: SeoWriterInput,
     config?: SeoWriterConfig
   ): Promise<SeoWriterOutput> {
-    const cfg = config ?? { writingStyleId: '', serpResearch: false, openrouterApiKey: '' };
+    const cfg: SeoWriterConfig = config ?? {
+      writingStyleId: '',
+      serpResearch: false,
+      openrouterApiKey: ''
+    };
 
     // Fetch writing style
     const { data: writingStyle } = await this.supabase
@@ -81,15 +88,14 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
     // Build prompt
     const prompt = this.buildPrompt(input, writingStyle, serpAnalysis);
 
-    // Call OpenRouter
-    const response = await this.fetchFn('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await this.fetchFn(OPENROUTER_COMPLETIONS_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${cfg.openrouterApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'anthropic/claude-sonnet-4-20250514',
+        model: DEFAULT_MODEL,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -105,8 +111,9 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
     let content: SeoWriterOutput;
     try {
       content = JSON.parse(data.choices[0].message.content) as SeoWriterOutput;
-    } catch (parseError) {
-      throw new Error(`Failed to parse LLM response as JSON: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+    } catch (cause) {
+      const reason = cause instanceof Error ? cause.message : String(cause);
+      throw new Error(`Failed to parse LLM response as JSON: ${reason}`);
     }
 
     return {
@@ -133,7 +140,7 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
 
     if (writingStyle) {
       parts.push(`Tone: ${writingStyle.tone}`);
-      parts.push(`Guidelines: ${writingStyle.guidelines}`);
+      parts.push(`Guidelines: ${writingStyle.voice_guidelines}`);
       if (writingStyle.avoid_phrases.length > 0) {
         parts.push(`AVOID these phrases: ${writingStyle.avoid_phrases.join(', ')}`);
       }

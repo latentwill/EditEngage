@@ -1,12 +1,20 @@
 import { Worker } from 'bullmq';
 import { PipelineOrchestrator } from '@editengage/agents/orchestrator';
+import { TopicQueueAgent } from '@editengage/agents/topic-queue/topic-queue.agent';
+import { VarietyEngineAgent } from '@editengage/agents/variety-engine/variety-engine.agent';
+import { SeoWriterAgent } from '@editengage/agents/seo-writer/seo-writer.agent';
+import { GhostPublisherAgent } from '@editengage/agents/ghost-publisher/ghost-publisher.agent';
+import { PostBridgePublisherAgent } from '@editengage/agents/postbridge-publisher/postbridge-publisher.agent';
+import { EmailPublisherAgent } from '@editengage/agents/email-publisher/email-publisher.agent';
+import { ResearchAgent } from '@editengage/agents/research/research.agent';
+import { ProgrammaticPageAgent } from '@editengage/agents/programmatic-page/programmatic-page.agent';
 import { createQueue } from './queue';
 import type { QueueInstance } from './queue';
 
 export interface PipelineJobData {
-  pipelineId: string;
-  pipelineRunId: string;
-  steps: Array<{ agentType: string; config: Record<string, unknown> }>;
+  readonly pipelineId: string;
+  readonly pipelineRunId: string;
+  readonly steps: ReadonlyArray<{ agentType: string; config: Record<string, unknown> }>;
 }
 
 interface SupabaseClient {
@@ -17,69 +25,128 @@ interface SupabaseClient {
   };
 }
 
+type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
+
+export interface AgentDeps {
+  readonly supabase: SupabaseClient;
+  readonly fetchFn: FetchFn;
+}
+
 interface JobPayload {
-  data: PipelineJobData;
+  readonly data: PipelineJobData;
 }
 
 interface FailedJob {
-  id: string;
-  data: PipelineJobData;
-  attemptsMade: number;
-  opts: { attempts: number };
+  readonly id: string;
+  readonly data: PipelineJobData;
+  readonly attemptsMade: number;
+  readonly opts: { readonly attempts: number };
+}
+
+interface PipelineAgent {
+  readonly type: string;
+  execute(input: unknown, config?: Record<string, unknown>): Promise<unknown>;
+  validate(config: Record<string, unknown>): { valid: boolean; errors?: string[] };
+}
+
+type AgentConstructorArg<T extends new (...args: never[]) => unknown> = ConstructorParameters<T>[0];
+type AgentConstructorArg2<T extends new (...args: never[]) => unknown> = ConstructorParameters<T>[1];
+
+export function createAgentFromStep(
+  step: { agentType: string; config: Record<string, unknown> },
+  deps: AgentDeps
+): PipelineAgent {
+  const { supabase, fetchFn } = deps;
+
+  switch (step.agentType) {
+    case 'topic_queue':
+      return new TopicQueueAgent(supabase as AgentConstructorArg<typeof TopicQueueAgent>);
+    case 'variety_engine':
+      return new VarietyEngineAgent(supabase as AgentConstructorArg<typeof VarietyEngineAgent>);
+    case 'seo_writer':
+      return new SeoWriterAgent(
+        supabase as AgentConstructorArg<typeof SeoWriterAgent>,
+        fetchFn as AgentConstructorArg2<typeof SeoWriterAgent>
+      );
+    case 'ghost_publisher':
+      return new GhostPublisherAgent(fetchFn as AgentConstructorArg<typeof GhostPublisherAgent>);
+    case 'postbridge_publisher':
+      return new PostBridgePublisherAgent(fetchFn as AgentConstructorArg<typeof PostBridgePublisherAgent>);
+    case 'email_publisher':
+      return new EmailPublisherAgent(
+        (() => { throw new Error('Email transporter not configured'); }) as AgentConstructorArg<typeof EmailPublisherAgent>
+      );
+    case 'research_agent':
+      return new ResearchAgent({
+        providers: [],
+        synthesizer: async (citations: unknown[]) => citations.map(String).join('\n')
+      } as AgentConstructorArg<typeof ResearchAgent>);
+    case 'programmatic_page':
+      return new ProgrammaticPageAgent(
+        (async () => '') as AgentConstructorArg<typeof ProgrammaticPageAgent>,
+        { publish: async () => ({ ghostPostId: '', slug: '', url: '' }) } as AgentConstructorArg2<typeof ProgrammaticPageAgent>
+      );
+    default:
+      throw new Error(`Unsupported agent type: ${step.agentType}`);
+  }
+}
+
+const QUEUE_NAME = 'editengage-pipeline';
+const PIPELINE_RUNS_TABLE = 'pipeline_runs';
+
+function getRedisConnection(): { host: string; port: number; password: string | undefined } {
+  return {
+    host: process.env.REDIS_HOST ?? 'localhost',
+    port: Number(process.env.REDIS_PORT ?? 6379),
+    password: process.env.REDIS_PASSWORD
+  };
+}
+
+function toErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
 }
 
 export function createWorker(supabase: SupabaseClient): void {
   const orchestrator = new PipelineOrchestrator(supabase);
   const dlq: QueueInstance = createQueue();
+  const deps: AgentDeps = { supabase, fetchFn: globalThis.fetch };
 
   const worker = new Worker(
-    'editengage-pipeline',
+    QUEUE_NAME,
     async (job: unknown) => {
       const { data } = job as JobPayload;
+      const { pipelineRunId, steps } = data;
 
       await supabase
-        .from('pipeline_runs')
+        .from(PIPELINE_RUNS_TABLE)
         .update({ status: 'running' })
-        .eq('id', data.pipelineRunId);
+        .eq('id', pipelineRunId);
 
-      const agents = data.steps.map((step) => ({
-        type: step.agentType as string,
-        execute: async (input: unknown) => input,
-        validate: () => ({ valid: true as const })
-      }));
+      const agents = steps.map((step) => createAgentFromStep(step, deps));
 
       try {
         const result = await orchestrator.run({
-          pipelineRunId: data.pipelineRunId,
+          pipelineRunId,
           agents: agents as Parameters<typeof orchestrator.run>[0]['agents'],
           initialInput: {}
         });
 
         await supabase
-          .from('pipeline_runs')
-          .update({ status: 'completed' })
-          .eq('id', data.pipelineRunId);
+          .from(PIPELINE_RUNS_TABLE)
+          .update({ status: 'completed', result })
+          .eq('id', pipelineRunId);
 
         return result;
       } catch (err) {
         await supabase
-          .from('pipeline_runs')
-          .update({
-            status: 'failed',
-            error: err instanceof Error ? err.message : String(err)
-          })
-          .eq('id', data.pipelineRunId);
+          .from(PIPELINE_RUNS_TABLE)
+          .update({ status: 'failed', error: toErrorMessage(err) })
+          .eq('id', pipelineRunId);
 
         throw err;
       }
     },
-    {
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: Number(process.env.REDIS_PORT ?? 6379),
-        password: process.env.REDIS_PASSWORD
-      }
-    }
+    { connection: getRedisConnection() }
   );
 
   worker.on('failed', async (job: unknown, err: Error) => {

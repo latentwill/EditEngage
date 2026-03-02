@@ -1,8 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock bullmq before importing anything that uses it
-const mockQueueAdd = vi.fn();
-const mockWorkerOn = vi.fn();
+// Hoisted mocks - these are available inside vi.mock factories
+const {
+  mockQueueAdd,
+  mockWorkerOn,
+  mockOrchestratorRun,
+  MockTopicQueueAgent,
+  MockVarietyEngineAgent,
+  MockSeoWriterAgent,
+  MockGhostPublisherAgent,
+  MockPostBridgePublisherAgent,
+  MockEmailPublisherAgent,
+  MockResearchAgent,
+  MockProgrammaticPageAgent
+} = vi.hoisted(() => ({
+  mockQueueAdd: vi.fn(),
+  mockWorkerOn: vi.fn(),
+  mockOrchestratorRun: vi.fn(),
+  MockTopicQueueAgent: vi.fn(),
+  MockVarietyEngineAgent: vi.fn(),
+  MockSeoWriterAgent: vi.fn(),
+  MockGhostPublisherAgent: vi.fn(),
+  MockPostBridgePublisherAgent: vi.fn(),
+  MockEmailPublisherAgent: vi.fn(),
+  MockResearchAgent: vi.fn(),
+  MockProgrammaticPageAgent: vi.fn()
+}));
+
 let capturedWorkerProcessor: ((job: unknown) => Promise<unknown>) | null = null;
 
 vi.mock('bullmq', () => {
@@ -19,8 +43,6 @@ vi.mock('bullmq', () => {
   };
 });
 
-// Mock the orchestrator
-const mockOrchestratorRun = vi.fn();
 vi.mock('@editengage/agents/orchestrator', () => {
   return {
     PipelineOrchestrator: vi.fn().mockImplementation(() => ({
@@ -29,9 +51,44 @@ vi.mock('@editengage/agents/orchestrator', () => {
   };
 });
 
+vi.mock('@editengage/agents/topic-queue/topic-queue.agent', () => ({
+  TopicQueueAgent: MockTopicQueueAgent
+}));
+vi.mock('@editengage/agents/variety-engine/variety-engine.agent', () => ({
+  VarietyEngineAgent: MockVarietyEngineAgent
+}));
+vi.mock('@editengage/agents/seo-writer/seo-writer.agent', () => ({
+  SeoWriterAgent: MockSeoWriterAgent
+}));
+vi.mock('@editengage/agents/ghost-publisher/ghost-publisher.agent', () => ({
+  GhostPublisherAgent: MockGhostPublisherAgent
+}));
+vi.mock('@editengage/agents/postbridge-publisher/postbridge-publisher.agent', () => ({
+  PostBridgePublisherAgent: MockPostBridgePublisherAgent
+}));
+vi.mock('@editengage/agents/email-publisher/email-publisher.agent', () => ({
+  EmailPublisherAgent: MockEmailPublisherAgent
+}));
+vi.mock('@editengage/agents/research/research.agent', () => ({
+  ResearchAgent: MockResearchAgent
+}));
+vi.mock('@editengage/agents/programmatic-page/programmatic-page.agent', () => ({
+  ProgrammaticPageAgent: MockProgrammaticPageAgent
+}));
+
 import { createQueue, addPipelineJob } from './queue';
-import { createWorker } from './worker';
+import { createWorker, createAgentFromStep } from './worker';
 import type { PipelineJobData } from './worker';
+
+function createMockSupabase() {
+  const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
+  const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
+  return {
+    instance: { from: vi.fn().mockReturnValue({ update: updateFn }) },
+    updateFn,
+    eqFn
+  };
+}
 
 describe('BullMQ Queue & Worker', () => {
   beforeEach(() => {
@@ -71,23 +128,16 @@ describe('BullMQ Queue & Worker', () => {
   });
 
   it('worker picks up a job and calls the pipeline orchestrator', async () => {
-    const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
-    const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({ update: updateFn })
-    };
+    const { instance } = createMockSupabase();
     mockOrchestratorRun.mockResolvedValue({ status: 'completed', steps: [{ result: true }] });
 
-    createWorker(mockSupabase);
-
+    createWorker(instance);
     expect(capturedWorkerProcessor).not.toBeNull();
 
     const mockJob: PipelineJobData = {
       pipelineId: 'pipeline-1',
       pipelineRunId: 'run-1',
-      steps: [
-        { agentType: 'topic_queue', config: {} }
-      ]
+      steps: [{ agentType: 'topic_queue', config: {} }]
     };
 
     await capturedWorkerProcessor!({ data: mockJob });
@@ -102,14 +152,10 @@ describe('BullMQ Queue & Worker', () => {
   });
 
   it('worker updates pipeline_runs status to running when job starts', async () => {
-    const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
-    const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({ update: updateFn })
-    };
+    const { instance, updateFn, eqFn } = createMockSupabase();
     mockOrchestratorRun.mockResolvedValue({ status: 'completed', steps: [] });
 
-    createWorker(mockSupabase);
+    createWorker(instance);
 
     const mockJob: PipelineJobData = {
       pipelineId: 'pipeline-1',
@@ -119,7 +165,7 @@ describe('BullMQ Queue & Worker', () => {
 
     await capturedWorkerProcessor!({ data: mockJob });
 
-    expect(mockSupabase.from).toHaveBeenCalledWith('pipeline_runs');
+    expect(instance.from).toHaveBeenCalledWith('pipeline_runs');
     expect(updateFn).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'running' })
     );
@@ -127,14 +173,10 @@ describe('BullMQ Queue & Worker', () => {
   });
 
   it('worker updates pipeline_runs status to completed on success', async () => {
-    const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
-    const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({ update: updateFn })
-    };
+    const { instance, updateFn } = createMockSupabase();
     mockOrchestratorRun.mockResolvedValue({ status: 'completed', steps: [{ result: true }] });
 
-    createWorker(mockSupabase);
+    createWorker(instance);
 
     const mockJob: PipelineJobData = {
       pipelineId: 'pipeline-1',
@@ -144,21 +186,16 @@ describe('BullMQ Queue & Worker', () => {
 
     await capturedWorkerProcessor!({ data: mockJob });
 
-    // Should have been called with 'completed' status
     expect(updateFn).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'completed' })
     );
   });
 
   it('worker updates pipeline_runs status to failed on error', async () => {
-    const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
-    const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({ update: updateFn })
-    };
+    const { instance, updateFn } = createMockSupabase();
     mockOrchestratorRun.mockRejectedValue(new Error('Orchestrator exploded'));
 
-    createWorker(mockSupabase);
+    createWorker(instance);
 
     const mockJob: PipelineJobData = {
       pipelineId: 'pipeline-1',
@@ -193,12 +230,8 @@ describe('BullMQ Queue & Worker', () => {
   });
 
   it('worker moves permanently failed jobs to dead-letter queue', async () => {
-    const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
-    const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({ update: updateFn })
-    };
-    createWorker(mockSupabase);
+    const { instance } = createMockSupabase();
+    createWorker(instance);
 
     const failedHandler = mockWorkerOn.mock.calls.find(
       (call: unknown[]) => call[0] === 'failed'
@@ -224,5 +257,171 @@ describe('BullMQ Queue & Worker', () => {
         error: 'permanent failure'
       })
     );
+  });
+});
+
+describe('createAgentFromStep - maps agentType to real agent classes', () => {
+  const mockSupabase = {
+    from: vi.fn().mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: null, error: null })
+      })
+    })
+  };
+  const mockFetch = vi.fn();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('creates a TopicQueueAgent for topic_queue agentType', () => {
+    const mockInstance = { type: 'topic_queue' };
+    MockTopicQueueAgent.mockImplementation(() => mockInstance);
+
+    const agent = createAgentFromStep(
+      { agentType: 'topic_queue', config: {} },
+      { supabase: mockSupabase, fetchFn: mockFetch }
+    );
+
+    expect(MockTopicQueueAgent).toHaveBeenCalledWith(mockSupabase);
+    expect(agent).toBe(mockInstance);
+  });
+
+  it('creates a VarietyEngineAgent for variety_engine agentType', () => {
+    const mockInstance = { type: 'variety_engine' };
+    MockVarietyEngineAgent.mockImplementation(() => mockInstance);
+
+    const agent = createAgentFromStep(
+      { agentType: 'variety_engine', config: {} },
+      { supabase: mockSupabase, fetchFn: mockFetch }
+    );
+
+    expect(MockVarietyEngineAgent).toHaveBeenCalledWith(mockSupabase);
+    expect(agent).toBe(mockInstance);
+  });
+
+  it('creates a SeoWriterAgent for seo_writer agentType', () => {
+    const mockInstance = { type: 'seo_writer' };
+    MockSeoWriterAgent.mockImplementation(() => mockInstance);
+
+    const agent = createAgentFromStep(
+      { agentType: 'seo_writer', config: {} },
+      { supabase: mockSupabase, fetchFn: mockFetch }
+    );
+
+    expect(MockSeoWriterAgent).toHaveBeenCalledWith(mockSupabase, mockFetch);
+    expect(agent).toBe(mockInstance);
+  });
+
+  it('creates a GhostPublisherAgent for ghost_publisher agentType', () => {
+    const mockInstance = { type: 'ghost_publisher' };
+    MockGhostPublisherAgent.mockImplementation(() => mockInstance);
+
+    const agent = createAgentFromStep(
+      { agentType: 'ghost_publisher', config: {} },
+      { supabase: mockSupabase, fetchFn: mockFetch }
+    );
+
+    expect(MockGhostPublisherAgent).toHaveBeenCalledWith(mockFetch);
+    expect(agent).toBe(mockInstance);
+  });
+
+  it('creates a PostBridgePublisherAgent for postbridge_publisher agentType', () => {
+    const mockInstance = { type: 'postbridge_publisher' };
+    MockPostBridgePublisherAgent.mockImplementation(() => mockInstance);
+
+    const agent = createAgentFromStep(
+      { agentType: 'postbridge_publisher', config: {} },
+      { supabase: mockSupabase, fetchFn: mockFetch }
+    );
+
+    expect(MockPostBridgePublisherAgent).toHaveBeenCalledWith(mockFetch);
+    expect(agent).toBe(mockInstance);
+  });
+
+  it('creates a ResearchAgent for research_agent agentType', () => {
+    const mockInstance = { type: 'research_agent' };
+    MockResearchAgent.mockImplementation(() => mockInstance);
+
+    const agent = createAgentFromStep(
+      { agentType: 'research_agent', config: {} },
+      { supabase: mockSupabase, fetchFn: mockFetch }
+    );
+
+    expect(MockResearchAgent).toHaveBeenCalledWith(
+      expect.objectContaining({ providers: [], synthesizer: expect.any(Function) })
+    );
+    expect(agent).toBe(mockInstance);
+  });
+
+  it('throws for unsupported agentType', () => {
+    expect(() =>
+      createAgentFromStep(
+        { agentType: 'nonexistent_agent', config: {} },
+        { supabase: mockSupabase, fetchFn: mockFetch }
+      )
+    ).toThrow('Unsupported agent type: nonexistent_agent');
+  });
+});
+
+describe('Worker wires real agents via createAgentFromStep', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedWorkerProcessor = null;
+  });
+
+  it('passes real agent instances to the orchestrator when processing a job', async () => {
+    const { instance } = createMockSupabase();
+    const mockAgentInstance = { type: 'topic_queue', execute: vi.fn(), validate: vi.fn() };
+    MockTopicQueueAgent.mockImplementation(() => mockAgentInstance);
+    mockOrchestratorRun.mockResolvedValue({ status: 'completed', steps: [{}] });
+
+    createWorker(instance);
+
+    const mockJob: PipelineJobData = {
+      pipelineId: 'pipeline-1',
+      pipelineRunId: 'run-1',
+      steps: [{ agentType: 'topic_queue', config: {} }]
+    };
+
+    await capturedWorkerProcessor!({ data: mockJob });
+
+    // The orchestrator should receive the real agent instance, not the identity stub
+    const orchestratorCall = mockOrchestratorRun.mock.calls[0][0];
+    expect(orchestratorCall.agents[0]).toBe(mockAgentInstance);
+  });
+});
+
+describe('Worker persists pipeline result on completion', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedWorkerProcessor = null;
+  });
+
+  it('stores orchestrator result in pipeline_runs.result on completion', async () => {
+    const { instance, updateFn } = createMockSupabase();
+    const pipelineResult = { status: 'completed' as const, steps: [{ title: 'My Article' }] };
+    mockOrchestratorRun.mockResolvedValue(pipelineResult);
+
+    createWorker(instance);
+
+    const mockJob: PipelineJobData = {
+      pipelineId: 'pipeline-1',
+      pipelineRunId: 'run-1',
+      steps: [{ agentType: 'topic_queue', config: {} }]
+    };
+
+    MockTopicQueueAgent.mockImplementation(() => ({
+      type: 'topic_queue', execute: vi.fn(), validate: vi.fn()
+    }));
+
+    await capturedWorkerProcessor!({ data: mockJob });
+
+    // The completion update should include the result
+    const completionCall = updateFn.mock.calls.find(
+      (call: unknown[]) => (call[0] as Record<string, unknown>).status === 'completed'
+    );
+    expect(completionCall).toBeDefined();
+    expect((completionCall![0] as Record<string, unknown>).result).toEqual(pipelineResult);
   });
 });

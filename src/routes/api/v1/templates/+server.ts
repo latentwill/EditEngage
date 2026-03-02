@@ -48,9 +48,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       slug_pattern,
       layout: layout ?? null,
       sections: sections ?? [],
-      seo_config: seo_config ?? null,
+      seo_config: seo_config ?? {},
       data_source_type: data_source_type ?? null,
-      data_source_config: data_source_config ?? null
+      data_source_config: data_source_config ?? {}
     })
     .select()
     .single();
