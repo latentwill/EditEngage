@@ -32,9 +32,10 @@ export function createResearchStore(client: Client): ResearchStore {
     }
 
     if (providerFilter) {
-      filtered = filtered.filter(q =>
-        q.provider_chain.some(entry => entry.provider === providerFilter)
-      );
+      filtered = filtered.filter(q => {
+        const chain = q.provider_chain as { provider: string; role: string }[] | null;
+        return chain?.some((entry: { provider: string; role: string }) => entry.provider === providerFilter) ?? false;
+      });
     }
 
     queries = filtered;

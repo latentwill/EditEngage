@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, ContentStatus } from '../types/database.js';
+import type { Database, ContentStatus, Json } from '../types/database.js';
 
 type Client = SupabaseClient<Database>;
 
@@ -19,7 +19,7 @@ export interface EditorStore {
   prev(): Promise<void>;
   saveContent(updates: {
     title?: string;
-    body?: Record<string, unknown>;
+    body?: Json;
     meta_description?: string;
     tags?: string[];
   }): Promise<void>;
@@ -74,7 +74,7 @@ export function createEditorStore(client: Client): EditorStore {
 
   async function saveContent(updates: {
     title?: string;
-    body?: Record<string, unknown>;
+    body?: Json;
     meta_description?: string;
     tags?: string[];
   }): Promise<void> {

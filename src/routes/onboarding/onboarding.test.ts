@@ -80,7 +80,7 @@ describe('Onboarding layout server', () => {
     const { load } = await import('./+layout.server.js');
 
     await expect(
-      load({ cookies: makeCookies() } as Parameters<typeof load>[0])
+      load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0])
     ).rejects.toMatchObject({ status: 303, location: '/dashboard' });
   });
 
@@ -93,7 +93,7 @@ describe('Onboarding layout server', () => {
 
     const { load } = await import('./+layout.server.js');
 
-    const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
+    const result = await load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0]);
     expect(result).toBeDefined();
   });
 });
@@ -115,7 +115,7 @@ describe('Onboarding page server load (GET)', () => {
     serviceClient = { auth: { getUser: vi.fn() }, from: vi.fn() };
 
     const { load } = await import('./+page.server.js');
-    const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
+    const result = await load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0]);
 
     expect(result).toBeDefined();
     // Must not touch the database on GET
@@ -155,7 +155,7 @@ describe('Onboarding page action (POST)', () => {
     const { actions } = await import('./+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 303, location: '/dashboard' });
 
     expect(serviceClient.from).toHaveBeenCalledWith('organization_members');
@@ -183,7 +183,7 @@ describe('Onboarding page action (POST)', () => {
     const { actions } = await import('./+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 303, location: '/dashboard' });
 
     // Should not create a duplicate org
@@ -205,7 +205,7 @@ describe('Onboarding page action (POST)', () => {
     const { actions } = await import('./+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 303, location: '/dashboard' });
 
     // Must not attempt to create a new org
@@ -231,7 +231,7 @@ describe('Onboarding page action (POST)', () => {
     const { actions } = await import('./+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 500 });
   });
 
@@ -260,7 +260,7 @@ describe('Onboarding page action (POST)', () => {
     const { actions } = await import('./+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 500 });
 
     expect(serviceClient.from).toHaveBeenCalledWith('organizations');

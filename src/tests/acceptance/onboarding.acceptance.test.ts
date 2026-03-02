@@ -90,7 +90,7 @@ describe('Dashboard layout: redirects to /onboarding when user has no org', () =
 
     const { load } = await import('../../routes/dashboard/+layout.server.js');
 
-    await expect(load({ cookies: makeCookies() } as Parameters<typeof load>[0])).rejects.toMatchObject({
+    await expect(load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0])).rejects.toMatchObject({
       status: 303,
       location: '/onboarding'
     });
@@ -111,7 +111,7 @@ describe('Dashboard layout: redirects to /onboarding when user has no org', () =
     serviceClient = { auth: { getUser: vi.fn() }, from: vi.fn() };
 
     const { load } = await import('../../routes/dashboard/+layout.server.js');
-    const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
+    const result = await load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0]);
 
     expect(result.orgId).toBe(orgId);
     expect(result.projects).toEqual([]);
@@ -137,7 +137,7 @@ describe('Onboarding layout: skips to /dashboard when org exists', () => {
 
     const { load } = await import('../../routes/onboarding/+layout.server.js');
 
-    await expect(load({ cookies: makeCookies() } as Parameters<typeof load>[0])).rejects.toMatchObject({
+    await expect(load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0])).rejects.toMatchObject({
       status: 303,
       location: '/dashboard'
     });
@@ -157,7 +157,7 @@ describe('Onboarding layout: skips to /dashboard when org exists', () => {
     const { load } = await import('../../routes/onboarding/+layout.server.js');
 
     // Should not throw — should return normally (empty object or void)
-    const result = await load({ cookies: makeCookies() } as Parameters<typeof load>[0]);
+    const result = await load({ cookies: makeCookies() } as unknown as Parameters<typeof load>[0]);
     expect(result).toBeDefined();
   });
 });
@@ -196,7 +196,7 @@ describe('Onboarding page action: creates org and redirects to /dashboard', () =
     const { actions } = await import('../../routes/onboarding/+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 303, location: '/dashboard' });
 
     // Verify service role client was used (not anon client)
@@ -230,7 +230,7 @@ describe('Onboarding page action: creates org and redirects to /dashboard', () =
     const { actions } = await import('../../routes/onboarding/+page.server.js');
 
     await expect(
-      actions.default({ cookies: makeCookies() } as Parameters<typeof actions.default>[0])
+      actions.default({ cookies: makeCookies() } as unknown as Parameters<typeof actions.default>[0])
     ).rejects.toMatchObject({ status: 500 });
   });
 });

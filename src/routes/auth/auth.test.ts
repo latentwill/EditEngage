@@ -210,7 +210,7 @@ describe('Protected Route Hook', () => {
 
     const mockResolve = vi.fn().mockResolvedValue(new Response('OK'));
 
-    const response = await handle({ event: mockEvent, resolve: mockResolve });
+    const response = await handle({ event: mockEvent as unknown as Parameters<typeof handle>[0]['event'], resolve: mockResolve });
 
     // Should redirect to login
     expect(response.status).toBe(303);
@@ -240,7 +240,7 @@ describe('Protected Route Hook', () => {
 
     const mockResolve = vi.fn().mockResolvedValue(new Response('OK'));
 
-    const response = await handle({ event: mockEvent, resolve: mockResolve });
+    const response = await handle({ event: mockEvent as unknown as Parameters<typeof handle>[0]['event'], resolve: mockResolve });
 
     expect(response.status).toBe(401);
     const body = await response.json();
@@ -270,7 +270,7 @@ describe('Protected Route Hook', () => {
 
     const mockResolve = vi.fn().mockResolvedValue(new Response('OK'));
 
-    const response = await handle({ event: mockEvent, resolve: mockResolve });
+    const response = await handle({ event: mockEvent as unknown as Parameters<typeof handle>[0]['event'], resolve: mockResolve });
 
     expect(response.status).toBe(200);
   });

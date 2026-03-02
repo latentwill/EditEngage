@@ -65,7 +65,7 @@
   const supabase = createSupabaseClient();
   const channel = supabase
     .channel(`workflow-runs-${workflow.id}`)
-    .on('postgres_changes', {
+    .on('postgres_changes' as any, {
       event: '*',
       schema: 'public',
       table: 'pipeline_runs',

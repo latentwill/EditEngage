@@ -1,9 +1,9 @@
 import { createServerSupabaseClient, createServiceRoleClient } from '$lib/server/supabase';
 import { redirect, error } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions } from './$types';
 
 // load only confirms the user is authenticated — no side effects on GET
-export const load: PageServerLoad = async ({ cookies }) => {
+export const load = async ({ cookies }: import('./$types').PageServerLoadEvent) => {
   const supabase = createServerSupabaseClient(cookies);
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 

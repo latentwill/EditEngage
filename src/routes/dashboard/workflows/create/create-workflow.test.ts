@@ -12,7 +12,12 @@ describe('Create Workflow Route', () => {
   it('renders WorkflowWizard component', () => {
     render(CreatePage, {
       props: {
-        data: { activeProjectId: 'proj-123' }
+        data: {
+          activeProjectId: 'proj-123',
+          projects: [],
+          orgId: 'org-1',
+          session: { user: { id: 'user-1', email: 'test@example.com' } }
+        }
       }
     });
 
