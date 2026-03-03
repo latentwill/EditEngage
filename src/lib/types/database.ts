@@ -397,27 +397,45 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          default_destination_types: string[]
+          default_writing_style_preset: string | null
+          enabled_modules: string[]
           id: string
           name: string
           owner_id: string
           settings: Json
+          tenant_type: string
+          ui_theme: Json
           updated_at: string
+          vocabulary_labels: Json
         }
         Insert: {
           created_at?: string
+          default_destination_types?: string[]
+          default_writing_style_preset?: string | null
+          enabled_modules?: string[]
           id?: string
           name: string
           owner_id: string
           settings?: Json
+          tenant_type?: string
+          ui_theme?: Json
           updated_at?: string
+          vocabulary_labels?: Json
         }
         Update: {
           created_at?: string
+          default_destination_types?: string[]
+          default_writing_style_preset?: string | null
+          enabled_modules?: string[]
           id?: string
           name?: string
           owner_id?: string
           settings?: Json
+          tenant_type?: string
+          ui_theme?: Json
           updated_at?: string
+          vocabulary_labels?: Json
         }
         Relationships: []
       }

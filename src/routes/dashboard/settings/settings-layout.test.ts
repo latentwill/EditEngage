@@ -35,6 +35,10 @@ describe('Settings Layout — Persistent Sub-Nav', () => {
     const connectionsLink = nav.querySelector('a[href="/dashboard/settings/connections"]');
     expect(connectionsLink).not.toBeNull();
     expect(connectionsLink?.textContent?.trim()).toContain('Connections');
+
+    const tenantLink = nav.querySelector('a[href="/dashboard/settings/tenant"]');
+    expect(tenantLink).not.toBeNull();
+    expect(tenantLink?.textContent?.trim()).toContain('Tenant Config');
   });
 
   it('highlights active sub-page based on data.currentPath', { timeout: 15000 }, async () => {
