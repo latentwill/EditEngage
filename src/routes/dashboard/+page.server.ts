@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from '$lib/server/supabase';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ parent, cookies }) => {
-  const { projects, session } = await parent();
+  const { projects } = await parent();
   const supabase = createServerSupabaseClient(cookies);
 
   const activeProjectId = projects[0]?.id ?? '';
@@ -16,7 +16,8 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       recentWorkflowRuns: [],
       contentInReview: [],
       topicQueueHealth: { pendingCount: 0, nextScheduledRun: null },
-      activeProjectId: ''
+      activeProjectId: '',
+      recentEvents: []
     };
   }
 
@@ -30,7 +31,8 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
     { count: activeWorkflows },
     { data: pipelineRuns },
     { data: contentInReview },
-    { count: pendingTopics }
+    { count: pendingTopics },
+    { data: recentEvents }
   ] = await Promise.all([
     supabase
       .from('content')
@@ -68,12 +70,18 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       .from('topic_queue')
       .select('*', { count: 'exact', head: true })
       .eq('project_id', activeProjectId)
-      .eq('status', 'pending')
+      .eq('status', 'pending'),
+    supabase
+      .from('events')
+      .select('*')
+      .eq('project_id', activeProjectId)
+      .order('created_at', { ascending: false })
+      .limit(50)
   ]);
 
-  const recentWorkflowRuns = (pipelineRuns ?? []).map((run: Record<string, unknown>) => ({
+  const recentWorkflowRuns = (pipelineRuns ?? []).map((run) => ({
     ...run,
-    pipeline_name: (run.pipelines as Record<string, unknown>)?.name ?? 'Unknown'
+    pipeline_name: (run.pipelines as { name: string } | null)?.name ?? 'Unknown'
   }));
 
   return {
@@ -87,6 +95,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       pendingCount: pendingTopics ?? 0,
       nextScheduledRun: null
     },
-    activeProjectId
+    activeProjectId,
+    recentEvents: recentEvents ?? []
   };
 };
