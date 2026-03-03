@@ -354,6 +354,156 @@ describe('Topics Page', () => {
     });
   });
 
+  it('variety memory parses canonical_line into labeled parts', async () => {
+    const TopicsPage = (await import('./+page.svelte')).default;
+
+    const pipeMemory = [
+      {
+        id: 'vm-pipe-1',
+        project_id: 'proj-1',
+        canonical_line: 'inform | diabetes | patient perspective',
+        content_id: null,
+        created_at: '2025-01-12T10:00:00Z'
+      }
+    ];
+
+    render(TopicsPage, {
+      props: {
+        data: {
+          topics: mockTopics,
+          varietyMemory: pipeMemory,
+          projectId: 'proj-1'
+        }
+      }
+    });
+
+    const varietyTab = screen.getByTestId('tab-variety-memory');
+    await fireEvent.click(varietyTab);
+
+    const item = screen.getByTestId('variety-memory-item');
+    expect(within(item).getByTestId('line-intent')).toHaveTextContent('Intent: inform');
+    expect(within(item).getByTestId('line-entity')).toHaveTextContent('Entity: diabetes');
+    expect(within(item).getByTestId('line-angle')).toHaveTextContent('Angle: patient perspective');
+  });
+
+  it('variety memory shows relative timestamps', async () => {
+    const TopicsPage = (await import('./+page.svelte')).default;
+
+    // Set "now" to a known time so we can assert relative text
+    const now = new Date('2025-01-14T10:00:00Z').getTime();
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+
+    const recentMemory = [
+      {
+        id: 'vm-recent',
+        project_id: 'proj-1',
+        canonical_line: 'inform | topic | angle',
+        content_id: null,
+        created_at: '2025-01-12T10:00:00Z' // 2 days before "now"
+      }
+    ];
+
+    render(TopicsPage, {
+      props: {
+        data: {
+          topics: mockTopics,
+          varietyMemory: recentMemory,
+          projectId: 'proj-1'
+        }
+      }
+    });
+
+    const varietyTab = screen.getByTestId('tab-variety-memory');
+    await fireEvent.click(varietyTab);
+
+    const item = screen.getByTestId('variety-memory-item');
+    expect(within(item).getByTestId('relative-time')).toHaveTextContent('2 days ago');
+
+    vi.restoreAllMocks();
+  });
+
+  it('variety memory shows explanatory info text', async () => {
+    const TopicsPage = (await import('./+page.svelte')).default;
+
+    render(TopicsPage, {
+      props: {
+        data: {
+          topics: mockTopics,
+          varietyMemory: mockVarietyMemory,
+          projectId: 'proj-1'
+        }
+      }
+    });
+
+    const varietyTab = screen.getByTestId('tab-variety-memory');
+    await fireEvent.click(varietyTab);
+
+    const info = screen.getByTestId('variety-memory-info');
+    expect(info).toBeInTheDocument();
+    expect(info.textContent).toContain('tracks');
+    expect(info.textContent).toContain('fresh');
+  });
+
+  it('variety memory shows entry count', async () => {
+    const TopicsPage = (await import('./+page.svelte')).default;
+
+    const threeItems = [
+      { id: 'vm-a', project_id: 'proj-1', canonical_line: 'a | b | c', content_id: null, created_at: '2025-01-12T10:00:00Z' },
+      { id: 'vm-b', project_id: 'proj-1', canonical_line: 'd | e | f', content_id: null, created_at: '2025-01-11T10:00:00Z' },
+      { id: 'vm-c', project_id: 'proj-1', canonical_line: 'g | h | i', content_id: null, created_at: '2025-01-10T10:00:00Z' }
+    ];
+
+    render(TopicsPage, {
+      props: {
+        data: {
+          topics: mockTopics,
+          varietyMemory: threeItems,
+          projectId: 'proj-1'
+        }
+      }
+    });
+
+    const varietyTab = screen.getByTestId('tab-variety-memory');
+    await fireEvent.click(varietyTab);
+
+    expect(screen.getByTestId('variety-memory-count')).toHaveTextContent('3 entries');
+  });
+
+  it('variety memory handles single-part canonical_line gracefully', async () => {
+    const TopicsPage = (await import('./+page.svelte')).default;
+
+    const singlePartMemory = [
+      {
+        id: 'vm-single',
+        project_id: 'proj-1',
+        canonical_line: 'just some text',
+        content_id: null,
+        created_at: '2025-01-12T10:00:00Z'
+      }
+    ];
+
+    render(TopicsPage, {
+      props: {
+        data: {
+          topics: mockTopics,
+          varietyMemory: singlePartMemory,
+          projectId: 'proj-1'
+        }
+      }
+    });
+
+    const varietyTab = screen.getByTestId('tab-variety-memory');
+    await fireEvent.click(varietyTab);
+
+    const item = screen.getByTestId('variety-memory-item');
+    // Should render without crashing - show the raw text in canonical-line
+    expect(within(item).getByTestId('canonical-line')).toHaveTextContent('just some text');
+    // Should NOT have labeled parts since there are no pipes
+    expect(within(item).queryByTestId('line-intent')).not.toBeInTheDocument();
+    expect(within(item).queryByTestId('line-entity')).not.toBeInTheDocument();
+    expect(within(item).queryByTestId('line-angle')).not.toBeInTheDocument();
+  });
+
   it('variety memory viewer shows canonical lines with linked content', async () => {
     const TopicsPage = (await import('./+page.svelte')).default;
 

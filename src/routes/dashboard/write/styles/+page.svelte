@@ -17,6 +17,10 @@
   let voiceGuidelines = $state('');
   let avoidPhrases = $state('');
   let exampleContent = $state('');
+  let structuralTemplate = $state('');
+  let vocabularyLevel = $state('');
+  let pointOfView = $state('');
+  let antiPatterns = $state('');
 
   function openForm() {
     showForm = true;
@@ -24,6 +28,11 @@
 
   async function handleSave() {
     const phrasesArray = avoidPhrases
+      .split(',')
+      .map((p: string) => p.trim())
+      .filter((p: string) => p.length > 0);
+
+    const antiPatternsArray = antiPatterns
       .split(',')
       .map((p: string) => p.trim())
       .filter((p: string) => p.length > 0);
@@ -37,6 +46,10 @@
         voice_guidelines: voiceGuidelines,
         avoid_phrases: phrasesArray,
         example_content: exampleContent,
+        structural_template: structuralTemplate,
+        vocabulary_level: vocabularyLevel,
+        point_of_view: pointOfView,
+        anti_patterns: antiPatternsArray,
         project_id: data.projectId
       })
     });
@@ -82,6 +95,37 @@
 
       <label class="block text-sm text-base-content/80 mb-1" for="style-example">Example Content</label>
       <textarea id="style-example" class="textarea textarea-bordered w-full" bind:value={exampleContent}></textarea>
+
+      <label class="block text-sm text-base-content/80 mb-1" for="structural-template">Structural Template</label>
+      <select id="structural-template" data-testid="structural-template-select" class="select select-bordered w-full" bind:value={structuralTemplate}>
+        <option value="">None</option>
+        <option value="listicle">Listicle</option>
+        <option value="long-form">Long-form</option>
+        <option value="thread">Thread</option>
+        <option value="clinical-summary">Clinical Summary</option>
+        <option value="how-to">How-to</option>
+        <option value="comparison">Comparison</option>
+      </select>
+
+      <label class="block text-sm text-base-content/80 mb-1" for="vocabulary-level">Vocabulary Level</label>
+      <select id="vocabulary-level" data-testid="vocabulary-level-select" class="select select-bordered w-full" bind:value={vocabularyLevel}>
+        <option value="">None</option>
+        <option value="technical">Technical</option>
+        <option value="professional">Professional</option>
+        <option value="accessible">Accessible</option>
+        <option value="casual">Casual</option>
+      </select>
+
+      <label class="block text-sm text-base-content/80 mb-1" for="pov">Point of View</label>
+      <select id="pov" data-testid="pov-select" class="select select-bordered w-full" bind:value={pointOfView}>
+        <option value="">None</option>
+        <option value="first-person">First Person</option>
+        <option value="second-person">Second Person</option>
+        <option value="third-person">Third Person</option>
+      </select>
+
+      <label class="block text-sm text-base-content/80 mb-1" for="anti-patterns">Anti-patterns</label>
+      <input id="anti-patterns" data-testid="anti-patterns-input" type="text" class="input input-bordered w-full" placeholder="e.g. no clickbait, avoid passive voice" bind:value={antiPatterns} />
 
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Save Style</button>

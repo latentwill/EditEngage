@@ -144,8 +144,97 @@ describe('Writing Styles handleSave sends project_id', () => {
         voice_guidelines: '',
         avoid_phrases: [],
         example_content: '',
+        structural_template: '',
+        vocabulary_level: '',
+        point_of_view: '',
+        anti_patterns: [],
         project_id: 'proj-1'
       })
     });
+  });
+});
+
+/**
+ * @behavior Enhanced writing style form shows fields for structural template,
+ * vocabulary level, point of view, and anti-patterns
+ * @business_rule Users can configure granular writing style parameters that
+ * control generated content structure, vocabulary, perspective, and patterns to avoid
+ */
+describe('Writing Styles - Enhanced Fields', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows structural template select when form is open', async () => {
+    render(WritingStylesPage, { props: { data: { writingStyles: [], projectId: 'p1' } } });
+    await fireEvent.click(screen.getByText('Create Style'));
+
+    const select = screen.getByTestId('structural-template-select');
+    expect(select).toBeInTheDocument();
+    // Verify options exist
+    expect(select.querySelector('option[value="listicle"]')).toBeTruthy();
+    expect(select.querySelector('option[value="long-form"]')).toBeTruthy();
+    expect(select.querySelector('option[value="how-to"]')).toBeTruthy();
+    expect(select.querySelector('option[value="comparison"]')).toBeTruthy();
+  });
+
+  it('shows vocabulary level select when form is open', async () => {
+    render(WritingStylesPage, { props: { data: { writingStyles: [], projectId: 'p1' } } });
+    await fireEvent.click(screen.getByText('Create Style'));
+
+    const select = screen.getByTestId('vocabulary-level-select');
+    expect(select).toBeInTheDocument();
+    expect(select.querySelector('option[value="technical"]')).toBeTruthy();
+    expect(select.querySelector('option[value="professional"]')).toBeTruthy();
+    expect(select.querySelector('option[value="accessible"]')).toBeTruthy();
+    expect(select.querySelector('option[value="casual"]')).toBeTruthy();
+  });
+
+  it('shows point of view select when form is open', async () => {
+    render(WritingStylesPage, { props: { data: { writingStyles: [], projectId: 'p1' } } });
+    await fireEvent.click(screen.getByText('Create Style'));
+
+    const select = screen.getByTestId('pov-select');
+    expect(select).toBeInTheDocument();
+    expect(select.querySelector('option[value="first-person"]')).toBeTruthy();
+    expect(select.querySelector('option[value="second-person"]')).toBeTruthy();
+    expect(select.querySelector('option[value="third-person"]')).toBeTruthy();
+  });
+
+  it('shows anti-patterns input when form is open', async () => {
+    render(WritingStylesPage, { props: { data: { writingStyles: [], projectId: 'p1' } } });
+    await fireEvent.click(screen.getByText('Create Style'));
+
+    const input = screen.getByTestId('anti-patterns-input');
+    expect(input).toBeInTheDocument();
+  });
+
+  it('handleSave sends enhanced fields in POST body', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ data: { id: 'style-new' } })
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+
+    render(WritingStylesPage, { props: { data: { writingStyles: [], projectId: 'proj-1' } } });
+    await fireEvent.click(screen.getByText('Create Style'));
+
+    // Fill required name
+    await fireEvent.input(screen.getByLabelText('Style Name'), { target: { value: 'Enhanced Style' } });
+
+    // Fill enhanced fields
+    await fireEvent.change(screen.getByTestId('structural-template-select'), { target: { value: 'listicle' } });
+    await fireEvent.change(screen.getByTestId('vocabulary-level-select'), { target: { value: 'technical' } });
+    await fireEvent.change(screen.getByTestId('pov-select'), { target: { value: 'second-person' } });
+    await fireEvent.input(screen.getByTestId('anti-patterns-input'), { target: { value: 'no clickbait, avoid passive voice' } });
+
+    await fireEvent.click(screen.getByText('Save Style'));
+
+    expect(fetchSpy).toHaveBeenCalled();
+    const callBody = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    expect(callBody.structural_template).toBe('listicle');
+    expect(callBody.vocabulary_level).toBe('technical');
+    expect(callBody.point_of_view).toBe('second-person');
+    expect(callBody.anti_patterns).toEqual(['no clickbait', 'avoid passive voice']);
   });
 });

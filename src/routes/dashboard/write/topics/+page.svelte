@@ -47,6 +47,29 @@
   // Local topics state for optimistic updates
   let localTopics = $state<TopicItem[]>(data.topics);
 
+  function parseCanonicalLine(line: string): { intent: string; entity: string; angle: string } | null {
+    const parts = line.split(' | ');
+    if (parts.length === 3) {
+      return { intent: parts[0], entity: parts[1], angle: parts[2] };
+    }
+    return null;
+  }
+
+  function relativeTime(dateStr: string): string {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diffMs = now - then;
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+    if (diffHours > 0) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+    if (diffMinutes > 0) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+    return 'just now';
+  }
+
   const statusColors: Record<TopicStatus, string> = {
     pending: 'badge-warning',
     in_progress: 'badge-info',
@@ -317,15 +340,32 @@
   <!-- Variety Memory Viewer -->
   {#if activeTab === 'variety-memory'}
     <div class="space-y-2">
+      <div data-testid="variety-memory-info" class="text-sm text-base-content/60 bg-base-200 rounded-lg p-3">
+        The variety engine tracks which content angles have been used. It avoids repeating the same approach to keep content fresh and diverse.
+      </div>
+
+      <div data-testid="variety-memory-count" class="text-xs text-base-content/40">
+        {data.varietyMemory.length} {data.varietyMemory.length === 1 ? 'entry' : 'entries'}
+      </div>
+
       {#each data.varietyMemory as memoryItem}
+        {@const parsed = parseCanonicalLine(memoryItem.canonical_line)}
         <div
           data-testid="variety-memory-item"
           class="card bg-base-200 shadow-xl p-4 hover:bg-base-300 transition-all duration-300"
         >
           <div class="flex items-center justify-between">
-            <span data-testid="canonical-line" class="text-sm text-base-content/80 italic">
-              "{memoryItem.canonical_line}"
-            </span>
+            <div class="flex items-center gap-2 flex-wrap">
+              {#if parsed}
+                <span data-testid="line-intent" class="badge badge-sm badge-outline">Intent: {parsed.intent}</span>
+                <span data-testid="line-entity" class="badge badge-sm badge-outline">Entity: {parsed.entity}</span>
+                <span data-testid="line-angle" class="badge badge-sm badge-outline">Angle: {parsed.angle}</span>
+              {:else}
+                <span data-testid="canonical-line" class="text-sm text-base-content/80 italic">
+                  "{memoryItem.canonical_line}"
+                </span>
+              {/if}
+            </div>
             <div class="flex items-center gap-3">
               {#if memoryItem.content_id}
                 <a
@@ -336,8 +376,8 @@
                   View Content
                 </a>
               {/if}
-              <span class="text-xs text-base-content/40">
-                {new Date(memoryItem.created_at).toLocaleDateString()}
+              <span data-testid="relative-time" class="text-xs text-base-content/40" title={new Date(memoryItem.created_at).toLocaleDateString()}>
+                {relativeTime(memoryItem.created_at)}
               </span>
             </div>
           </div>
