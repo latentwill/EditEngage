@@ -204,6 +204,65 @@ describe('Research Store', () => {
     expect(updatedQuery?.status).toBe('running');
   });
 
+  it('should filter queries by status', async () => {
+    const queries = [
+      fakeQuery({ id: 'q-1', name: 'Query A', status: 'active' as ResearchQueryStatus }),
+      fakeQuery({ id: 'q-2', name: 'Query B', status: 'running' as ResearchQueryStatus }),
+      fakeQuery({ id: 'q-3', name: 'Query C', status: 'active' as ResearchQueryStatus }),
+      fakeQuery({ id: 'q-4', name: 'Query D', status: 'queued' as ResearchQueryStatus }),
+    ];
+    mock.mockResolvedData(queries);
+
+    const { createResearchStore } = await import('./researchStore.js');
+    const store = createResearchStore(mock.client);
+    await store.loadQueries();
+
+    store.filterByStatus('active');
+
+    expect(store.queries).toHaveLength(2);
+    expect(store.queries.map(q => q.id)).toEqual(['q-1', 'q-3']);
+    expect(store.statusFilter).toBe('active');
+  });
+
+  it('should clear status filter when null is passed', async () => {
+    const queries = [
+      fakeQuery({ id: 'q-1', status: 'active' as ResearchQueryStatus }),
+      fakeQuery({ id: 'q-2', status: 'running' as ResearchQueryStatus }),
+    ];
+    mock.mockResolvedData(queries);
+
+    const { createResearchStore } = await import('./researchStore.js');
+    const store = createResearchStore(mock.client);
+    await store.loadQueries();
+
+    store.filterByStatus('active');
+    expect(store.queries).toHaveLength(1);
+
+    store.filterByStatus(null);
+    expect(store.queries).toHaveLength(2);
+    expect(store.statusFilter).toBeNull();
+  });
+
+  it('should update query status to consumed via Supabase client', async () => {
+    const queries = [
+      fakeQuery({ id: 'q-1', name: 'SEO Research', status: 'complete' as ResearchQueryStatus }),
+    ];
+    mock.mockResolvedData(queries);
+
+    const { createResearchStore } = await import('./researchStore.js');
+    const store = createResearchStore(mock.client);
+    await store.loadQueries();
+
+    await store.markConsumed('q-1');
+
+    expect(mock.from).toHaveBeenCalledWith('research_queries');
+    expect(mock.chain.update).toHaveBeenCalledWith({ status: 'consumed' });
+    expect(mock.chain.eq).toHaveBeenCalledWith('id', 'q-1');
+
+    const updatedQuery = store.queries.find(q => q.id === 'q-1');
+    expect(updatedQuery?.status).toBe('consumed');
+  });
+
   it('should not update local state when runQuery fetch fails', async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,

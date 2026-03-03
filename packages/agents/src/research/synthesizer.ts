@@ -13,7 +13,16 @@ interface LLMResponse {
 export function createSynthesizer(apiKey: string, fetchFn: FetchFn): (query: string, citations: Citation[]) => Promise<string> {
   return async (query: string, citations: Citation[]): Promise<string> => {
     const citationText = citations
-      .map((c, i) => `[${i + 1}] ${c.title} (${c.provider}): ${c.snippet}`)
+      .map((c, i) => {
+        let entry = `[${i + 1}] ${c.title} (${c.provider}): ${c.snippet}`;
+        if (c.date) {
+          entry += ` [date: ${c.date}]`;
+        }
+        if (c.relevance_score != null) {
+          entry += ` [relevance: ${c.relevance_score}]`;
+        }
+        return entry;
+      })
       .join('\n');
 
     const response = await fetchFn('https://openrouter.ai/api/v1/chat/completions', {

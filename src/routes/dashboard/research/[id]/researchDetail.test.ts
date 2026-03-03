@@ -53,6 +53,17 @@ const mockBriefs = [
         ]
       }
     ],
+    output_type: 'source_document' as const,
+    citations: [
+      {
+        url: 'https://example.com/seo-guide',
+        title: 'SEO Guide',
+        snippet: 'Comprehensive guide to SEO',
+        provider: 'perplexity',
+        date: '2026-02-10',
+        relevance_score: 0.95
+      }
+    ],
     created_at: '2026-02-22T00:00:00Z'
   },
   {
@@ -68,6 +79,8 @@ const mockBriefs = [
         ]
       }
     ],
+    output_type: 'topic_candidate' as const,
+    citations: [],
     created_at: '2026-02-21T00:00:00Z'
   }
 ];
@@ -206,6 +219,51 @@ describe('Research Detail Page', () => {
     const secondLink = sourceLinks[1] as HTMLAnchorElement;
     expect(secondLink).toHaveTextContent('AI in SEO');
     expect(secondLink).toHaveAttribute('href', 'https://example.com/ai-seo');
+  });
+
+  /**
+   * @behavior Detail page passes output_type and citations through to brief view for display
+   * @business_rule Brief cards must show output type badges so users can filter by content type
+   */
+  it('should render output_type badges on brief cards', async () => {
+    const DetailPage = (await import('./+page.svelte')).default;
+
+    render(DetailPage, {
+      props: {
+        data: {
+          query: mockQuery,
+          briefs: mockBriefs,
+          pipelineName: 'SEO Pipeline'
+        }
+      }
+    });
+
+    const badges = screen.getAllByTestId('brief-output-type');
+    expect(badges).toHaveLength(2);
+    expect(badges[0]).toHaveTextContent('source_document');
+    expect(badges[1]).toHaveTextContent('topic_candidate');
+  });
+
+  /**
+   * @behavior Detail page passes citations through to brief view for expandable display
+   * @business_rule Briefs with citations show a citations button; those without do not
+   */
+  it('should show citations button only on briefs with citations', async () => {
+    const DetailPage = (await import('./+page.svelte')).default;
+
+    render(DetailPage, {
+      props: {
+        data: {
+          query: mockQuery,
+          briefs: mockBriefs,
+          pipelineName: 'SEO Pipeline'
+        }
+      }
+    });
+
+    // Only the first brief has citations (b1 has 1, b2 has empty array)
+    const citationBtns = screen.getAllByTestId('brief-citations-btn');
+    expect(citationBtns).toHaveLength(1);
   });
 
   it('should show pipeline connection — pipeline name displayed', async () => {

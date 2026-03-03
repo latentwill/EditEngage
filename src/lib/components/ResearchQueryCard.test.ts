@@ -148,6 +148,73 @@ describe('ResearchQueryCard', () => {
     expect(onviewbriefsFn).toHaveBeenCalledOnce();
   });
 
+  it('should render queued status with badge-warning class', async () => {
+    const ResearchQueryCard = (await import('./ResearchQueryCard.svelte')).default;
+
+    render(ResearchQueryCard, {
+      props: {
+        query: { ...defaultQuery, status: 'queued' as const },
+        onviewbriefs: vi.fn(),
+        onrunnow: vi.fn()
+      }
+    });
+
+    const statusBadge = screen.getByTestId('query-status');
+    expect(statusBadge).toHaveTextContent('queued');
+    expect(statusBadge.className).toContain('badge-warning');
+  });
+
+  it('should render complete status with badge-success class', async () => {
+    const ResearchQueryCard = (await import('./ResearchQueryCard.svelte')).default;
+
+    render(ResearchQueryCard, {
+      props: {
+        query: { ...defaultQuery, status: 'complete' as const },
+        onviewbriefs: vi.fn(),
+        onrunnow: vi.fn()
+      }
+    });
+
+    const statusBadge = screen.getByTestId('query-status');
+    expect(statusBadge).toHaveTextContent('complete');
+    expect(statusBadge.className).toContain('badge-success');
+  });
+
+  it('should render consumed status with badge-neutral class', async () => {
+    const ResearchQueryCard = (await import('./ResearchQueryCard.svelte')).default;
+
+    render(ResearchQueryCard, {
+      props: {
+        query: { ...defaultQuery, status: 'consumed' as const },
+        onviewbriefs: vi.fn(),
+        onrunnow: vi.fn()
+      }
+    });
+
+    const statusBadge = screen.getByTestId('query-status');
+    expect(statusBadge).toHaveTextContent('consumed');
+    expect(statusBadge.className).toContain('badge-neutral');
+  });
+
+  it('should display lifecycle progress indicator', async () => {
+    const ResearchQueryCard = (await import('./ResearchQueryCard.svelte')).default;
+
+    render(ResearchQueryCard, {
+      props: {
+        query: { ...defaultQuery, status: 'running' as const },
+        onviewbriefs: vi.fn(),
+        onrunnow: vi.fn()
+      }
+    });
+
+    const lifecycle = screen.getByTestId('query-lifecycle');
+    expect(lifecycle).toBeInTheDocument();
+    expect(lifecycle.textContent).toContain('Queued');
+    expect(lifecycle.textContent).toContain('Running');
+    expect(lifecycle.textContent).toContain('Complete');
+    expect(lifecycle.textContent).toContain('Consumed');
+  });
+
   it('should call onrunnow when Run Now button is clicked', async () => {
     const onrunnowFn = vi.fn();
     const ResearchQueryCard = (await import('./ResearchQueryCard.svelte')).default;
