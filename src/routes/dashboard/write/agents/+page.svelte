@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Database } from '$lib/types/database.js';
+  import AgentContextBundle from '$lib/components/AgentContextBundle.svelte';
+  import type { AgentContextData } from './agentContext.js';
   type WritingAgent = Database['public']['Tables']['writing_agents']['Row'];
 
-  let { data }: { data: { writingAgents: WritingAgent[] } } = $props();
+  let { data }: { data: { writingAgents: WritingAgent[]; agentContextMap?: Record<string, AgentContextData> } } = $props();
 
   const AVAILABLE_MODELS = [
     { value: 'anthropic/claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
@@ -146,6 +148,9 @@
             {/if}
             {#if agent.system_prompt}
               <p class="text-xs text-base-content/40 italic line-clamp-2">"{agent.system_prompt}"</p>
+            {/if}
+            {#if data.agentContextMap?.[agent.id]}
+              <AgentContextBundle context={data.agentContextMap[agent.id]} />
             {/if}
           </div>
           <button

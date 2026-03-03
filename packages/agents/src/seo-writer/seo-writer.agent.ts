@@ -30,6 +30,10 @@ interface WritingStyle {
   tone: string;
   avoid_phrases: string[];
   voice_guidelines: string;
+  structural_template?: string | null;
+  vocabulary_level?: string | null;
+  point_of_view?: string | null;
+  anti_patterns?: string[] | null;
 }
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<{ ok: boolean; json(): Promise<unknown> }>;
@@ -143,6 +147,18 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
       parts.push(`Guidelines: ${writingStyle.voice_guidelines}`);
       if (writingStyle.avoid_phrases.length > 0) {
         parts.push(`AVOID these phrases: ${writingStyle.avoid_phrases.join(', ')}`);
+      }
+      if (writingStyle.structural_template) {
+        parts.push(`Structural Template: ${writingStyle.structural_template}`);
+      }
+      if (writingStyle.vocabulary_level) {
+        parts.push(`Vocabulary: ${writingStyle.vocabulary_level}`);
+      }
+      if (writingStyle.point_of_view) {
+        parts.push(`Point of View: ${writingStyle.point_of_view}`);
+      }
+      if (writingStyle.anti_patterns && writingStyle.anti_patterns.length > 0) {
+        parts.push(`Anti-patterns: ${writingStyle.anti_patterns.join(', ')}`);
       }
     }
 

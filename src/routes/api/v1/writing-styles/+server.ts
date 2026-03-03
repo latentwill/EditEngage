@@ -37,7 +37,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   }
 
   const body = await request.json();
-  const { name, tone, voice_guidelines, avoid_phrases, example_content } = body;
+  const { name, tone, voice_guidelines, avoid_phrases, example_content, structural_template, vocabulary_level, point_of_view, anti_patterns } = body;
+
+  if (!body.project_id) {
+    return json({ error: 'project_id is required' }, { status: 400 });
+  }
 
   if (!name) {
     return json({ error: 'name is required' }, { status: 400 });
@@ -51,7 +55,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       tone,
       voice_guidelines,
       avoid_phrases,
-      example_content
+      example_content,
+      structural_template: structural_template || null,
+      vocabulary_level: vocabulary_level || null,
+      point_of_view: point_of_view || null,
+      anti_patterns: anti_patterns || []
     })
     .select()
     .single();

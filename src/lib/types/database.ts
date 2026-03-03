@@ -943,36 +943,48 @@ export type Database = {
       }
       writing_styles: {
         Row: {
+          anti_patterns: string[] | null
           avoid_phrases: string[]
           created_at: string
           example_content: string | null
           id: string
           name: string
+          point_of_view: string | null
           project_id: string
+          structural_template: string | null
           tone: string | null
           updated_at: string
+          vocabulary_level: string | null
           voice_guidelines: string | null
         }
         Insert: {
+          anti_patterns?: string[] | null
           avoid_phrases?: string[]
           created_at?: string
           example_content?: string | null
           id?: string
           name: string
+          point_of_view?: string | null
           project_id: string
+          structural_template?: string | null
           tone?: string | null
           updated_at?: string
+          vocabulary_level?: string | null
           voice_guidelines?: string | null
         }
         Update: {
+          anti_patterns?: string[] | null
           avoid_phrases?: string[]
           created_at?: string
           example_content?: string | null
           id?: string
           name?: string
+          point_of_view?: string | null
           project_id?: string
+          structural_template?: string | null
           tone?: string | null
           updated_at?: string
+          vocabulary_level?: string | null
           voice_guidelines?: string | null
         }
         Relationships: [
