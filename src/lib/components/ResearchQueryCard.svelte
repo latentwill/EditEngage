@@ -1,13 +1,12 @@
 <script lang="ts">
-  interface ProviderChainEntry {
-    provider: string;
-    role: string;
-  }
+  import type { ProviderChainEntry } from '$lib/types/research.js';
+  import { LIFECYCLE_STEPS, STATUS_TO_LIFECYCLE_STEP } from '$lib/types/research.js';
+  import type { ResearchQueryStatus } from '$lib/types/database.js';
 
   interface ResearchQuery {
     id: string;
     name: string;
-    status: 'active' | 'running' | 'idle' | 'error';
+    status: ResearchQueryStatus;
     provider_chain: ProviderChainEntry[];
     schedule: string | null;
     last_run_at: string | null;
@@ -29,12 +28,17 @@
       : 'Never'
   );
 
-  const statusClass: Record<string, string> = {
+  const statusClass: Record<ResearchQueryStatus, string> = {
     active: 'badge-success',
     running: 'badge-info',
     idle: 'badge-ghost',
-    error: 'badge-error'
+    error: 'badge-error',
+    queued: 'badge-warning',
+    complete: 'badge-success',
+    consumed: 'badge-neutral'
   };
+
+  let currentStep = $derived(STATUS_TO_LIFECYCLE_STEP[query.status] ?? -1);
 </script>
 
 <div class="card bg-base-100 shadow-sm" data-testid="research-query-card">
@@ -60,6 +64,15 @@
       <span data-testid="query-brief-count">{query.brief_count} briefs</span>
       <span class="mx-1">&middot;</span>
       <span data-testid="query-pipeline">{query.pipeline_name ? `Feeds into: ${query.pipeline_name}` : 'Standalone'}</span>
+    </div>
+
+    <div class="flex items-center gap-1 text-xs text-base-content/50" data-testid="query-lifecycle">
+      {#each LIFECYCLE_STEPS as step, i}
+        <span class={i <= currentStep ? 'text-primary font-semibold' : ''}>{step}</span>
+        {#if i < LIFECYCLE_STEPS.length - 1}
+          <span>&rarr;</span>
+        {/if}
+      {/each}
     </div>
 
     <div class="card-actions justify-end">

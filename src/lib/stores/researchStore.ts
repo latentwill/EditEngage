@@ -10,10 +10,13 @@ export interface ResearchStore {
   readonly loading: boolean;
   readonly searchTerm: string;
   readonly providerFilter: string | null;
+  readonly statusFilter: string | null;
   loadQueries(projectId?: string): Promise<void>;
   searchQueries(term: string): void;
   filterByProvider(provider: string | null): void;
+  filterByStatus(status: string | null): void;
   runQuery(queryId: string): Promise<void>;
+  markConsumed(queryId: string): Promise<void>;
 }
 
 export function createResearchStore(client: Client): ResearchStore {
@@ -22,6 +25,7 @@ export function createResearchStore(client: Client): ResearchStore {
   let allQueries: ResearchQueryRow[] = [];
   let searchTerm = '';
   let providerFilter: string | null = null;
+  let statusFilter: string | null = null;
 
   function applyFilters(): void {
     let filtered = allQueries;
@@ -34,8 +38,12 @@ export function createResearchStore(client: Client): ResearchStore {
     if (providerFilter) {
       filtered = filtered.filter(q => {
         const chain = q.provider_chain as { provider: string; role: string }[] | null;
-        return chain?.some((entry: { provider: string; role: string }) => entry.provider === providerFilter) ?? false;
+        return chain?.some(entry => entry.provider === providerFilter) ?? false;
       });
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(q => q.status === statusFilter);
     }
 
     queries = filtered;
@@ -76,6 +84,11 @@ export function createResearchStore(client: Client): ResearchStore {
     applyFilters();
   }
 
+  function filterByStatus(status: string | null): void {
+    statusFilter = status;
+    applyFilters();
+  }
+
   async function runQuery(queryId: string): Promise<void> {
     const response = await fetch(`/api/v1/research/${queryId}/run`, {
       method: 'POST'
@@ -90,14 +103,29 @@ export function createResearchStore(client: Client): ResearchStore {
     }
   }
 
+  async function markConsumed(queryId: string): Promise<void> {
+    await client
+      .from('research_queries')
+      .update({ status: 'consumed' as ResearchQueryStatus })
+      .eq('id', queryId);
+
+    allQueries = allQueries.map(q =>
+      q.id === queryId ? { ...q, status: 'consumed' as ResearchQueryStatus } : q
+    );
+    applyFilters();
+  }
+
   return {
     get queries() { return queries; },
     get loading() { return loading; },
     get searchTerm() { return searchTerm; },
     get providerFilter() { return providerFilter; },
+    get statusFilter() { return statusFilter; },
     loadQueries,
     searchQueries,
     filterByProvider,
+    filterByStatus,
     runQuery,
+    markConsumed,
   };
 }

@@ -597,23 +597,29 @@ export type Database = {
       }
       research_briefs: {
         Row: {
+          citations: Json
           created_at: string
           findings: Json
           id: string
+          output_type: Database["public"]["Enums"]["research_output_type"]
           query_id: string
           summary: string | null
         }
         Insert: {
+          citations?: Json
           created_at?: string
           findings?: Json
           id?: string
+          output_type?: Database["public"]["Enums"]["research_output_type"]
           query_id: string
           summary?: string | null
         }
         Update: {
+          citations?: Json
           created_at?: string
           findings?: Json
           id?: string
+          output_type?: Database["public"]["Enums"]["research_output_type"]
           query_id?: string
           summary?: string | null
         }
@@ -1016,7 +1022,8 @@ export type Database = {
         | "brave"
         | "openrouter"
       research_provider_role: "discovery" | "analysis" | "citation"
-      research_query_status: "active" | "running" | "idle" | "error"
+      research_output_type: "topic_candidate" | "source_document" | "competitive_signal" | "data_point"
+      research_query_status: "active" | "running" | "idle" | "error" | "queued" | "complete" | "consumed"
       synthesis_mode: "unified" | "per_provider" | "comparative"
       template_data_source_type: "csv" | "json" | "supabase_query" | "manual"
       topic_status: "pending" | "in_progress" | "completed" | "skipped"
@@ -1161,6 +1168,7 @@ export type GeneratedPageStatus = Database['public']['Enums']['generated_page_st
 export type ApiProvider = Database['public']['Enums']['api_provider'];
 export type ResearchProvider = Database['public']['Enums']['research_provider'];
 export type ResearchProviderRole = Database['public']['Enums']['research_provider_role'];
+export type ResearchOutputType = Database['public']['Enums']['research_output_type'];
 export type ResearchQueryStatus = Database['public']['Enums']['research_query_status'];
 export type SynthesisMode = Database['public']['Enums']['synthesis_mode'];
 

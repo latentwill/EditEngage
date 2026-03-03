@@ -1,29 +1,7 @@
 <script lang="ts">
   import ResearchBriefView from '$lib/components/ResearchBriefView.svelte';
-
-  interface BriefSource {
-    url: string;
-    title: string;
-  }
-
-  interface BriefFinding {
-    provider: string;
-    content: string;
-    sources: BriefSource[];
-  }
-
-  interface Brief {
-    id: string;
-    query_id: string;
-    summary: string;
-    findings: BriefFinding[];
-    created_at: string;
-  }
-
-  interface ProviderChainEntry {
-    provider: string;
-    role: string;
-  }
+  import type { ResearchBrief, ProviderChainEntry } from '$lib/types/research.js';
+  import { LIFECYCLE_STEPS, STATUS_TO_LIFECYCLE_STEP } from '$lib/types/research.js';
 
   interface ResearchQuery {
     id: string;
@@ -45,10 +23,12 @@
   let { data }: {
     data: {
       query: ResearchQuery;
-      briefs: Brief[];
+      briefs: ResearchBrief[];
       pipelineName: string | null;
     };
   } = $props();
+
+  let currentStep = $derived(STATUS_TO_LIFECYCLE_STEP[data.query.status] ?? -1);
 </script>
 
 <div data-testid="research-detail-page" class="space-y-8 py-6 max-w-4xl mx-auto">
@@ -65,6 +45,22 @@
     <h1 data-testid="detail-query-name" class="text-2xl font-bold text-base-content">{data.query.name}</h1>
     <span data-testid="detail-query-status" class="badge badge-outline">{data.query.status}</span>
   </div>
+
+  <!-- Lifecycle -->
+  <div data-testid="detail-lifecycle" class="flex items-center gap-2 text-sm">
+    {#each LIFECYCLE_STEPS as step, i}
+      <span class="px-3 py-1 rounded-full {i <= currentStep ? 'bg-primary text-primary-content font-semibold' : 'bg-base-200 text-base-content/50'}">{step}</span>
+      {#if i < LIFECYCLE_STEPS.length - 1}
+        <span class="text-base-content/30">&rarr;</span>
+      {/if}
+    {/each}
+  </div>
+
+  {#if data.query.status === 'consumed' && data.pipelineName}
+    <div data-testid="detail-consumed-by" class="text-sm text-base-content/70">
+      Consumed by: {data.pipelineName}
+    </div>
+  {/if}
 
   <!-- Configuration -->
   <div data-testid="detail-config" class="card bg-base-200 shadow-sm">

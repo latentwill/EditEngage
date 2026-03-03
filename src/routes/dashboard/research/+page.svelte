@@ -4,6 +4,7 @@
   import { createResearchStore } from '$lib/stores/researchStore';
   import { createProjectStore } from '$lib/stores/projectStore';
   import { createSupabaseClient } from '$lib/supabase';
+  import type { ProviderChainEntry } from '$lib/types/research.js';
 
   const client = createSupabaseClient();
   const researchStore = createResearchStore(client);
@@ -14,6 +15,7 @@
   });
 
   const providers = ['perplexity', 'tavily', 'openai', 'serper', 'exa', 'brave', 'openrouter'] as const;
+  const statuses = ['active', 'queued', 'running', 'complete', 'consumed', 'idle', 'error'] as const;
 
   function handleSearch(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -24,6 +26,12 @@
     const target = event.target as HTMLSelectElement;
     const value = target.value || null;
     researchStore.filterByProvider(value);
+  }
+
+  function handleStatusFilter(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    const value = target.value || null;
+    researchStore.filterByStatus(value);
   }
 
   function handleViewBriefs(queryId: string) {
@@ -101,6 +109,16 @@
         <option value={provider}>{provider}</option>
       {/each}
     </select>
+    <select
+      data-testid="research-status-filter"
+      class="select select-bordered select-sm"
+      onchange={handleStatusFilter}
+    >
+      <option value="">All Statuses</option>
+      {#each statuses as status}
+        <option value={status}>{status}</option>
+      {/each}
+    </select>
   </div>
 
   {#if researchStore.loading}
@@ -121,7 +139,7 @@
             id: query.id,
             name: query.name,
             status: query.status,
-            provider_chain: query.provider_chain as { provider: string; role: string }[],
+            provider_chain: query.provider_chain as unknown as ProviderChainEntry[],
             schedule: query.schedule,
             last_run_at: query.last_run_at,
             brief_count: query.brief_count,

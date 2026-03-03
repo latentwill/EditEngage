@@ -5,6 +5,8 @@ export interface Citation {
   title: string;
   snippet: string;
   provider: string;
+  date?: string | null;
+  relevance_score?: number | null;
 }
 
 export interface ProviderResult {
@@ -21,11 +23,14 @@ export interface ResearchInput {
   synthesize: boolean;
 }
 
+export type ResearchOutputType = 'topic_candidate' | 'source_document' | 'competitive_signal' | 'data_point';
+
 export interface ResearchBrief {
   query: string;
   citations: Citation[];
   brief: string | null;
   warnings: string[];
+  outputType: ResearchOutputType;
 }
 
 type SynthesizerFn = (query: string, citations: Citation[]) => Promise<string>;
@@ -74,13 +79,14 @@ export class ResearchAgent implements Agent<ResearchInput, ResearchBrief> {
       query: input.query,
       citations: allCitations,
       brief,
-      warnings
+      warnings,
+      outputType: 'source_document'
     };
   }
 
   validate(config: AgentConfig): ValidationResult {
     const errors: string[] = [];
-    if (!config.providers || !Array.isArray(config.providers) || (config.providers as unknown[]).length === 0) {
+    if (!Array.isArray(config.providers) || config.providers.length === 0) {
       errors.push('providers is required and must be a non-empty array');
     }
     return errors.length > 0 ? { valid: false, errors } : { valid: true };

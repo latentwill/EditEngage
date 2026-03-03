@@ -165,6 +165,55 @@ describe('ResearchAgent', () => {
   });
 
   /**
+   * @behavior Research Agent preserves optional date and relevance_score in citations when providers supply them
+   * @business_rule Enhanced citation metadata enables downstream filtering and ranking of sources
+   */
+  it('should include date and relevance_score in citations when available', async () => {
+    const citationsWithMeta: Citation[] = [
+      {
+        url: 'https://example.com/article',
+        title: 'Article with metadata',
+        snippet: 'A snippet',
+        provider: 'perplexity',
+        date: '2026-02-15',
+        relevance_score: 0.92
+      }
+    ];
+    const metaProvider = createMockProvider('perplexity', citationsWithMeta);
+
+    const agentWithMeta = new ResearchAgent({
+      providers: [metaProvider],
+      synthesizer
+    });
+
+    const result = await agentWithMeta.execute({ query: 'test', synthesize: false });
+
+    expect(result.citations[0].date).toBe('2026-02-15');
+    expect(result.citations[0].relevance_score).toBe(0.92);
+  });
+
+  /**
+   * @behavior Research Agent allows citations without date and relevance_score for backward compatibility
+   * @business_rule Optional fields must not break existing providers that do not supply them
+   */
+  it('should allow citations without date and relevance_score', async () => {
+    const result = await agent.execute({ query: 'test', synthesize: false });
+
+    expect(result.citations[0].date).toBeUndefined();
+    expect(result.citations[0].relevance_score).toBeUndefined();
+  });
+
+  /**
+   * @behavior Research Agent classifies output type for downstream routing
+   * @business_rule Output must include an outputType to determine how the brief is used (default: source_document)
+   */
+  it('should include outputType in research brief output defaulting to source_document', async () => {
+    const result = await agent.execute({ query: 'TypeScript best practices 2026', synthesize: false });
+
+    expect(result.outputType).toBe('source_document');
+  });
+
+  /**
    * @behavior Research Agent integrates as pipeline step: output feeds SEO Writer input
    * @business_rule Output must conform to Agent interface and include citations for downstream agents
    */
