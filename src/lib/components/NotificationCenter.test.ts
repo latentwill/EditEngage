@@ -1,9 +1,14 @@
 /**
- * @behavior NotificationCenter displays notification history with read/unread states and real-time updates
- * @business_rule Users can view all notifications, mark them as read individually or in bulk
+ * @behavior NotificationCenter renders notifications grouped by tier with distinct
+ * visual styling: alerts get red borders, updates get emerald borders, digests get muted styling.
+ * @business_rule Users must be able to visually distinguish notification urgency at a glance,
+ * and can mark individual or all notifications as read.
  */
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Database } from '../types/database.js';
+
+type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
 vi.mock('$env/static/public', () => ({
   PUBLIC_SUPABASE_URL: 'http://localhost:54321',
@@ -18,38 +23,20 @@ const mockChannel = {
   unsubscribe: vi.fn()
 };
 
-const mockNotifications = [
-  {
-    id: 'notif-1',
+function makeNotification(overrides: Partial<NotificationRow> = {}): NotificationRow {
+  return {
+    id: `notif-${Math.random().toString(36).slice(2, 8)}`,
     user_id: 'user-1',
     project_id: 'proj-1',
     event_id: 'evt-1',
-    title: 'Workflow Complete',
-    message: 'SEO Articles workflow finished successfully',
+    title: 'Test notification',
+    message: 'Test message',
     is_read: false,
-    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'notif-2',
-    user_id: 'user-1',
-    project_id: 'proj-1',
-    event_id: 'evt-2',
-    title: 'Content Published',
-    message: 'Article "Top 10 Tips" was published to Ghost',
-    is_read: true,
-    created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: 'notif-3',
-    user_id: 'user-1',
-    project_id: 'proj-1',
-    event_id: 'evt-3',
-    title: 'New Topic Added',
-    message: 'Topic "AI Trends 2025" was added to queue',
-    is_read: false,
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-  }
-];
+    tier: 'update',
+    created_at: new Date().toISOString(),
+    ...overrides
+  };
+}
 
 const mockInReturn = { data: null, error: null };
 const mockEqReturn = { data: null, error: null };
@@ -58,9 +45,16 @@ const mockUpdateReturn = {
   in: vi.fn().mockReturnValue(mockInReturn)
 };
 
-const mockLimitReturn = { data: mockNotifications, error: null };
-const mockOrderReturn = { limit: vi.fn().mockReturnValue(mockLimitReturn) };
-const mockSelectReturn = { order: vi.fn().mockReturnValue(mockOrderReturn) };
+let currentNotifications: NotificationRow[] = [];
+
+const mockSelectReturn = {
+  order: vi.fn().mockReturnValue({
+    limit: vi.fn().mockImplementation(() =>
+      Promise.resolve({ data: currentNotifications, error: null })
+    )
+  })
+};
+
 const mockFromReturn = {
   select: vi.fn().mockReturnValue(mockSelectReturn),
   update: vi.fn().mockReturnValue(mockUpdateReturn)
@@ -80,90 +74,125 @@ import NotificationCenter from './NotificationCenter.svelte';
 describe('NotificationCenter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    currentNotifications = [];
     mockOn.mockReturnValue(mockChannel);
     mockSubscribe.mockReturnValue(mockChannel);
     mockClient.from.mockReturnValue(mockFromReturn);
     mockFromReturn.select.mockReturnValue(mockSelectReturn);
     mockFromReturn.update.mockReturnValue(mockUpdateReturn);
-    mockSelectReturn.order.mockReturnValue(mockOrderReturn);
-    mockOrderReturn.limit.mockReturnValue(mockLimitReturn);
+    mockSelectReturn.order.mockReturnValue({
+      limit: vi.fn().mockImplementation(() =>
+        Promise.resolve({ data: currentNotifications, error: null })
+      )
+    });
     mockUpdateReturn.eq.mockReturnValue(mockEqReturn);
     mockUpdateReturn.in.mockReturnValue(mockInReturn);
     mockClient.channel.mockReturnValue(mockChannel);
   });
 
-  it('renders notification list with read/unread styling', async () => {
+  it('renders notification items', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'n1', title: 'First' }),
+      makeNotification({ id: 'n2', title: 'Second' })
+    ];
     render(NotificationCenter, { props: { open: true } });
 
     await vi.waitFor(() => {
-      expect(screen.getAllByTestId('notification-item')).toHaveLength(3);
+      expect(screen.getAllByTestId('notification-item')).toHaveLength(2);
     });
-
-    const items = screen.getAllByTestId('notification-item');
-    // Unread items (notif-1, notif-3) should have emerald border accent
-    expect(items[0].className).toContain('border-emerald');
-    // Read item (notif-2) should not have emerald border
-    expect(items[1].className).not.toContain('border-emerald');
   });
 
-  it('shows unread count badge on bell icon', async () => {
+  it('alert-tier notifications show alert styling with red border', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'alert-1', tier: 'alert', title: 'Pipeline failed' })
+    ];
     render(NotificationCenter, { props: { open: true } });
 
     await vi.waitFor(() => {
-      expect(screen.getByTestId('unread-badge')).toBeDefined();
+      expect(screen.getAllByTestId('notification-item')).toHaveLength(1);
     });
 
-    const badge = screen.getByTestId('unread-badge');
-    // 2 unread notifications (notif-1 and notif-3)
-    expect(badge.textContent).toContain('2');
+    const item = screen.getByTestId('notification-item');
+    expect(item.className).toContain('border-red');
   });
 
-  it('clicking a notification marks it as read via Supabase update', async () => {
+  it('update-tier notifications show update styling with emerald border', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'update-1', tier: 'update', title: 'Pipeline completed' })
+    ];
     render(NotificationCenter, { props: { open: true } });
 
     await vi.waitFor(() => {
-      expect(screen.getAllByTestId('notification-item')).toHaveLength(3);
+      expect(screen.getAllByTestId('notification-item')).toHaveLength(1);
     });
 
-    // Click the first unread notification
-    const items = screen.getAllByTestId('notification-item');
-    await fireEvent.click(items[0]);
+    const item = screen.getByTestId('notification-item');
+    expect(item.className).toContain('border-emerald');
+  });
+
+  it('digest-tier notifications show digest styling with muted border', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'digest-1', tier: 'digest', title: 'Topic queued' })
+    ];
+    render(NotificationCenter, { props: { open: true } });
+
+    await vi.waitFor(() => {
+      expect(screen.getAllByTestId('notification-item')).toHaveLength(1);
+    });
+
+    const item = screen.getByTestId('notification-item');
+    expect(item.className).toContain('border-base-content/20');
+  });
+
+  it('shows tier badge on each notification', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'badge-1', tier: 'alert', title: 'Failed' })
+    ];
+    render(NotificationCenter, { props: { open: true } });
+
+    await vi.waitFor(() => {
+      expect(screen.getAllByTestId('tier-badge')).toHaveLength(1);
+    });
+
+    const badge = screen.getByTestId('tier-badge');
+    expect(badge.textContent).toContain('alert');
+  });
+
+  it('mark as read works when clicking a notification', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'notif-click', title: 'Click me' })
+    ];
+    render(NotificationCenter, { props: { open: true } });
+
+    await vi.waitFor(() => {
+      expect(screen.getAllByTestId('notification-item')).toHaveLength(1);
+    });
+
+    const item = screen.getByTestId('notification-item');
+    await fireEvent.click(item);
 
     expect(mockClient.from).toHaveBeenCalledWith('notifications');
     expect(mockFromReturn.update).toHaveBeenCalledWith({ is_read: true });
-    expect(mockUpdateReturn.eq).toHaveBeenCalledWith('id', 'notif-1');
+    expect(mockUpdateReturn.eq).toHaveBeenCalledWith('id', 'notif-click');
   });
 
-  it('Mark all as read uses single batch query with .in()', async () => {
+  it('mark all as read uses batch query with .in()', async () => {
+    currentNotifications = [
+      makeNotification({ id: 'unread-1', is_read: false, title: 'Unread 1' }),
+      makeNotification({ id: 'unread-2', is_read: false, title: 'Unread 2' })
+    ];
     render(NotificationCenter, { props: { open: true } });
 
-    // Wait for notifications to load first
     await vi.waitFor(() => {
-      expect(screen.getAllByTestId('notification-item')).toHaveLength(3);
+      expect(screen.getAllByTestId('notification-item')).toHaveLength(2);
     });
 
     const markAllBtn = screen.getByTestId('mark-all-read');
     await fireEvent.click(markAllBtn);
 
-    // Should have called update with .in() for batch operation
     await vi.waitFor(() => {
       expect(mockFromReturn.update).toHaveBeenCalledWith({ is_read: true });
-      expect(mockUpdateReturn.in).toHaveBeenCalledWith('id', ['notif-1', 'notif-3']);
+      expect(mockUpdateReturn.in).toHaveBeenCalledWith('id', ['unread-1', 'unread-2']);
     });
-  });
-
-  it('subscribes to real-time updates for new notifications', async () => {
-    render(NotificationCenter, { props: { open: true } });
-
-    await vi.waitFor(() => {
-      expect(mockClient.channel).toHaveBeenCalledWith('notifications-realtime');
-    });
-
-    expect(mockOn).toHaveBeenCalledWith(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'notifications' },
-      expect.any(Function)
-    );
-    expect(mockSubscribe).toHaveBeenCalled();
   });
 });

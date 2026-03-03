@@ -175,30 +175,42 @@ export type Database = {
       }
       events: {
         Row: {
+          agent_id: string | null
+          artifact_link: string | null
           created_at: string
           description: string
           event_type: string
           id: string
           is_read: boolean
           metadata: Json
+          module: string | null
+          payload_summary: string | null
           project_id: string
         }
         Insert: {
+          agent_id?: string | null
+          artifact_link?: string | null
           created_at?: string
           description: string
           event_type: string
           id?: string
           is_read?: boolean
           metadata?: Json
+          module?: string | null
+          payload_summary?: string | null
           project_id: string
         }
         Update: {
+          agent_id?: string | null
+          artifact_link?: string | null
           created_at?: string
           description?: string
           event_type?: string
           id?: string
           is_read?: boolean
           metadata?: Json
+          module?: string | null
+          payload_summary?: string | null
           project_id?: string
         }
         Relationships: [
@@ -258,6 +270,47 @@ export type Database = {
           },
         ]
       }
+      notification_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          project_id: string
+          subscribed_event_types: string[]
+          subscribed_modules: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          project_id: string
+          subscribed_event_types?: string[]
+          subscribed_modules?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          project_id?: string
+          subscribed_event_types?: string[]
+          subscribed_modules?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_subscriptions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -266,6 +319,7 @@ export type Database = {
           is_read: boolean
           message: string
           project_id: string
+          tier: string
           title: string
           user_id: string
         }
@@ -276,6 +330,7 @@ export type Database = {
           is_read?: boolean
           message: string
           project_id: string
+          tier?: string
           title: string
           user_id: string
         }
@@ -286,6 +341,7 @@ export type Database = {
           is_read?: boolean
           message?: string
           project_id?: string
+          tier?: string
           title?: string
           user_id?: string
         }

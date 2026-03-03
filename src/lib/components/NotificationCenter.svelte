@@ -55,6 +55,20 @@
       .subscribe();
   }
 
+  function tierBorderClass(notification: NotificationRow): string {
+    if (notification.tier === 'alert') return 'border-red-500 bg-base-200/30';
+    if (notification.tier === 'digest') return 'border-base-content/20';
+    // 'update' tier or fallback
+    if (!notification.is_read) return 'border-emerald-400 bg-base-200/30';
+    return 'border-transparent';
+  }
+
+  function tierBadgeClass(tier: string): string {
+    if (tier === 'alert') return 'bg-red-500/20 text-red-400';
+    if (tier === 'digest') return 'bg-base-content/10 text-base-content/50';
+    return 'bg-emerald-500/20 text-emerald-400';
+  }
+
   onMount(async () => {
     await fetchNotifications();
     subscribeRealtime();
@@ -91,11 +105,19 @@
         <div
           data-testid="notification-item"
           onclick={() => markAsRead(notification.id)}
-          class="p-3 rounded-lg cursor-pointer transition-colors hover:bg-base-200 {!notification.is_read ? 'border-l-2 border-emerald-400 bg-base-200/30' : 'border-l-2 border-transparent'}"
+          class="p-3 rounded-lg cursor-pointer transition-colors hover:bg-base-200 border-l-2 {tierBorderClass(notification)}"
         >
-          <p class="text-sm font-medium {!notification.is_read ? 'text-base-content' : 'text-base-content/60'}">
-            {notification.title}
-          </p>
+          <div class="flex items-center gap-2">
+            <p class="text-sm font-medium {!notification.is_read ? 'text-base-content' : 'text-base-content/60'} {notification.tier === 'digest' ? 'text-sm' : ''}">
+              {notification.title}
+            </p>
+            <span
+              data-testid="tier-badge"
+              class="text-[10px] px-1.5 py-0.5 rounded-full font-medium {tierBadgeClass(notification.tier)}"
+            >
+              {notification.tier}
+            </span>
+          </div>
           <p class="text-xs text-base-content/40 mt-1">{notification.message}</p>
         </div>
       {/each}

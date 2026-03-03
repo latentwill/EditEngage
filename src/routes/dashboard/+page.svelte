@@ -1,5 +1,7 @@
 <script lang="ts">
   import StatCard from '$lib/components/StatCard.svelte';
+  import OrchestrationFeed from '$lib/components/OrchestrationFeed.svelte';
+  import type { EventRow } from '$lib/stores/events.js';
 
   let { data }: {
     data: {
@@ -26,6 +28,7 @@
         nextScheduledRun: string | null;
       };
       activeProjectId: string;
+      recentEvents?: EventRow[];
     };
   } = $props();
 
@@ -104,5 +107,14 @@
         </div>
       {/if}
     </div>
+  </div>
+
+  <!-- Orchestration Feed -->
+  <div
+    data-testid="orchestration-feed-section"
+    class="card bg-base-200 rounded-xl p-4"
+  >
+    <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Orchestration Feed</h2>
+    <OrchestrationFeed events={data.recentEvents ?? []} />
   </div>
 </div>
