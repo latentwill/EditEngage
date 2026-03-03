@@ -16,6 +16,7 @@
   const subNavItems = [
     { href: '/dashboard/settings', label: 'General', icon: 'iconoir:settings' },
     { href: '/dashboard/settings/connections', label: 'Connections', icon: 'iconoir:ev-plug-xmark' },
+    { href: '/dashboard/settings/tenant', label: 'Tenant Config', icon: 'iconoir:building' },
   ];
 
   function isActive(href: string): boolean {
