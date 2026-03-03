@@ -10,6 +10,9 @@
     is_active: boolean;
     created_at: string;
     updated_at: string;
+    last_health_status: string | null;
+    last_health_check: string | null;
+    health_message: string | null;
   }>; projectId: string } } = $props();
 
   let showForm = $state(false);
@@ -93,10 +96,28 @@
 
   async function testConnection(destId: string) {
     testingId = destId;
-    await fetch(`/api/v1/destinations/${destId}/health`, {
+    const res = await fetch(`/api/v1/destinations/${destId}/health`, {
       method: 'POST'
     });
+    const result = await res.json();
+    data = {
+      ...data,
+      destinations: data.destinations.map(d =>
+        d.id === destId ? { ...d, last_health_status: result.status, last_health_check: new Date().toISOString(), health_message: result.message ?? null } : d
+      )
+    };
     testingId = null;
+  }
+
+  function formatTimeAgo(isoDate: string): string {
+    const diff = Date.now() - new Date(isoDate).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
   }
 </script>
 
@@ -110,6 +131,19 @@
           <span class="text-base-content font-medium">{dest.name}</span>
           <span class="text-base-content/60 text-sm">{dest.type}</span>
           <span class={dest.is_active ? 'badge badge-success' : 'badge badge-ghost'}>{dest.is_active ? 'active' : 'inactive'}</span>
+          {#if dest.last_health_status === 'healthy'}
+            <span data-testid="health-indicator-{dest.id}" class="badge badge-success">Healthy</span>
+          {:else if dest.last_health_status === 'unhealthy'}
+            <span data-testid="health-indicator-{dest.id}" class="badge badge-error">Unhealthy</span>
+          {:else}
+            <span data-testid="health-indicator-{dest.id}" class="badge badge-warning">Not checked</span>
+          {/if}
+          {#if dest.last_health_status === 'unhealthy' && dest.health_message}
+            <span class="text-error text-sm">{dest.health_message}</span>
+          {/if}
+          {#if dest.last_health_check}
+            <span class="text-base-content/50 text-xs">Last checked: {formatTimeAgo(dest.last_health_check)}</span>
+          {/if}
         </div>
         <button class="btn btn-ghost" onclick={() => testConnection(dest.id)}>
           {testingId === dest.id ? 'Testing…' : 'Test Connection'}

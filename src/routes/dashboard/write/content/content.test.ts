@@ -222,4 +222,108 @@ describe('Content Library Page', () => {
     expect(screen.queryByText('How to Scale SEO in 2025')).not.toBeInTheDocument();
     expect(screen.queryByText('Product Landing Page Copy')).not.toBeInTheDocument();
   });
+
+  it('renders destination type badge for published content', async () => {
+    const ContentPage = (await import('./+page.svelte')).default;
+
+    render(ContentPage, {
+      props: {
+        data: {
+          contentItems: mockContentItems,
+          pipelines: mockPipelines
+        }
+      }
+    });
+
+    // Item 1 has destination_type: 'ghost' - should show destination badge
+    const destinationBadges = screen.getAllByTestId('destination-badge');
+    expect(destinationBadges).toHaveLength(1);
+    expect(destinationBadges[0]).toHaveTextContent('ghost');
+  });
+
+  it('does not render destination badge for unpublished content', async () => {
+    const ContentPage = (await import('./+page.svelte')).default;
+
+    // Render with only unpublished items (no destination_type)
+    const unpublishedItems = mockContentItems.filter((item) => item.destination_type === null);
+
+    render(ContentPage, {
+      props: {
+        data: {
+          contentItems: unpublishedItems,
+          pipelines: mockPipelines
+        }
+      }
+    });
+
+    // No destination badges should be rendered
+    const destinationBadges = screen.queryAllByTestId('destination-badge');
+    expect(destinationBadges).toHaveLength(0);
+  });
+
+  it('renders published URL as clickable link', async () => {
+    const ContentPage = (await import('./+page.svelte')).default;
+
+    render(ContentPage, {
+      props: {
+        data: {
+          contentItems: mockContentItems,
+          pipelines: mockPipelines
+        }
+      }
+    });
+
+    // Item 1 has published_url - should show a clickable link
+    const publishedLinks = screen.getAllByTestId('published-link');
+    expect(publishedLinks).toHaveLength(1);
+    expect(publishedLinks[0]).toHaveAttribute('data-href', 'https://blog.example.com/seo-2025');
+    expect(publishedLinks[0]).toHaveAttribute('data-target', '_blank');
+  });
+
+  it('destination filter narrows results to selected destination', async () => {
+    const ContentPage = (await import('./+page.svelte')).default;
+
+    render(ContentPage, {
+      props: {
+        data: {
+          contentItems: mockContentItems,
+          pipelines: mockPipelines
+        }
+      }
+    });
+
+    // Select "ghost" destination filter
+    const destinationFilter = screen.getByTestId('destination-filter');
+    await fireEvent.change(destinationFilter, { target: { value: 'ghost' } });
+
+    // Only ghost-destination items should remain (item 1)
+    const contentCards = screen.getAllByTestId('content-item');
+    expect(contentCards).toHaveLength(1);
+    expect(screen.getByText('How to Scale SEO in 2025')).toBeInTheDocument();
+    expect(screen.queryByText('Top 10 AI Tools for Marketers')).not.toBeInTheDocument();
+  });
+
+  it('destination filter unpublished shows items without destination', async () => {
+    const ContentPage = (await import('./+page.svelte')).default;
+
+    render(ContentPage, {
+      props: {
+        data: {
+          contentItems: mockContentItems,
+          pipelines: mockPipelines
+        }
+      }
+    });
+
+    // Select "unpublished" destination filter
+    const destinationFilter = screen.getByTestId('destination-filter');
+    await fireEvent.change(destinationFilter, { target: { value: 'unpublished' } });
+
+    // Only items with null destination_type should remain (items 2-5)
+    const contentCards = screen.getAllByTestId('content-item');
+    expect(contentCards).toHaveLength(4);
+    expect(screen.queryByText('How to Scale SEO in 2025')).not.toBeInTheDocument();
+    expect(screen.getByText('Top 10 AI Tools for Marketers')).toBeInTheDocument();
+    expect(screen.getByText('Launch Day Social Post')).toBeInTheDocument();
+  });
 });

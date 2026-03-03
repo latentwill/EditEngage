@@ -83,6 +83,11 @@ export const POST: RequestHandler = async ({ params, cookies }) => {
 
   if (destination.type === 'ghost') {
     const result = await checkGhost(config);
+    await supabase.from('destinations').update({
+      last_health_status: result.status,
+      last_health_check: new Date().toISOString(),
+      health_message: result.message ?? null
+    }).eq('id', params.id);
     return json(result, { status: 200 });
   }
 

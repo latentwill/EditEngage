@@ -14,6 +14,7 @@ vi.mock('$env/static/private', () => ({
 
 const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
+const mockUpdate = vi.fn();
 
 vi.mock('$lib/server/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
@@ -21,6 +22,19 @@ vi.mock('$lib/server/supabase', () => ({
     from: mockFrom
   }))
 }));
+
+function setupFromMock(data: unknown, error: unknown = null) {
+  mockFrom.mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data, error })
+      })
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null })
+    })
+  });
+}
 
 import { POST } from './+server.js';
 
@@ -75,13 +89,7 @@ describe('POST /api/v1/destinations/[id]/health', () => {
 
   it('returns 404 when destination does not exist or belongs to another user', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } })
-        })
-      })
-    });
+    setupFromMock(null, { message: 'Not found' });
 
     const res = await POST(makeEvent('dest-1'));
     expect(res.status).toBe(404);
@@ -89,13 +97,7 @@ describe('POST /api/v1/destinations/[id]/health', () => {
 
   it('returns healthy when Ghost Content API responds 200', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: ghostContentDest, error: null })
-        })
-      })
-    });
+    setupFromMock(ghostContentDest);
     fetchSpy.mockResolvedValue(new Response('{}', { status: 200 }));
 
     const res = await POST(makeEvent('dest-1'));
@@ -106,13 +108,7 @@ describe('POST /api/v1/destinations/[id]/health', () => {
 
   it('returns unhealthy when Ghost Content API responds 401', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: ghostContentDest, error: null })
-        })
-      })
-    });
+    setupFromMock(ghostContentDest);
     fetchSpy.mockResolvedValue(new Response('{"errors":[{"type":"UnauthorizedError"}]}', { status: 401 }));
 
     const res = await POST(makeEvent('dest-1'));
@@ -124,13 +120,7 @@ describe('POST /api/v1/destinations/[id]/health', () => {
 
   it('returns unhealthy when Ghost API fetch throws (network error)', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: ghostContentDest, error: null })
-        })
-      })
-    });
+    setupFromMock(ghostContentDest);
     fetchSpy.mockRejectedValue(new Error('ECONNREFUSED'));
 
     const res = await POST(makeEvent('dest-1'));
@@ -142,13 +132,7 @@ describe('POST /api/v1/destinations/[id]/health', () => {
 
   it('returns healthy when Ghost Admin API responds 200', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: ghostAdminDest, error: null })
-        })
-      })
-    });
+    setupFromMock(ghostAdminDest);
     fetchSpy.mockResolvedValue(new Response('{}', { status: 200 }));
 
     const res = await POST(makeEvent('dest-1'));
@@ -164,16 +148,7 @@ describe('POST /api/v1/destinations/[id]/health', () => {
 
   it('returns 400 for unsupported destination type', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { id: 'dest-2', type: 'webhook', config: {} },
-            error: null
-          })
-        })
-      })
-    });
+    setupFromMock({ id: 'dest-2', type: 'webhook', config: {} });
 
     const res = await POST(makeEvent('dest-2'));
     expect(res.status).toBe(400);

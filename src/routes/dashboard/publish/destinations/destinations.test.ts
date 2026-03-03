@@ -25,8 +25,8 @@ vi.mock('$lib/server/supabase', () => ({
 import DestinationsPage from './+page.svelte';
 
 const mockDestinations = [
-  { id: '1', project_id: 'p1', type: 'ghost' as const, name: 'My Ghost', config: {}, is_active: true, created_at: '', updated_at: '' },
-  { id: '2', project_id: 'p1', type: 'postbridge' as const, name: 'My PB', config: {}, is_active: false, created_at: '', updated_at: '' }
+  { id: '1', project_id: 'p1', type: 'ghost' as const, name: 'My Ghost', config: {}, is_active: true, created_at: '', updated_at: '', last_health_status: null as string | null, last_health_check: null as string | null, health_message: null as string | null },
+  { id: '2', project_id: 'p1', type: 'postbridge' as const, name: 'My PB', config: {}, is_active: false, created_at: '', updated_at: '', last_health_status: null as string | null, last_health_check: null as string | null, health_message: null as string | null }
 ];
 
 const defaultData = { destinations: mockDestinations, projectId: 'p1' };
@@ -133,7 +133,7 @@ describe('Destinations Page at /dashboard/publish/destinations', () => {
     });
 
     it('appends destination and closes form on success', async () => {
-      const newDest = { id: '3', project_id: 'p1', type: 'ghost', name: 'New Ghost', config: {}, is_active: false, created_at: '', updated_at: '' };
+      const newDest = { id: '3', project_id: 'p1', type: 'ghost', name: 'New Ghost', config: {}, is_active: false, created_at: '', updated_at: '', last_health_status: null, last_health_check: null, health_message: null };
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response(JSON.stringify({ data: newDest }), { status: 201 })
       );
@@ -151,6 +151,70 @@ describe('Destinations Page at /dashboard/publish/destinations', () => {
         expect(screen.queryByText('Save Destination')).not.toBeInTheDocument();
         expect(screen.getByText('New Ghost')).toBeInTheDocument();
       });
+    });
+  });
+
+  /**
+   * @behavior Health indicators show destination connection status at a glance
+   * @business_rule Users need to see which destinations are working without manually testing each one
+   */
+  describe('Health status indicators', () => {
+    it('renders health indicator green when destination is healthy', () => {
+      const healthyDests = [
+        { ...mockDestinations[0], last_health_status: 'healthy', last_health_check: '2026-03-03T10:00:00Z', health_message: 'Connection successful' }
+      ];
+      render(DestinationsPage, { props: { data: { destinations: healthyDests, projectId: 'p1' } } });
+      const indicator = screen.getByTestId('health-indicator-1');
+      expect(indicator).toBeInTheDocument();
+      expect(indicator.classList.contains('badge-success')).toBe(true);
+      expect(screen.getByText('Healthy')).toBeInTheDocument();
+    });
+
+    it('renders health indicator red when destination is unhealthy', () => {
+      const unhealthyDests = [
+        { ...mockDestinations[0], last_health_status: 'unhealthy', last_health_check: '2026-03-03T10:00:00Z', health_message: 'Connection refused' }
+      ];
+      render(DestinationsPage, { props: { data: { destinations: unhealthyDests, projectId: 'p1' } } });
+      const indicator = screen.getByTestId('health-indicator-1');
+      expect(indicator).toBeInTheDocument();
+      expect(indicator.classList.contains('badge-error')).toBe(true);
+      expect(screen.getByText('Connection refused')).toBeInTheDocument();
+    });
+
+    it('renders health indicator gray when never checked', () => {
+      render(DestinationsPage, { props: { data: defaultData } });
+      const indicator = screen.getByTestId('health-indicator-1');
+      expect(indicator).toBeInTheDocument();
+      expect(indicator.classList.contains('badge-warning')).toBe(true);
+      expect(indicator.textContent).toBe('Not checked');
+    });
+
+    it('shows last checked timestamp', () => {
+      const checkedDests = [
+        { ...mockDestinations[0], last_health_status: 'healthy', last_health_check: '2026-03-03T10:00:00Z', health_message: 'Connection successful' }
+      ];
+      render(DestinationsPage, { props: { data: { destinations: checkedDests, projectId: 'p1' } } });
+      expect(screen.getByText(/Last checked:/)).toBeInTheDocument();
+    });
+
+    it('test connection updates health status on card', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ status: 'healthy', message: 'Connection successful' }), { status: 200 })
+      );
+
+      render(DestinationsPage, { props: { data: defaultData } });
+      const indicator = screen.getByTestId('health-indicator-1');
+      expect(indicator.classList.contains('badge-warning')).toBe(true);
+
+      const testBtns = screen.getAllByText('Test Connection');
+      await fireEvent.click(testBtns[0]);
+
+      await waitFor(() => {
+        const updatedIndicator = screen.getByTestId('health-indicator-1');
+        expect(updatedIndicator.classList.contains('badge-success')).toBe(true);
+      });
+
+      fetchSpy.mockRestore();
     });
   });
 });

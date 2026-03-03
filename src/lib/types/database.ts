@@ -136,8 +136,11 @@ export type Database = {
         Row: {
           config: Json
           created_at: string
+          health_message: string | null
           id: string
           is_active: boolean
+          last_health_check: string | null
+          last_health_status: string | null
           name: string
           project_id: string
           type: Database["public"]["Enums"]["destination_type"]
@@ -146,8 +149,11 @@ export type Database = {
         Insert: {
           config?: Json
           created_at?: string
+          health_message?: string | null
           id?: string
           is_active?: boolean
+          last_health_check?: string | null
+          last_health_status?: string | null
           name: string
           project_id: string
           type: Database["public"]["Enums"]["destination_type"]
@@ -156,8 +162,11 @@ export type Database = {
         Update: {
           config?: Json
           created_at?: string
+          health_message?: string | null
           id?: string
           is_active?: boolean
+          last_health_check?: string | null
+          last_health_status?: string | null
           name?: string
           project_id?: string
           type?: Database["public"]["Enums"]["destination_type"]

@@ -35,6 +35,7 @@
   let statusFilter = $state('all');
   let typeFilter = $state('all');
   let workflowFilter = $state('all');
+  let destinationFilter = $state('all');
 
   const statusColors: Record<string, string> = {
     draft: 'badge-ghost',
@@ -49,6 +50,13 @@
       if (statusFilter !== 'all' && item.status !== statusFilter) return false;
       if (typeFilter !== 'all' && item.content_type !== typeFilter) return false;
       if (workflowFilter !== 'all' && item.pipeline_name !== workflowFilter) return false;
+      if (destinationFilter !== 'all') {
+        if (destinationFilter === 'unpublished') {
+          if (item.destination_type !== null) return false;
+        } else {
+          if (item.destination_type !== destinationFilter) return false;
+        }
+      }
       return true;
     })
   );
@@ -94,6 +102,18 @@
         <option value={pipeline.name}>{pipeline.name}</option>
       {/each}
     </select>
+
+    <select
+      data-testid="destination-filter"
+      class="select select-bordered select-sm"
+      bind:value={destinationFilter}
+    >
+      <option value="all">All Destinations</option>
+      <option value="ghost">Ghost</option>
+      <option value="postbridge">PostBridge</option>
+      <option value="webhook">Webhook</option>
+      <option value="unpublished">Unpublished</option>
+    </select>
   </div>
 
   <div class="space-y-2">
@@ -112,6 +132,23 @@
             >
               {item.status}
             </span>
+            {#if item.destination_type}
+              <span data-testid="destination-badge" class="badge badge-outline badge-sm">
+                {item.destination_type}
+              </span>
+            {/if}
+            {#if item.published_url}
+              <button
+                data-testid="published-link"
+                type="button"
+                class="text-xs text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
+                onclick={(e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); window.open(item.published_url!, '_blank'); }}
+                data-href={item.published_url}
+                data-target="_blank"
+              >
+                &#x2197;
+              </button>
+            {/if}
           </div>
 
           <div class="flex items-center gap-4">
