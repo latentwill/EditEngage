@@ -24,22 +24,27 @@ vi.mock('$lib/server/supabase', () => ({
 
 import SettingsPage from './+page.svelte';
 
+const mockData = {
+  project: { id: 'proj-1', name: 'Test', description: '', domain: '', color: '#000000' },
+  projectId: 'proj-1'
+};
+
 describe('Settings General Page - Styling', () => {
   it('renders settings page with proper testid', () => {
-    render(SettingsPage);
+    render(SettingsPage, { props: { data: mockData } });
     const page = screen.getByTestId('settings-page');
     expect(page).toBeInTheDocument();
   });
 
   it('has styled heading', () => {
-    render(SettingsPage);
+    render(SettingsPage, { props: { data: mockData } });
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading.className).toMatch(/text-2xl|text-xl/);
     expect(heading.className).toMatch(/font-bold|font-semibold/);
   });
 
   it('displays General Settings title', () => {
-    render(SettingsPage);
+    render(SettingsPage, { props: { data: mockData } });
     expect(screen.getByText('General Settings')).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ContentType, ContentStatus, DestinationType } from '$lib/types/database.js';
+  import BulkActionBar from '$lib/components/BulkActionBar.svelte';
 
   type ContentItem = {
     id: string;
@@ -35,6 +36,7 @@
   let statusFilter = $state('all');
   let typeFilter = $state('all');
   let workflowFilter = $state('all');
+  let selectedIds = $state<string[]>([]);
 
   const statusColors: Record<string, string> = {
     draft: 'badge-ghost',
@@ -52,6 +54,46 @@
       return true;
     })
   );
+
+  function toggleSelection(id: string) {
+    if (selectedIds.includes(id)) {
+      selectedIds = selectedIds.filter((sid) => sid !== id);
+    } else {
+      selectedIds = [...selectedIds, id];
+    }
+  }
+
+  function toggleSelectAll() {
+    const allFilteredIds = filteredItems.map((item) => item.id);
+    const allSelected = allFilteredIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      selectedIds = [];
+    } else {
+      selectedIds = allFilteredIds;
+    }
+  }
+
+  async function handleBulkApprove() {
+    const res = await fetch('/api/v1/content/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', ids: selectedIds })
+    });
+    if (res.ok) {
+      selectedIds = [];
+    }
+  }
+
+  async function handleBulkReject() {
+    const res = await fetch('/api/v1/content/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject', ids: selectedIds })
+    });
+    if (res.ok) {
+      selectedIds = [];
+    }
+  }
 </script>
 
 <div data-testid="content-library-page" class="space-y-8 py-6">
@@ -60,6 +102,14 @@
   </div>
 
   <div class="flex items-center gap-4">
+    <input
+      type="checkbox"
+      data-testid="select-all-checkbox"
+      class="checkbox checkbox-sm"
+      checked={filteredItems.length > 0 && filteredItems.every((item) => selectedIds.includes(item.id))}
+      onchange={toggleSelectAll}
+    />
+
     <select
       data-testid="status-filter"
       class="select select-bordered select-sm"
@@ -98,14 +148,20 @@
 
   <div class="space-y-2">
     {#each filteredItems as item}
-      <a
-        href="/dashboard/write/content/{item.id}"
+      <div
         data-testid="content-item"
         class="card bg-base-200 shadow-xl block p-4 hover:bg-base-300 transition-all duration-300"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <span class="text-sm font-medium text-base-content">{item.title}</span>
+            <input
+              type="checkbox"
+              data-testid="content-checkbox"
+              class="checkbox checkbox-sm"
+              checked={selectedIds.includes(item.id)}
+              onchange={() => toggleSelection(item.id)}
+            />
+            <a href="/dashboard/write/content/{item.id}" class="text-sm font-medium text-base-content">{item.title}</a>
             <span
               data-testid="content-status-badge"
               class="badge {statusColors[item.status] ?? 'badge-ghost'}"
@@ -121,7 +177,7 @@
             </span>
           </div>
         </div>
-      </a>
+      </div>
     {/each}
 
     {#if filteredItems.length === 0}
@@ -130,4 +186,10 @@
       </div>
     {/if}
   </div>
+
+  <BulkActionBar
+    {selectedIds}
+    onapprove={handleBulkApprove}
+    onreject={handleBulkReject}
+  />
 </div>

@@ -148,13 +148,19 @@
               <p class="text-xs text-base-content/40 italic line-clamp-2">"{agent.system_prompt}"</p>
             {/if}
           </div>
-          <button
-            class="btn btn-ghost btn-sm flex-shrink-0"
-            onclick={() => toggleActive(agent)}
-            disabled={togglingId !== null}
-          >
-            {togglingId === agent.id ? '…' : agent.is_active ? 'Deactivate' : 'Activate'}
-          </button>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <a
+              href="/dashboard/write/agents/{agent.id}"
+              class="btn btn-ghost btn-sm"
+            >Edit</a>
+            <button
+              class="btn btn-ghost btn-sm"
+              onclick={() => toggleActive(agent)}
+              disabled={togglingId !== null}
+            >
+              {togglingId === agent.id ? '…' : agent.is_active ? 'Deactivate' : 'Activate'}
+            </button>
+          </div>
         </div>
       </div>
     {/each}

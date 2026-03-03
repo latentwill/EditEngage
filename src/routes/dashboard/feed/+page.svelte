@@ -10,9 +10,26 @@
   const feedStore = createFeedStore(client);
   const projectStore = createProjectStore();
 
+  let pipelines = $state<Array<{ id: string; name: string }>>([]);
+
   onMount(() => {
     feedStore.loadFeed();
+    loadPipelines();
   });
+
+  async function loadPipelines() {
+    const projectId = projectStore.selectedProjectId;
+    if (!projectId || projectId === 'all') return;
+
+    const { data } = await client
+      .from('pipelines')
+      .select('id, name')
+      .eq('project_id', projectId);
+
+    if (data) {
+      pipelines = data as Array<{ id: string; name: string }>;
+    }
+  }
 
   const showProjectBadge = $derived(projectStore.selectedProjectId === 'all');
 
@@ -34,7 +51,7 @@
 </script>
 
 <div data-testid="feed-page" class="space-y-6 py-6">
-  <FeedFilterBar pipelines={[]} onFilterChange={(filters) => feedStore.setFilters(filters)} />
+  <FeedFilterBar {pipelines} onFilterChange={(filters) => feedStore.setFilters(filters)} />
 
   {#if feedStore.loading}
     <div data-testid="feed-loading" class="flex flex-col gap-4 p-4">

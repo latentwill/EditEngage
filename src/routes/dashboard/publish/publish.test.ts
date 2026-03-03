@@ -1,6 +1,6 @@
 /**
- * @behavior Publish page displays a coming-soon placeholder at /dashboard/publish
- * @business_rule Publish features are planned but not yet implemented; users see a clear placeholder
+ * @behavior Publish page displays an overview of publishing activity
+ * @business_rule Users see their publishing stats, recent publications, and destination status
  */
 import { render, screen } from '@testing-library/svelte';
 import { describe, it, expect, vi } from 'vitest';
@@ -14,18 +14,24 @@ vi.mock('$env/static/private', () => ({
   SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
 }));
 
-describe('Publish Placeholder Page', () => {
+const defaultData = {
+  recentPublications: [],
+  destinations: [],
+  projectId: 'proj-1'
+};
+
+describe('Publish Overview Page', () => {
   it('renders with "Publish" heading', async () => {
     const PublishPage = (await import('./+page.svelte')).default;
-    render(PublishPage);
+    render(PublishPage, { props: { data: defaultData } });
 
     expect(screen.getByRole('heading', { name: /publish/i })).toBeInTheDocument();
   });
 
-  it('shows coming soon indicator', async () => {
+  it('renders publish page testid', async () => {
     const PublishPage = (await import('./+page.svelte')).default;
-    render(PublishPage);
+    render(PublishPage, { props: { data: defaultData } });
 
-    expect(screen.getByText(/coming soon/i)).toBeInTheDocument();
+    expect(screen.getByTestId('publish-page')).toBeInTheDocument();
   });
 });

@@ -30,6 +30,36 @@
   let keySaveSuccess = $state<Record<string, boolean>>({});
   let showKey = $state<Record<string, boolean>>({});
 
+  // Track saved keys by provider for deactivate/delete actions
+  let savedKeys = $state<Record<string, { id: string; is_active: boolean }>>(
+    Object.fromEntries(
+      data.apiKeys.map(k => [k.provider, { id: k.id, is_active: k.is_active }])
+    )
+  );
+
+  async function toggleActive(provider: ApiProvider) {
+    const saved = savedKeys[provider];
+    if (!saved) return;
+    const newActive = !saved.is_active;
+    await fetch(`/api/v1/api-keys/${saved.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: newActive })
+    });
+    savedKeys[provider] = { ...saved, is_active: newActive };
+  }
+
+  async function deleteKey(provider: ApiProvider) {
+    const saved = savedKeys[provider];
+    if (!saved) return;
+    if (!confirm('Are you sure you want to delete this API key?')) return;
+    await fetch(`/api/v1/api-keys/${saved.id}`, {
+      method: 'DELETE'
+    });
+    delete savedKeys[provider];
+    keyValues[provider] = '';
+  }
+
   async function saveKey(provider: ApiProvider) {
     keySaving[provider] = true;
     keySaveError[provider] = '';
@@ -103,6 +133,24 @@
           </button>
           {#if keySaveSuccess[provider.id]}
             <span data-testid="api-key-success-{provider.id}" class="text-success text-sm">Saved!</span>
+          {/if}
+          {#if savedKeys[provider.id]}
+            <button
+              type="button"
+              data-testid="api-key-deactivate-{provider.id}"
+              class="btn btn-ghost btn-sm"
+              onclick={() => toggleActive(provider.id)}
+            >
+              {savedKeys[provider.id].is_active ? 'Deactivate' : 'Activate'}
+            </button>
+            <button
+              type="button"
+              data-testid="api-key-delete-{provider.id}"
+              class="btn btn-ghost btn-sm text-error"
+              onclick={() => deleteKey(provider.id)}
+            >
+              <Icon icon="iconoir:trash" width={16} />
+            </button>
           {/if}
         </form>
         {#if keySaveError[provider.id]}

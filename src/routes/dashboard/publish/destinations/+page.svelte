@@ -23,6 +23,7 @@
   let validationErrors = $state<string[]>([]);
   let saveError = $state<string | null>(null);
   let testingId = $state<string | null>(null);
+  let testResults = $state<Record<string, { status: string; message?: string }>>({});
 
   function openForm() {
     showForm = true;
@@ -93,9 +94,21 @@
 
   async function testConnection(destId: string) {
     testingId = destId;
-    await fetch(`/api/v1/destinations/${destId}/health`, {
+    const { [destId]: _, ...rest } = testResults;
+    testResults = rest;
+
+    const res = await fetch(`/api/v1/destinations/${destId}/health`, {
       method: 'POST'
     });
+
+    if (res.ok) {
+      const body = await res.json() as { status: string; message?: string };
+      testResults = { ...testResults, [destId]: body };
+    } else {
+      const body = await res.json().catch(() => ({})) as { message?: string };
+      testResults = { ...testResults, [destId]: { status: 'error', message: body.message ?? `HTTP ${res.status}` } };
+    }
+
     testingId = null;
   }
 </script>
@@ -111,9 +124,18 @@
           <span class="text-base-content/60 text-sm">{dest.type}</span>
           <span class={dest.is_active ? 'badge badge-success' : 'badge badge-ghost'}>{dest.is_active ? 'active' : 'inactive'}</span>
         </div>
-        <button class="btn btn-ghost" onclick={() => testConnection(dest.id)}>
-          {testingId === dest.id ? 'Testing…' : 'Test Connection'}
-        </button>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-ghost" onclick={() => testConnection(dest.id)}>
+            {testingId === dest.id ? 'Testing…' : 'Test Connection'}
+          </button>
+          {#if testResults[dest.id]}
+            {#if testResults[dest.id].status === 'healthy'}
+              <span data-testid="test-result-{dest.id}" class="badge badge-success">Healthy</span>
+            {:else}
+              <span data-testid="test-result-{dest.id}" class="badge badge-error">Error: {testResults[dest.id].message ?? 'Unknown'}</span>
+            {/if}
+          {/if}
+        </div>
       </div>
     {/each}
   </div>

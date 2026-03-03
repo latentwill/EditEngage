@@ -46,13 +46,18 @@ export const PATCH: RequestHandler = async ({ request, params, cookies }) => {
   }
 
   const body = await request.json();
-  const { name, domain, settings, description } = body;
+  const { name, domain, settings, description, color } = body;
 
   const updates: Record<string, unknown> = {};
   if (name !== undefined) updates.name = name;
   if (domain !== undefined) updates.domain = domain;
   if (settings !== undefined) updates.settings = settings;
   if (description !== undefined) updates.description = description;
+  if (color !== undefined) updates.color = color;
+
+  if (Object.keys(updates).length === 0) {
+    return json({ error: 'No valid fields provided' }, { status: 400 });
+  }
 
   const memberships = await getUserOrgMemberships(supabase, user.id);
   const orgIds = memberships.map((m: { org_id: string }) => m.org_id);

@@ -89,7 +89,9 @@ vi.stubGlobal('fetch', mockFetch);
 describe('Settings General Page', () => {
   it('renders general settings page', async () => {
     const SettingsPage = (await import('./+page.svelte')).default;
-    render(SettingsPage);
+    render(SettingsPage, {
+      props: { data: { project: null, projectId: '' } }
+    });
 
     expect(screen.getByTestId('settings-page')).toBeInTheDocument();
     expect(screen.getByText('General Settings')).toBeInTheDocument();

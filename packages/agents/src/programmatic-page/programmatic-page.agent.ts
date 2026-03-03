@@ -1,4 +1,4 @@
-import { AgentType, type Agent, type AgentConfig, type ValidationResult } from '../types.js';
+import { AgentType, type Agent, type AgentConfig, type AgentSupabaseClient, type ValidationResult } from '../types.js';
 
 export class ProgrammaticPageError extends Error {
   constructor(message: string) {
@@ -8,6 +8,7 @@ export class ProgrammaticPageError extends Error {
 }
 
 export interface TemplateConfig {
+  id?: string;
   name: string;
   slug_pattern: string;
   body_template: string;
@@ -73,10 +74,12 @@ export class ProgrammaticPageAgent implements Agent<ProgrammaticPageInput, Progr
 
   private llmFn: LlmFn;
   private publisher: GhostPublisher;
+  private supabase?: AgentSupabaseClient;
 
-  constructor(llmFn: LlmFn, publisher: GhostPublisher) {
+  constructor(llmFn: LlmFn, publisher: GhostPublisher, supabase?: AgentSupabaseClient) {
     this.llmFn = llmFn;
     this.publisher = publisher;
+    this.supabase = supabase;
   }
 
   async execute(input: ProgrammaticPageInput): Promise<ProgrammaticPageOutput> {
@@ -129,6 +132,17 @@ export class ProgrammaticPageAgent implements Agent<ProgrammaticPageInput, Progr
           });
           page.ghostPostId = result.ghostPostId;
           page.url = result.url;
+        }
+
+        if (this.supabase && template.id) {
+          await this.supabase.from('generated_pages').insert({
+            template_id: template.id,
+            slug,
+            status: publish ? 'published' : 'draft',
+            published_url: page.url ?? null,
+            variables: row,
+            enriched_content: enrichmentContent ?? null
+          });
         }
 
         allPages.push(page);
