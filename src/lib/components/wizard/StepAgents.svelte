@@ -1,73 +1,105 @@
 <script lang="ts">
-  type AgentOption = {
-    type: string;
-    label: string;
-  };
+  import { onMount } from 'svelte';
+  import type { SelectedAgent, UserAgent } from '$lib/types/workflow';
 
   let {
-    availableAgents,
+    projectId,
     selectedAgents,
     onToggleAgent,
-    onMoveAgent,
+    onAgentsFetched,
     validationError
   }: {
-    availableAgents: AgentOption[];
-    selectedAgents: AgentOption[];
-    onToggleAgent: (agentType: string) => void;
-    onMoveAgent: (index: number, direction: 'up' | 'down') => void;
+    projectId: string;
+    selectedAgents: SelectedAgent[];
+    onToggleAgent: (agentId: string) => void;
+    onAgentsFetched?: (agents: UserAgent[]) => void;
     validationError: string | null;
   } = $props();
 
-  function isSelected(agentType: string): boolean {
-    return selectedAgents.some((a) => a.type === agentType);
+  let agents = $state<UserAgent[]>([]);
+  let loading = $state(true);
+
+  let writingAgents = $derived(agents.filter((a) => a.type === 'writing'));
+  let researchAgents = $derived(agents.filter((a) => a.type === 'research'));
+
+  function isSelected(agentId: string): boolean {
+    return selectedAgents.some((a) => a.id === agentId);
   }
+
+  onMount(async () => {
+    try {
+      const response = await fetch(`/api/v1/writing-agents?project_id=${projectId}`);
+      if (response.ok) {
+        const result = await response.json();
+        agents = result.data ?? [];
+        onAgentsFetched?.(agents);
+      }
+    } catch {
+      // fetch failed
+    } finally {
+      loading = false;
+    }
+  });
 </script>
 
 <div data-testid="step-agents">
   <h2 class="text-lg font-semibold text-base-content mb-4">Select agents</h2>
 
-  <div class="grid grid-cols-2 gap-3 mb-4">
-    {#each availableAgents as agent (agent.type)}
-      <button
-        type="button"
-        data-testid="agent-card"
-        data-agent-type={agent.type}
-        onclick={() => onToggleAgent(agent.type)}
-        class="card bg-base-200 card-compact p-3 border text-left transition-all {isSelected(agent.type)
-          ? 'border-primary ring ring-primary/30 text-primary'
-          : 'border-base-300 text-base-content/70 hover:border-base-content/20'}"
-      >
-        <span data-testid="agent-card-{agent.type}">{agent.label}</span>
-      </button>
-    {/each}
-  </div>
+  {#if !loading && agents.length === 0}
+    <div data-testid="agents-empty-state" class="text-center py-8 text-base-content/50">
+      <p>No agents found. Please create an agent first.</p>
+    </div>
+  {/if}
+
+  {#if writingAgents.length > 0}
+    <div data-testid="agent-group-writing" class="mb-4">
+      <h3 class="text-sm text-base-content/50 mb-2">Writing</h3>
+      <div class="grid grid-cols-2 gap-3">
+        {#each writingAgents as agent (agent.id)}
+          <button
+            type="button"
+            data-testid="agent-card"
+            onclick={() => onToggleAgent(agent.id)}
+            class="card bg-base-200 card-compact p-3 border text-left transition-all {isSelected(agent.id)
+              ? 'border-primary ring ring-primary/30 text-primary'
+              : 'border-base-300 text-base-content/70 hover:border-base-content/20'}"
+          >
+            <span>{agent.name}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
+
+  {#if researchAgents.length > 0}
+    <div data-testid="agent-group-research" class="mb-4">
+      <h3 class="text-sm text-base-content/50 mb-2">Research</h3>
+      <div class="grid grid-cols-2 gap-3">
+        {#each researchAgents as agent (agent.id)}
+          <button
+            type="button"
+            data-testid="agent-card"
+            onclick={() => onToggleAgent(agent.id)}
+            class="card bg-base-200 card-compact p-3 border text-left transition-all {isSelected(agent.id)
+              ? 'border-primary ring ring-primary/30 text-primary'
+              : 'border-base-300 text-base-content/70 hover:border-base-content/20'}"
+          >
+            <span>{agent.name}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   {#if selectedAgents.length > 0}
     <div data-testid="selected-agents-list" class="mt-4">
-      <h3 class="text-sm text-base-content/50 mb-2">Selected agents (drag to reorder)</h3>
-      {#each selectedAgents as agent, i (agent.type)}
+      <h3 class="text-sm text-base-content/50 mb-2">Selected agents</h3>
+      {#each selectedAgents as agent (agent.id)}
         <div
           data-testid="selected-agent-item"
           class="flex items-center gap-2 p-2 mb-1 rounded bg-base-200 border border-base-300"
         >
-          <span data-testid="agent-drag-handle" class="cursor-grab text-base-content/30">&#x2630;</span>
-          <span class="flex-1 text-base-content/80">{agent.label}</span>
-          {#if i > 0}
-            <button
-              type="button"
-              data-testid="agent-move-up"
-              onclick={() => onMoveAgent(i, 'up')}
-              class="text-base-content/40 hover:text-base-content/70 text-sm"
-            >&#9650;</button>
-          {/if}
-          {#if i < selectedAgents.length - 1}
-            <button
-              type="button"
-              data-testid="agent-move-down"
-              onclick={() => onMoveAgent(i, 'down')}
-              class="text-base-content/40 hover:text-base-content/70 text-sm"
-            >&#9660;</button>
-          {/if}
+          <span class="flex-1 text-base-content/80">{agent.name}</span>
         </div>
       {/each}
     </div>

@@ -31,7 +31,14 @@ vi.mock('$env/static/private', () => ({
 }));
 
 vi.mock('$lib/supabase', () => ({
-  createSupabaseClient: vi.fn(() => ({}))
+  createSupabaseClient: vi.fn(() => ({
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+      unsubscribe: vi.fn()
+    })),
+    removeChannel: vi.fn()
+  }))
 }));
 
 const mockChannel = {

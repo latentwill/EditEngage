@@ -1,18 +1,63 @@
 /**
  * @behavior Steps 3-5 of the WorkflowWizard handle agent configuration,
- * scheduling, and destination selection. The final step saves the complete
+ * scheduling, and review/save. The final step saves the complete
  * workflow via POST /api/v1/workflows.
- * @business_rule Each agent must have valid config before proceeding. Schedule
- * defaults to draft_for_review review mode. The save action assembles all
- * wizard state into a single API call.
+ * @business_rule Each agent must have topic and destination configured before
+ * proceeding. Schedule defaults to draft_for_review review mode. The save action
+ * assembles all wizard state into a single API call with per-agent config.
  */
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import WorkflowWizard from '../WorkflowWizard.svelte';
 
-// Helper to navigate through steps 1 and 2
+const MOCK_AGENTS = [
+  { id: 'agent-w1', name: 'SEO Blog Writer', type: 'writing', project_id: 'proj-1', config: {} }
+];
+
+const MOCK_TOPICS = [
+  { id: 'topic-1', title: 'AI in Healthcare', project_id: 'proj-1', status: 'pending' }
+];
+
+const MOCK_DESTINATIONS = [
+  { id: 'dest-1', name: 'My Ghost Blog', type: 'ghost', project_id: 'proj-1' }
+];
+
+function setupMockFetch() {
+  const fetchMock = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+    if (typeof url === 'string' && url.includes('/api/v1/writing-agents')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: MOCK_AGENTS })
+      });
+    }
+    if (typeof url === 'string' && url.includes('/api/v1/topics')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: MOCK_TOPICS })
+      });
+    }
+    if (typeof url === 'string' && url.includes('/api/v1/destinations')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: MOCK_DESTINATIONS })
+      });
+    }
+    if (typeof url === 'string' && url.includes('/api/v1/workflows') && options?.method === 'POST') {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'new-pipeline-id' })
+      });
+    }
+    return Promise.resolve({ ok: false, json: () => Promise.resolve({ error: 'Not found' }) });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+// Helper to navigate through steps
 async function navigateToStep(targetStep: number) {
-  render(WorkflowWizard);
+  setupMockFetch();
+  render(WorkflowWizard, { props: { projectId: 'proj-1' } });
 
   // Step 1: fill name
   const nameInput = screen.getByTestId('workflow-name-input');
@@ -27,17 +72,29 @@ async function navigateToStep(targetStep: number) {
   if (targetStep <= 2) return;
 
   // Step 2: select an agent
-  const seoWriter = screen.getByTestId('agent-card-seo_writer');
-  await fireEvent.click(seoWriter);
+  await waitFor(() => {
+    expect(screen.getAllByTestId('agent-card').length).toBeGreaterThan(0);
+  });
+  await fireEvent.click(screen.getAllByTestId('agent-card')[0]);
 
   nextBtn = screen.getByTestId('wizard-next-btn');
   await fireEvent.click(nextBtn);
 
   if (targetStep <= 3) return;
 
-  // Step 3: fill config for seo_writer agent
-  const configInput = screen.getByTestId('agent-config-seo_writer-target_keywords');
-  await fireEvent.input(configInput, { target: { value: 'svelte, tdd' } });
+  // Step 3: fill config for agent
+  await waitFor(() => {
+    const sel = screen.getByTestId('agent-topic-select-agent-w1') as HTMLSelectElement;
+    expect(sel.querySelectorAll('option').length).toBeGreaterThan(1);
+  });
+
+  const topicSelect = screen.getByTestId('agent-topic-select-agent-w1') as HTMLSelectElement;
+  topicSelect.value = 'topic-1';
+  await fireEvent.change(topicSelect);
+
+  const destSelect = screen.getByTestId('agent-destination-select-agent-w1') as HTMLSelectElement;
+  destSelect.value = 'dest-1';
+  await fireEvent.change(destSelect);
 
   nextBtn = screen.getByTestId('wizard-next-btn');
   await fireEvent.click(nextBtn);
@@ -50,49 +107,53 @@ async function navigateToStep(targetStep: number) {
 }
 
 describe('WorkflowWizard — Step 3: Agent Configuration', () => {
-  it('renders agent-specific config forms based on agent type', async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('renders per-agent config forms with topic and destination selectors', async () => {
     await navigateToStep(3);
 
-    // Should be on step 3
     const stepIndicator = screen.getByTestId('wizard-step-indicator');
     expect(stepIndicator.textContent).toContain('3');
 
-    // Config form for seo_writer should be visible
-    const configSection = screen.getByTestId('agent-config-section-seo_writer');
+    const configSection = screen.getByTestId('agent-config-section-agent-w1');
     expect(configSection).toBeInTheDocument();
 
-    // Should have a target_keywords input specific to seo_writer
-    const keywordsInput = screen.getByTestId('agent-config-seo_writer-target_keywords');
-    expect(keywordsInput).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('agent-topic-select-agent-w1')).toBeInTheDocument();
+      expect(screen.getByTestId('agent-destination-select-agent-w1')).toBeInTheDocument();
+    });
   });
 
   it('validates each agent config before allowing progression', async () => {
     await navigateToStep(3);
 
-    // Try to proceed without filling required config
+    // Try to proceed without filling config
     const nextBtn = screen.getByTestId('wizard-next-btn');
     await fireEvent.click(nextBtn);
 
-    // Should still be on step 3
     const stepIndicator = screen.getByTestId('wizard-step-indicator');
     expect(stepIndicator.textContent).toContain('3');
 
-    // Validation error should appear
     const error = screen.getByTestId('config-validation-error');
     expect(error).toBeInTheDocument();
   });
 });
 
 describe('WorkflowWizard — Step 4: Schedule', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders cron schedule input and review mode toggle', async () => {
     await navigateToStep(4);
 
-    // Should be on step 4
     const stepIndicator = screen.getByTestId('wizard-step-indicator');
     expect(stepIndicator.textContent).toContain('4');
 
-    const cronInput = screen.getByTestId('cron-schedule-input');
-    expect(cronInput).toBeInTheDocument();
+    const dailyPreset = screen.getByTestId('schedule-preset-daily');
+    expect(dailyPreset).toBeInTheDocument();
 
     const reviewModeSelect = screen.getByTestId('review-mode-select');
     expect(reviewModeSelect).toBeInTheDocument();
@@ -106,63 +167,74 @@ describe('WorkflowWizard — Step 4: Schedule', () => {
   });
 });
 
-describe('WorkflowWizard — Step 5: Destination & Save', () => {
-  it('renders available destinations and save button', async () => {
+describe('WorkflowWizard — Step 5: Review & Save', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('renders review step and save button', async () => {
     await navigateToStep(5);
 
-    // Should be on step 5
     const stepIndicator = screen.getByTestId('wizard-step-indicator');
     expect(stepIndicator.textContent).toContain('5');
 
-    // Destination options should be visible
-    const destinations = screen.getAllByTestId('destination-option');
-    expect(destinations.length).toBeGreaterThanOrEqual(2);
-
-    // Save button should be visible
     const saveBtn = screen.getByTestId('wizard-save-btn');
     expect(saveBtn).toBeInTheDocument();
   });
 
-  it('save calls POST /api/v1/workflows with complete workflow config', async () => {
-    const fetchSpy = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ id: 'new-pipeline-id' })
+  it('save calls POST /api/v1/workflows with per-agent config payload', async () => {
+    const fetchSpy = setupMockFetch();
+    render(WorkflowWizard, { props: { projectId: 'proj-1' } });
+
+    // Step 1
+    await fireEvent.input(screen.getByTestId('workflow-name-input'), { target: { value: 'Test Workflow' } });
+    await fireEvent.input(screen.getByTestId('workflow-description-input'), { target: { value: 'A test workflow' } });
+    await fireEvent.click(screen.getByTestId('wizard-next-btn'));
+
+    // Step 2
+    await waitFor(() => {
+      expect(screen.getAllByTestId('agent-card').length).toBeGreaterThan(0);
     });
-    vi.stubGlobal('fetch', fetchSpy);
+    await fireEvent.click(screen.getAllByTestId('agent-card')[0]);
+    await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-    await navigateToStep(5);
+    // Step 3
+    await waitFor(() => {
+      const sel = screen.getByTestId('agent-topic-select-agent-w1') as HTMLSelectElement;
+      expect(sel.querySelectorAll('option').length).toBeGreaterThan(1);
+    });
+    const topicSelect = screen.getByTestId('agent-topic-select-agent-w1') as HTMLSelectElement;
+    topicSelect.value = 'topic-1';
+    await fireEvent.change(topicSelect);
+    const destSelect = screen.getByTestId('agent-destination-select-agent-w1') as HTMLSelectElement;
+    destSelect.value = 'dest-1';
+    await fireEvent.change(destSelect);
+    await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-    // Select a destination
-    const ghostDest = screen.getByTestId('destination-option-ghost');
-    await fireEvent.click(ghostDest);
+    // Step 4 - proceed
+    await fireEvent.click(screen.getByTestId('wizard-next-btn'));
 
-    // Click save
-    const saveBtn = screen.getByTestId('wizard-save-btn');
-    await fireEvent.click(saveBtn);
+    // Step 5 - save
+    await fireEvent.click(screen.getByTestId('wizard-save-btn'));
 
     await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledWith(
-        '/api/v1/workflows',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'Content-Type': 'application/json'
-          }),
-          body: expect.stringContaining('Test Workflow')
-        })
+      const postCalls = (fetchSpy.mock.calls as [string, RequestInit?][]).filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('/api/v1/workflows')
       );
+      expect(postCalls.length).toBe(1);
     });
 
-    // Verify the body contains expected fields
-    const callArgs = fetchSpy.mock.calls[0];
-    const body = JSON.parse(callArgs[1].body);
+    const postCall = (fetchSpy.mock.calls as [string, RequestInit?][]).find(
+      (c) => typeof c[0] === 'string' && c[0].includes('/api/v1/workflows')
+    );
+    const body = JSON.parse(postCall![1]!.body as string);
     expect(body.name).toBe('Test Workflow');
     expect(body.description).toBe('A test workflow');
     expect(body.steps).toHaveLength(1);
-    expect(body.steps[0].agentType).toBe('seo_writer');
+    expect(body.steps[0].agent_id).toBe('agent-w1');
+    expect(body.steps[0].agent_type).toBe('writing');
+    expect(body.steps[0].topic_id).toBe('topic-1');
+    expect(body.steps[0].destination_id).toBe('dest-1');
     expect(body.review_mode).toBe('draft_for_review');
-    expect(body.destination).toBe('ghost');
-
-    vi.unstubAllGlobals();
   });
 });

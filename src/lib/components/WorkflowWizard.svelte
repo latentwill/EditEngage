@@ -1,16 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import type { WorkflowReviewMode, DestinationType } from '$lib/types/database';
+  import type { WorkflowReviewMode } from '$lib/types/database';
+  import type { SelectedAgent, UserAgent } from '$lib/types/workflow';
   import StepName from './wizard/StepName.svelte';
   import StepAgents from './wizard/StepAgents.svelte';
   import StepConfig from './wizard/StepConfig.svelte';
   import StepSchedule from './wizard/StepSchedule.svelte';
-  import StepDestination from './wizard/StepDestination.svelte';
-
-  type AgentOption = {
-    type: string;
-    label: string;
-  };
 
   let {
     projectId = ''
@@ -20,44 +15,16 @@
 
   const TOTAL_STEPS = 5;
 
-  const AVAILABLE_AGENTS: AgentOption[] = [
-    { type: 'topic_queue', label: 'Topic Queue' },
-    { type: 'variety_engine', label: 'Variety Engine' },
-    { type: 'seo_writer', label: 'SEO Writer' },
-    { type: 'ghost_publisher', label: 'Ghost Publisher' },
-    { type: 'postbridge_publisher', label: 'Postbridge Publisher' },
-    { type: 'email_publisher', label: 'Email Publisher' },
-    { type: 'content_reviewer', label: 'Content Reviewer' },
-    { type: 'research_agent', label: 'Research Agent' },
-    { type: 'programmatic_page', label: 'Programmatic Page' }
-  ];
-
-  const DESTINATIONS: { type: DestinationType; label: string }[] = [
-    { type: 'ghost', label: 'Ghost CMS' },
-    { type: 'postbridge', label: 'Postbridge' },
-    { type: 'webhook', label: 'Webhook' }
-  ];
-
-  const REQUIRED_CONFIG_FIELDS: Record<string, string[]> = {
-    topic_queue: ['max_topics'],
-    variety_engine: ['variation_count'],
-    seo_writer: ['target_keywords'],
-    ghost_publisher: ['ghost_url'],
-    postbridge_publisher: ['api_endpoint'],
-    email_publisher: ['recipient_list'],
-    content_reviewer: ['review_criteria'],
-    research_agent: ['research_sources'],
-    programmatic_page: ['template_slug']
-  };
-
   let currentStep = $state(1);
   let workflowName = $state('');
   let workflowDescription = $state('');
-  let selectedAgents = $state<AgentOption[]>([]);
+  let selectedAgents = $state<SelectedAgent[]>([]);
   let agentConfigs = $state<Record<string, Record<string, string>>>({});
   let schedule = $state('');
   let reviewMode = $state<WorkflowReviewMode>('draft_for_review');
-  let selectedDestination = $state<DestinationType | null>(null);
+
+  // Track fetched agents for lookup when toggling
+  let fetchedAgents = $state<UserAgent[]>([]);
 
   let nameError = $state<string | null>(null);
   let agentsError = $state<string | null>(null);
@@ -86,13 +53,10 @@
 
     if (currentStep === 3) {
       for (const agent of selectedAgents) {
-        const requiredFields = REQUIRED_CONFIG_FIELDS[agent.type] ?? [];
-        for (const field of requiredFields) {
-          const value = agentConfigs[agent.type]?.[field];
-          if (!value || !value.trim()) {
-            configError = `All required config fields must be filled`;
-            return false;
-          }
+        const config = agentConfigs[agent.id];
+        if (!config?.topic_id || !config?.destination_id) {
+          configError = 'Each agent must have a topic and destination selected';
+          return false;
         }
       }
       configError = null;
@@ -115,34 +79,31 @@
     }
   }
 
-  function handleToggleAgent(agentType: string) {
-    const existing = selectedAgents.findIndex((a) => a.type === agentType);
+  function handleToggleAgent(agentId: string) {
+    const existing = selectedAgents.findIndex((a) => a.id === agentId);
     if (existing >= 0) {
-      selectedAgents = selectedAgents.filter((a) => a.type !== agentType);
+      selectedAgents = selectedAgents.filter((a) => a.id !== agentId);
     } else {
-      const agent = AVAILABLE_AGENTS.find((a) => a.type === agentType);
+      const agent = fetchedAgents.find((a) => a.id === agentId);
       if (agent) {
-        selectedAgents = [...selectedAgents, agent];
+        selectedAgents = [...selectedAgents, { id: agent.id, name: agent.name, type: agent.type }];
       }
     }
   }
 
-  function handleMoveAgent(index: number, direction: 'up' | 'down') {
-    const newAgents = [...selectedAgents];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newAgents.length) return;
-    [newAgents[index], newAgents[targetIndex]] = [newAgents[targetIndex], newAgents[index]];
-    selectedAgents = newAgents;
-  }
-
-  function handleConfigChange(agentType: string, key: string, value: string) {
+  function handleConfigChange(agentId: string, key: string, value: string) {
     agentConfigs = {
       ...agentConfigs,
-      [agentType]: {
-        ...(agentConfigs[agentType] ?? {}),
+      [agentId]: {
+        ...(agentConfigs[agentId] ?? {}),
         [key]: value
       }
     };
+  }
+
+  // Intercept agents fetched by StepAgents for use in toggle logic
+  function handleAgentsFetched(agents: UserAgent[]) {
+    fetchedAgents = agents;
   }
 
   async function handleSave() {
@@ -154,12 +115,13 @@
       name: workflowName,
       description: workflowDescription,
       steps: selectedAgents.map((agent) => ({
-        agentType: agent.type,
-        config: agentConfigs[agent.type] ?? {}
+        agent_id: agent.id,
+        agent_type: agent.type,
+        topic_id: agentConfigs[agent.id]?.topic_id ?? null,
+        destination_id: agentConfigs[agent.id]?.destination_id ?? null
       })),
       schedule: schedule || null,
-      review_mode: reviewMode,
-      destination: selectedDestination
+      review_mode: reviewMode
     };
 
     try {
@@ -208,14 +170,15 @@
     />
   {:else if currentStep === 2}
     <StepAgents
-      availableAgents={AVAILABLE_AGENTS}
+      {projectId}
       {selectedAgents}
       onToggleAgent={handleToggleAgent}
-      onMoveAgent={handleMoveAgent}
+      onAgentsFetched={handleAgentsFetched}
       validationError={agentsError}
     />
   {:else if currentStep === 3}
     <StepConfig
+      {projectId}
       {selectedAgents}
       {agentConfigs}
       onConfigChange={handleConfigChange}
@@ -229,11 +192,20 @@
       onReviewModeChange={(v) => { reviewMode = v; }}
     />
   {:else if currentStep === 5}
-    <StepDestination
-      destinations={DESTINATIONS}
-      {selectedDestination}
-      onSelectDestination={(t) => { selectedDestination = t; }}
-    />
+    <div data-testid="step-review">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Review workflow</h2>
+      <div class="space-y-2 text-sm text-base-content/70">
+        <p><span class="font-medium text-base-content">Name:</span> {workflowName}</p>
+        {#if workflowDescription}
+          <p><span class="font-medium text-base-content">Description:</span> {workflowDescription}</p>
+        {/if}
+        <p><span class="font-medium text-base-content">Agents:</span> {selectedAgents.map(a => a.name).join(', ')}</p>
+        <p><span class="font-medium text-base-content">Review mode:</span> {reviewMode}</p>
+        {#if schedule}
+          <p><span class="font-medium text-base-content">Schedule:</span> {schedule}</p>
+        {/if}
+      </div>
+    </div>
   {/if}
 
   <!-- Navigation -->

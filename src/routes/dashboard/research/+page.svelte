@@ -2,13 +2,11 @@
   import { onMount } from 'svelte';
   import ResearchQueryCard from '$lib/components/ResearchQueryCard.svelte';
   import { createResearchStore } from '$lib/stores/researchStore';
-  import { createProjectStore } from '$lib/stores/projectStore';
   import { createSupabaseClient } from '$lib/supabase';
   import type { ProviderChainEntry } from '$lib/types/research.js';
 
   const client = createSupabaseClient();
   const researchStore = createResearchStore(client);
-  const projectStore = createProjectStore();
 
   onMount(() => {
     researchStore.loadQueries();
@@ -44,6 +42,7 @@
 
   let showNewQueryForm = false;
   let newQueryName = '';
+  let saveError = '';
 
   function handleNewQueryClick() {
     showNewQueryForm = true;
@@ -52,9 +51,11 @@
   function handleNewQueryCancel() {
     showNewQueryForm = false;
     newQueryName = '';
+    saveError = '';
   }
 
   async function handleNewQuerySave() {
+    saveError = '';
     const response = await fetch('/api/v1/research', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,6 +66,8 @@
       showNewQueryForm = false;
       newQueryName = '';
       researchStore.loadQueries();
+    } else {
+      saveError = 'Failed to save query. Please try again.';
     }
   }
 </script>
@@ -86,8 +89,11 @@
       />
       <div class="flex gap-2 justify-end">
         <button data-testid="new-query-cancel-btn" class="btn btn-ghost btn-sm" onclick={handleNewQueryCancel}>Cancel</button>
-        <button data-testid="new-query-save-btn" class="btn btn-primary btn-sm" onclick={handleNewQuerySave}>Save</button>
+        <button data-testid="new-query-save-btn" class="btn btn-primary btn-sm" onclick={handleNewQuerySave} disabled={!newQueryName.trim()}>Save</button>
       </div>
+      {#if saveError}
+        <p data-testid="new-query-save-error" class="text-error text-sm">{saveError}</p>
+      {/if}
     </div>
   {/if}
 

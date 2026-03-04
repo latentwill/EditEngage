@@ -16,6 +16,14 @@
     last_run_at: string | null;
   };
 
+  type RunStep = {
+    agent_name: string;
+    status: string;
+    started_at: string | null;
+    completed_at: string | null;
+    log: string;
+  };
+
   type WorkflowRun = {
     id: string;
     pipeline_id: string;
@@ -28,6 +36,7 @@
     error: string | null;
     bullmq_job_id: string | null;
     created_at: string;
+    steps?: RunStep[];
   };
 
   let { data }: {
@@ -41,6 +50,11 @@
   let runs = $state(data.runs);
   let runLoading = $state(false);
   let runError = $state<string | null>(null);
+  let expandedRunId = $state<string | null>(null);
+
+  function toggleRunExpanded(runId: string) {
+    expandedRunId = expandedRunId === runId ? null : runId;
+  }
 
   async function handleRunNow() {
     runLoading = true;
@@ -51,7 +65,7 @@
         const body = await res.json();
         runError = body.error || 'Failed to start run';
       }
-    } catch (err) {
+    } catch {
       runError = 'Failed to start run';
     } finally {
       runLoading = false;
@@ -144,9 +158,12 @@
       </div>
 
       {#each runs as run}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           data-testid="run-history-row"
-          class="grid grid-cols-4 gap-4 py-3 border-b border-base-300 last:border-0"
+          class="grid grid-cols-4 gap-4 py-3 border-b border-base-300 last:border-0 cursor-pointer hover:bg-base-300/30"
+          onclick={() => toggleRunExpanded(run.id)}
         >
           <span class="text-sm text-base-content/80">
             {new Date(run.created_at).toLocaleDateString()}
@@ -163,6 +180,22 @@
             {run.current_step}/{run.total_steps}
           </span>
         </div>
+
+        {#if expandedRunId === run.id && run.steps}
+          <div class="pl-4 py-2 space-y-2 border-b border-base-300">
+            {#each run.steps as step}
+              <div data-testid="run-step-detail" class="card bg-base-300/50 p-3 rounded-lg">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-semibold text-sm text-base-content">{step.agent_name}</span>
+                  <span class="badge badge-sm {statusColors[step.status] ?? 'badge-ghost'}">{step.status}</span>
+                </div>
+                {#if step.log}
+                  <p class="text-xs text-base-content/60 font-mono">{step.log}</p>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
       {/each}
 
       {#if runs.length === 0}
