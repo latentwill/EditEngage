@@ -1,5 +1,15 @@
 <script lang="ts">
-  import type { WorkflowReviewMode } from '$lib/types/database.js';
+  import { onMount, onDestroy } from 'svelte';
+  import type { WorkflowReviewMode, WorkflowRunStatus } from '$lib/types/database.js';
+  import { getNextRun } from '$lib/utils/cron-converter.js';
+  import { createSupabaseClient } from '$lib/supabase.js';
+
+  type CurrentRun = {
+    id: string;
+    status: WorkflowRunStatus;
+    current_step: number;
+    total_steps: number;
+  };
 
   type Workflow = {
     id: string;
@@ -13,6 +23,7 @@
     created_at: string;
     updated_at: string;
     last_run_at: string | null;
+    current_run?: CurrentRun;
   };
 
   let { data }: {
@@ -22,11 +33,13 @@
   } = $props();
 
   let overrides = $state<Record<string, boolean>>({});
+  let runOverrides = $state<Record<string, CurrentRun | undefined>>({});
 
   let workflows = $derived(
     data.pipelines.map(w => ({
       ...w,
-      is_active: overrides[w.id] !== undefined ? overrides[w.id] : w.is_active
+      is_active: overrides[w.id] !== undefined ? overrides[w.id] : w.is_active,
+      current_run: runOverrides[w.id] !== undefined ? runOverrides[w.id] : w.current_run
     }))
   );
 
@@ -34,6 +47,42 @@
     active: 'badge-success',
     paused: 'badge-warning'
   };
+
+  let channel: ReturnType<ReturnType<typeof createSupabaseClient>['channel']> | null = null;
+
+  onMount(() => {
+    const supabase = createSupabaseClient();
+    channel = supabase
+      .channel('pipeline-runs')
+      .on(
+        'postgres_changes' as 'system',
+        { event: 'UPDATE', schema: 'public', table: 'pipeline_runs' },
+        (payload: { new: { pipeline_id: string; status: WorkflowRunStatus; current_step: number; total_steps: number; id: string } }) => {
+          const run = payload.new;
+          if (run.status === 'completed' || run.status === 'failed') {
+            runOverrides = { ...runOverrides, [run.pipeline_id]: undefined };
+          } else {
+            runOverrides = {
+              ...runOverrides,
+              [run.pipeline_id]: {
+                id: run.id,
+                status: run.status,
+                current_step: run.current_step,
+                total_steps: run.total_steps
+              }
+            };
+          }
+        }
+      )
+      .subscribe();
+  });
+
+  onDestroy(() => {
+    if (channel) {
+      const supabase = createSupabaseClient();
+      supabase.removeChannel(channel);
+    }
+  });
 
   async function runWorkflow(workflowId: string) {
     await fetch(`/api/v1/workflows/${workflowId}/run`, {
@@ -81,6 +130,15 @@
             >
               {workflow.is_active ? 'active' : 'paused'}
             </span>
+            {#if workflow.current_run?.status === 'running'}
+              <span
+                data-testid="workflow-running-badge"
+                class="badge badge-info gap-1"
+              >
+                Running
+                <span class="text-xs">Step {workflow.current_run.current_step}/{workflow.current_run.total_steps}</span>
+              </span>
+            {/if}
           </div>
 
           <div class="flex items-center gap-3">
@@ -93,6 +151,14 @@
                 Last run: {new Date(workflow.last_run_at).toLocaleDateString()}
               </span>
             {/if}
+
+            <span data-testid="workflow-next-run" class="text-xs text-base-content/40">
+              {#if workflow.schedule}
+                Next run: {getNextRun(workflow.schedule).toLocaleString()}
+              {:else}
+                Manual only
+              {/if}
+            </span>
 
             <button
               data-testid="workflow-run-button"

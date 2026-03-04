@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { createServerSupabaseClient } from '$lib/server/supabase.js';
+import { resolveProjectId } from '$lib/server/project-access.js';
 
 const ALLOWED_MODELS = [
   'anthropic/claude-sonnet-4-6',
@@ -12,7 +13,7 @@ const ALLOWED_MODELS = [
   'meta-llama/llama-3.3-70b-instruct',
 ] as const;
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, url }) => {
   const supabase = createServerSupabaseClient(cookies);
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -20,20 +21,15 @@ export const GET: RequestHandler = async ({ cookies }) => {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id')
-    .limit(1)
-    .single();
-
-  if (!project) {
+  const projectId = await resolveProjectId(supabase, url.searchParams.get('project_id'));
+  if (!projectId) {
     return json({ data: [] });
   }
 
   const { data: agents, error } = await supabase
     .from('writing_agents')
     .select('id, project_id, name, description, model, is_active, created_at, updated_at')
-    .eq('project_id', project.id)
+    .eq('project_id', projectId)
     .order('created_at', { ascending: false })
     .limit(50);
 
