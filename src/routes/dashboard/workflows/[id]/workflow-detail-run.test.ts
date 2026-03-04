@@ -131,6 +131,104 @@ describe('Workflow Detail Run Now button', () => {
     });
   });
 
+  it('should display error message for failed runs', async () => {
+    const WorkflowDetailPage = (await import('./+page.svelte')).default;
+
+    render(WorkflowDetailPage, {
+      props: {
+        data: {
+          workflow: mockWorkflow,
+          runs: [{
+            id: 'run-fail-1',
+            pipeline_id: mockWorkflow.id,
+            status: 'failed' as const,
+            current_step: 1,
+            total_steps: 2,
+            started_at: '2025-01-01T10:00:00Z',
+            completed_at: '2025-01-01T10:01:00Z',
+            result: null,
+            error: 'LLM connection timeout after 30s',
+            bullmq_job_id: null,
+            created_at: '2025-01-01T10:00:00Z'
+          }]
+        }
+      }
+    });
+
+    // Error should be visible without expanding
+    const errorMessage = screen.getByTestId('run-error-message');
+    expect(errorMessage.textContent).toContain('LLM connection timeout after 30s');
+  });
+
+  it('should display log_output in expanded step detail', async () => {
+    const WorkflowDetailPage = (await import('./+page.svelte')).default;
+
+    const runWithSteps = {
+      id: 'run-steps-1',
+      pipeline_id: mockWorkflow.id,
+      status: 'completed' as const,
+      current_step: 2,
+      total_steps: 2,
+      started_at: '2025-01-01T10:00:00Z',
+      completed_at: '2025-01-01T10:05:00Z',
+      result: null,
+      error: null,
+      bullmq_job_id: null,
+      created_at: '2025-01-01T10:00:00Z',
+      steps: [{
+        agent_name: 'SEO Writer',
+        status: 'completed',
+        started_at: '2025-01-01T10:00:00Z',
+        completed_at: '2025-01-01T10:02:00Z',
+        log: 'Generated 1500 word article on topic: AI trends',
+        log_output: 'Generated 1500 word article on topic: AI trends'
+      }]
+    };
+
+    render(WorkflowDetailPage, {
+      props: { data: { workflow: mockWorkflow, runs: [runWithSteps] } }
+    });
+
+    // Click to expand
+    const runRow = screen.getByTestId('run-history-row');
+    await fireEvent.click(runRow);
+
+    await waitFor(() => {
+      const stepDetail = screen.getByTestId('run-step-detail');
+      expect(stepDetail.textContent).toContain('Generated 1500 word article');
+    });
+  });
+
+  it('should show date AND time for run timestamps', async () => {
+    const WorkflowDetailPage = (await import('./+page.svelte')).default;
+
+    render(WorkflowDetailPage, {
+      props: {
+        data: {
+          workflow: mockWorkflow,
+          runs: [{
+            id: 'run-datetime-1',
+            pipeline_id: mockWorkflow.id,
+            status: 'completed' as const,
+            current_step: 1,
+            total_steps: 1,
+            started_at: '2025-06-15T14:30:00Z',
+            completed_at: '2025-06-15T14:35:00Z',
+            result: null,
+            error: null,
+            bullmq_job_id: null,
+            created_at: '2025-06-15T14:30:00Z'
+          }]
+        }
+      }
+    });
+
+    const rows = screen.getAllByTestId('run-history-row');
+    // Should contain time info (not just date)
+    const dateCell = rows[0].querySelector('span');
+    expect(dateCell?.textContent).toMatch(/\d{1,2}:\d{2}/); // contains time
+  });
+
   it('shows error message when request fails', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: false,

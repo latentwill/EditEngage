@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { createServerSupabaseClient } from '$lib/server/supabase.js';
-import { resolveProjectId } from '$lib/server/project-access.js';
+import { resolveProjectId, getUserProjects } from '$lib/server/project-access.js';
 
 const ALLOWED_MODELS = [
   'anthropic/claude-sonnet-4-6',
@@ -21,7 +21,7 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const projectId = await resolveProjectId(supabase, url.searchParams.get('project_id'));
+  const projectId = await resolveProjectId(supabase, url.searchParams.get('project_id'), user.id);
   if (!projectId) {
     return json({ data: [] });
   }
@@ -38,7 +38,17 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     return json({ error: 'Internal server error' }, { status: 500 });
   }
 
-  return json({ data: agents ?? [] });
+  const { data: researchAgents } = await supabase
+    .from('research_agents')
+    .select('id, project_id, name, description, model, is_active, created_at, updated_at')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const taggedWriting = (agents ?? []).map(a => ({ ...a, type: 'writing' as const }));
+  const taggedResearch = (researchAgents ?? []).map(a => ({ ...a, type: 'research' as const }));
+
+  return json({ data: [...taggedWriting, ...taggedResearch] });
 };
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
@@ -49,11 +59,8 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('id')
-    .limit(1)
-    .single();
+  const userProjects = await getUserProjects(supabase, user.id);
+  const project = userProjects[0];
 
   if (!project) {
     return json({ error: 'No project found' }, { status: 404 });

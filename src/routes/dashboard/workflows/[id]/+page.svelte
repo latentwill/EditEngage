@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { createSupabaseClient } from '$lib/supabase.js';
   import type { WorkflowReviewMode, WorkflowRunStatus } from '$lib/types/database.js';
 
@@ -22,6 +23,7 @@
     started_at: string | null;
     completed_at: string | null;
     log: string;
+    log_output?: string;
   };
 
   type WorkflowRun = {
@@ -51,9 +53,31 @@
   let runLoading = $state(false);
   let runError = $state<string | null>(null);
   let expandedRunId = $state<string | null>(null);
+  let deleteConfirmOpen = $state(false);
+  let deleting = $state(false);
+  let deleteError = $state<string | null>(null);
 
   function toggleRunExpanded(runId: string) {
     expandedRunId = expandedRunId === runId ? null : runId;
+  }
+
+  async function handleDelete() {
+    deleting = true;
+    deleteError = null;
+    try {
+      const res = await fetch(`/api/v1/workflows/${workflow.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        goto('/dashboard/workflows');
+        return;
+      }
+      const body = await res.json();
+      deleteError = body.error || 'Failed to delete workflow';
+    } catch {
+      deleteError = 'Failed to delete workflow';
+    } finally {
+      deleting = false;
+      deleteConfirmOpen = false;
+    }
   }
 
   async function handleRunNow() {
@@ -127,18 +151,31 @@
         </span>
       </div>
 
-      <button
-        data-testid="workflow-detail-run-button"
-        class="btn btn-primary btn-sm"
-        disabled={runLoading}
-        onclick={handleRunNow}
-      >
-        {runLoading ? 'Running...' : 'Run Now'}
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          data-testid="workflow-delete-button"
+          class="btn btn-error btn-sm btn-outline"
+          onclick={() => deleteConfirmOpen = true}
+        >
+          Delete
+        </button>
+        <button
+          data-testid="workflow-detail-run-button"
+          class="btn btn-primary btn-sm"
+          disabled={runLoading}
+          onclick={handleRunNow}
+        >
+          {runLoading ? 'Running...' : 'Run Now'}
+        </button>
+      </div>
     </div>
 
     {#if runError}
       <p data-testid="run-error" class="text-sm text-error mt-2">{runError}</p>
+    {/if}
+
+    {#if deleteError}
+      <p data-testid="delete-error" class="text-sm text-error mt-2">{deleteError}</p>
     {/if}
 
     {#if workflow.description}
@@ -166,7 +203,7 @@
           onclick={() => toggleRunExpanded(run.id)}
         >
           <span class="text-sm text-base-content/80">
-            {new Date(run.created_at).toLocaleDateString()}
+            {new Date(run.created_at).toLocaleString()}
           </span>
           <span data-testid="run-status">
             <span class="badge {statusColors[run.status] ?? 'badge-ghost'}">
@@ -181,6 +218,12 @@
           </span>
         </div>
 
+        {#if run.error}
+          <div data-testid="run-error-message" class="px-2 py-1 text-sm text-error">
+            {run.error}
+          </div>
+        {/if}
+
         {#if expandedRunId === run.id && run.steps}
           <div class="pl-4 py-2 space-y-2 border-b border-base-300">
             {#each run.steps as step}
@@ -189,8 +232,8 @@
                   <span class="font-semibold text-sm text-base-content">{step.agent_name}</span>
                   <span class="badge badge-sm {statusColors[step.status] ?? 'badge-ghost'}">{step.status}</span>
                 </div>
-                {#if step.log}
-                  <p class="text-xs text-base-content/60 font-mono">{step.log}</p>
+                {#if step.log_output || step.log}
+                  <p class="text-xs text-base-content/60 font-mono">{step.log_output ?? step.log}</p>
                 {/if}
               </div>
             {/each}
@@ -205,4 +248,31 @@
       {/if}
     </div>
   </div>
+
+  {#if deleteConfirmOpen}
+    <div data-testid="delete-confirm-dialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div class="card bg-base-200 p-6 max-w-sm mx-4">
+        <h3 class="text-lg font-bold text-base-content mb-2">Delete Workflow</h3>
+        <p class="text-sm text-base-content/60 mb-4">
+          Are you sure you want to delete "{workflow.name}"? This action cannot be undone.
+        </p>
+        <div class="flex gap-2 justify-end">
+          <button
+            class="btn btn-sm"
+            onclick={() => deleteConfirmOpen = false}
+          >
+            Cancel
+          </button>
+          <button
+            data-testid="delete-confirm-button"
+            class="btn btn-error btn-sm"
+            disabled={deleting}
+            onclick={handleDelete}
+          >
+            {deleting ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>

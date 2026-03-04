@@ -24,6 +24,7 @@ function createChainMock(terminalValue: { data: unknown; error: unknown }) {
   chain.select = vi.fn().mockReturnValue(chain);
   chain.insert = vi.fn().mockReturnValue(chain);
   chain.eq = vi.fn().mockReturnValue(chain);
+  chain.in = vi.fn().mockReturnValue(chain);
   chain.order = vi.fn().mockReturnValue(chain);
   chain.limit = vi.fn().mockReturnValue(chain);
   chain.single = vi.fn().mockResolvedValue(terminalValue);
@@ -34,6 +35,7 @@ function createChainMock(terminalValue: { data: unknown; error: unknown }) {
 let mockAuthUser: { id: string } | null = { id: 'user-1' };
 let mockProjectChain: ReturnType<typeof createChainMock>;
 let mockAgentsChain: ReturnType<typeof createChainMock>;
+let mockMembershipsChain: ReturnType<typeof createChainMock>;
 
 const mockSupabase = {
   auth: {
@@ -48,6 +50,9 @@ const mockSupabase = {
     }
     if (table === 'writing_agents') {
       return mockAgentsChain;
+    }
+    if (table === 'organization_members') {
+      return mockMembershipsChain;
     }
     return createChainMock({ data: null, error: null });
   })
@@ -75,7 +80,7 @@ describe('GET /api/v1/writing-agents', () => {
     vi.clearAllMocks();
     mockAuthUser = { id: 'user-1' };
     mockProjectChain = createChainMock({
-      data: { id: 'proj-1' },
+      data: [{ id: 'proj-1', org_id: 'org-1' }],
       error: null
     });
     mockAgentsChain = createChainMock({
@@ -83,6 +88,10 @@ describe('GET /api/v1/writing-agents', () => {
         { id: 'agent-1', project_id: 'proj-1', name: 'Blog Writer', model: 'openai/gpt-4o', is_active: true },
         { id: 'agent-2', project_id: 'proj-1', name: 'SEO Writer', model: 'anthropic/claude-sonnet-4-6', is_active: true }
       ],
+      error: null
+    });
+    mockMembershipsChain = createChainMock({
+      data: [{ org_id: 'org-1' }],
       error: null
     });
   });
@@ -103,18 +112,32 @@ describe('GET /api/v1/writing-agents', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('writing_agents');
   });
 
-  it('should filter by project_id when provided as query param', async () => {
+  it('should filter by project_id when user has access to it', async () => {
     const { GET } = await import('../../routes/api/v1/writing-agents/+server.js');
 
-    const url = new URL('http://localhost/api/v1/writing-agents?project_id=proj-99');
+    const url = new URL('http://localhost/api/v1/writing-agents?project_id=proj-1');
     const response = await GET({
       cookies: makeCookies(),
       url
     } as never);
 
     expect(response.status).toBe(200);
-    // When project_id is provided, it should use it directly instead of querying projects table
-    expect(mockAgentsChain.eq).toHaveBeenCalledWith('project_id', 'proj-99');
+    expect(mockAgentsChain.eq).toHaveBeenCalledWith('project_id', 'proj-1');
+  });
+
+  it('should reject project_id the user does not have access to', async () => {
+    const { GET } = await import('../../routes/api/v1/writing-agents/+server.js');
+
+    const url = new URL('http://localhost/api/v1/writing-agents?project_id=proj-999');
+    const response = await GET({
+      cookies: makeCookies(),
+      url
+    } as never);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    // resolveProjectId returns null for unauthorized project, endpoint returns empty data
+    expect(json.data).toEqual([]);
   });
 
   it('should return empty array when no agents exist', async () => {
@@ -150,5 +173,70 @@ describe('GET /api/v1/writing-agents', () => {
     expect(response.status).toBe(401);
     const json = await response.json();
     expect(json.error).toBeDefined();
+  });
+});
+
+describe('POST /api/v1/writing-agents', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthUser = { id: 'user-1' };
+    mockMembershipsChain = createChainMock({
+      data: [{ org_id: 'org-1' }],
+      error: null
+    });
+    mockProjectChain = createChainMock({
+      data: [{ id: 'proj-1', org_id: 'org-1' }],
+      error: null
+    });
+    mockAgentsChain = createChainMock({
+      data: { id: 'agent-new', project_id: 'proj-1', name: 'New Agent', description: null, model: 'openai/gpt-4o', is_active: true, created_at: '2024-01-01', updated_at: '2024-01-01' },
+      error: null
+    });
+  });
+
+  it('should use only projects the user has membership access to', async () => {
+    // User has no org memberships, so should get 404
+    mockMembershipsChain = createChainMock({
+      data: [],
+      error: null
+    });
+
+    const { POST } = await import('../../routes/api/v1/writing-agents/+server.js');
+
+    const request = new Request('http://localhost/api/v1/writing-agents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Test Agent',
+        model: 'openai/gpt-4o'
+      })
+    });
+
+    const response = await POST({
+      request,
+      cookies: makeCookies()
+    } as never);
+
+    expect(response.status).toBe(404);
+  });
+
+  it('should create agent on a project the user has access to', async () => {
+    const { POST } = await import('../../routes/api/v1/writing-agents/+server.js');
+
+    const request = new Request('http://localhost/api/v1/writing-agents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Test Agent',
+        model: 'openai/gpt-4o'
+      })
+    });
+
+    const response = await POST({
+      request,
+      cookies: makeCookies()
+    } as never);
+
+    expect(response.status).toBe(201);
   });
 });

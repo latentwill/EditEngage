@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     return json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const projectId = await resolveProjectId(supabase, url.searchParams.get('project_id'));
+  const projectId = await resolveProjectId(supabase, url.searchParams.get('project_id'), user.id);
   if (!projectId) {
     return json({ data: [] });
   }

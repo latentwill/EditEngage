@@ -439,6 +439,53 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline_run_logs: {
+        Row: {
+          id: string
+          pipeline_run_id: string
+          step_index: number
+          agent_name: string
+          status: string
+          log_output: string | null
+          started_at: string | null
+          completed_at: string | null
+          duration_ms: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          pipeline_run_id: string
+          step_index: number
+          agent_name: string
+          status?: string
+          log_output?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          pipeline_run_id?: string
+          step_index?: number
+          agent_name?: string
+          status?: string
+          log_output?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_run_logs_pipeline_run_id_fkey"
+            columns: ["pipeline_run_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_runs: {
         Row: {
           bullmq_job_id: string | null
@@ -609,6 +656,50 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_agents: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          model: string
+          name: string
+          project_id: string
+          system_prompt: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          model: string
+          name: string
+          project_id: string
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          model?: string
+          name?: string
+          project_id?: string
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_agents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
