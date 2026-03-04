@@ -22,6 +22,7 @@ function createChainMock(terminalValue: { data: unknown; error: unknown }) {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {};
   chain.select = vi.fn().mockReturnValue(chain);
   chain.eq = vi.fn().mockReturnValue(chain);
+  chain.in = vi.fn().mockReturnValue(chain);
   chain.order = vi.fn().mockReturnValue(chain);
   chain.limit = vi.fn().mockReturnValue(chain);
   chain.single = vi.fn().mockResolvedValue(terminalValue);
@@ -30,7 +31,8 @@ function createChainMock(terminalValue: { data: unknown; error: unknown }) {
 }
 
 let mockAuthUser: { id: string } | null = { id: 'user-1' };
-let mockProjectChain: ReturnType<typeof createChainMock>;
+let mockMembershipsChain: ReturnType<typeof createChainMock>;
+let mockProjectsChain: ReturnType<typeof createChainMock>;
 let mockResearchChain: ReturnType<typeof createChainMock>;
 
 const mockSupabase = {
@@ -41,8 +43,11 @@ const mockSupabase = {
     }))
   },
   from: vi.fn((table: string) => {
+    if (table === 'organization_members') {
+      return mockMembershipsChain;
+    }
     if (table === 'projects') {
-      return mockProjectChain;
+      return mockProjectsChain;
     }
     if (table === 'research_queries') {
       return mockResearchChain;
@@ -72,10 +77,20 @@ describe('GET /api/v1/research', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthUser = { id: 'user-1' };
-    mockProjectChain = createChainMock({
-      data: { id: 'proj-1' },
+
+    // Mock organization_members query for getUserProjects
+    mockMembershipsChain = createChainMock({
+      data: [{ org_id: 'org-1' }],
       error: null
     });
+
+    // Mock projects query for getUserProjects
+    mockProjectsChain = createChainMock({
+      data: [{ id: 'proj-1', org_id: 'org-1' }],
+      error: null
+    });
+
+    // Mock research_queries query
     mockResearchChain = createChainMock({
       data: [
         { id: 'rq-1', name: 'SEO Research', status: 'completed', provider_chain: ['perplexity'] },
@@ -103,10 +118,10 @@ describe('GET /api/v1/research', () => {
   });
 
   it('should return empty array when none exist', async () => {
-    mockResearchChain = createChainMock({
-      data: [],
-      error: null
-    });
+    // Keep memberships and projects setup, only change research chain
+    mockResearchChain.then = vi.fn((resolve: (v: unknown) => void) =>
+      resolve({ data: [], error: null })
+    );
 
     const { GET } = await import('../../routes/api/v1/research/+server.js');
 
