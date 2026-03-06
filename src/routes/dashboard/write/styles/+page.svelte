@@ -11,6 +11,7 @@
     updated_at: string;
   }> } } = $props();
 
+  let localStyles = $state(data.writingStyles);
   let showForm = $state(false);
   let styleName = $state('');
   let tone = $state('conversational');
@@ -21,6 +22,9 @@
   let vocabularyLevel = $state('');
   let pointOfView = $state('');
   let antiPatterns = $state('');
+  let saveError = $state('');
+  let deleteConfirmId = $state<string | null>(null);
+  let deleteError = $state<string | null>(null);
 
   function openForm() {
     showForm = true;
@@ -37,7 +41,8 @@
       .map((p: string) => p.trim())
       .filter((p: string) => p.length > 0);
 
-    await fetch('/api/v1/writing-styles', {
+    saveError = '';
+    const response = await fetch('/api/v1/writing-styles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -54,7 +59,28 @@
       })
     });
 
-    showForm = false;
+    if (response.ok) {
+      const result = await response.json();
+      localStyles = [result.data, ...localStyles];
+      showForm = false;
+    } else {
+      const result = await response.json();
+      saveError = result.error ?? 'Failed to save style';
+    }
+  }
+
+  async function handleDelete(styleId: string) {
+    const response = await fetch(`/api/v1/writing-styles/${styleId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      localStyles = localStyles.filter((s) => s.id !== styleId);
+      deleteConfirmId = null;
+      deleteError = null;
+    } else {
+      deleteError = 'Failed to delete style';
+    }
   }
 </script>
 
@@ -62,10 +88,13 @@
   <h1 class="text-2xl font-bold text-base-content">Writing Styles</h1>
 
   <div class="grid gap-4">
-    {#each data.writingStyles as style}
-      <div data-testid="writing-style-card" class="card bg-base-200 shadow-xl p-6 flex flex-row items-center gap-4">
-        <span class="text-base-content font-medium">{style.name}</span>
-        <span class="badge badge-success">{style.tone}</span>
+    {#each localStyles as style}
+      <div data-testid="writing-style-card" class="card bg-base-200 shadow-xl p-6 flex flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <span class="text-base-content font-medium">{style.name}</span>
+          <span class="badge badge-success">{style.tone}</span>
+        </div>
+        <button data-testid="delete-style-button" class="btn btn-ghost btn-sm text-error" onclick={() => { deleteConfirmId = style.id; }}>Delete</button>
       </div>
     {/each}
   </div>
@@ -127,10 +156,30 @@
       <label class="block text-sm text-base-content/80 mb-1" for="anti-patterns">Anti-patterns</label>
       <input id="anti-patterns" data-testid="anti-patterns-input" type="text" class="input input-bordered w-full" placeholder="e.g. no clickbait, avoid passive voice" bind:value={antiPatterns} />
 
+      {#if saveError}
+        <p data-testid="style-save-error" class="text-error text-sm">{saveError}</p>
+      {/if}
+
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Save Style</button>
         <button type="button" class="btn btn-ghost" onclick={() => { showForm = false; }}>Cancel</button>
       </div>
     </form>
+  {/if}
+
+  {#if deleteConfirmId}
+    <div data-testid="delete-confirm-modal" class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Delete Style</h3>
+        <p class="py-4">Are you sure? This cannot be undone.</p>
+        {#if deleteError}
+          <p data-testid="delete-error" class="text-error text-sm">{deleteError}</p>
+        {/if}
+        <div class="modal-action">
+          <button data-testid="confirm-delete-button" class="btn btn-error" onclick={() => handleDelete(deleteConfirmId!)}>Delete</button>
+          <button data-testid="cancel-delete-button" class="btn" onclick={() => { deleteConfirmId = null; deleteError = null; }}>Cancel</button>
+        </div>
+      </div>
+    </div>
   {/if}
 </div>

@@ -32,6 +32,8 @@
   let errors = $state<string[]>([]);
   let toggleError = $state<string | null>(null);
   let togglingId = $state<string | null>(null);
+  let deleteConfirmId = $state<string | null>(null);
+  let deleteError = $state<string | null>(null);
 
   function openForm() {
     showForm = true;
@@ -80,6 +82,25 @@
     }
   }
 
+  async function handleDelete(id: string) {
+    deleteError = null;
+    try {
+      const res = await fetch(`/api/v1/writing-agents/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        localAgents = localAgents.filter((a) => a.id !== id);
+        deleteConfirmId = null;
+      } else {
+        const result = await res.json();
+        deleteError = result.error ?? 'Failed to delete agent';
+      }
+    } catch {
+      deleteError = 'Request failed';
+    }
+  }
+
   async function toggleActive(agent: WritingAgent) {
     if (togglingId) return;
     togglingId = agent.id;
@@ -124,6 +145,10 @@
     <p class="text-error text-sm">{toggleError}</p>
   {/if}
 
+  {#if deleteError}
+    <p data-testid="delete-error" class="text-error text-sm">{deleteError}</p>
+  {/if}
+
   <!-- Agent Cards -->
   <div class="grid gap-4">
     {#each localAgents as agent}
@@ -153,13 +178,22 @@
               <AgentContextBundle context={data.agentContextMap[agent.id]} />
             {/if}
           </div>
-          <button
-            class="btn btn-ghost btn-sm flex-shrink-0"
-            onclick={() => toggleActive(agent)}
-            disabled={togglingId !== null}
-          >
-            {togglingId === agent.id ? '…' : agent.is_active ? 'Deactivate' : 'Activate'}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              class="btn btn-ghost btn-sm flex-shrink-0"
+              onclick={() => toggleActive(agent)}
+              disabled={togglingId !== null}
+            >
+              {togglingId === agent.id ? '…' : agent.is_active ? 'Deactivate' : 'Activate'}
+            </button>
+            <button
+              data-testid="delete-agent-button"
+              class="btn btn-ghost btn-sm text-error"
+              onclick={() => { deleteConfirmId = agent.id; }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
     {/each}
@@ -234,5 +268,18 @@
         <button type="button" class="btn btn-ghost" onclick={closeForm}>Cancel</button>
       </div>
     </form>
+  {/if}
+
+  {#if deleteConfirmId}
+    <div data-testid="delete-confirm-modal" class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Delete Agent</h3>
+        <p class="py-4">Are you sure? This cannot be undone.</p>
+        <div class="modal-action">
+          <button data-testid="confirm-delete-button" class="btn btn-error" onclick={() => handleDelete(deleteConfirmId!)}>Delete</button>
+          <button data-testid="cancel-delete-button" class="btn" onclick={() => { deleteConfirmId = null; }}>Cancel</button>
+        </div>
+      </div>
+    </div>
   {/if}
 </div>

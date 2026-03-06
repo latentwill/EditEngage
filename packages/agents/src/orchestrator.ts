@@ -1,3 +1,4 @@
+import Logfire from '@pydantic/logfire-node';
 import type { Agent, AgentType, AgentConfig } from './types';
 
 export interface ProgressUpdate {
@@ -33,41 +34,48 @@ export class PipelineOrchestrator {
   }
 
   async run(options: PipelineRunOptions): Promise<PipelineResult> {
-    const { pipelineRunId, agents, initialInput, onProgress } = options;
-    const steps: unknown[] = [];
-    let currentInput = initialInput;
+    return Logfire.span('pipeline.run', { attributes: { pipelineRunId: options.pipelineRunId, 'pipeline.step_count': options.agents.length }, callback: async (span: import('@opentelemetry/api').Span) => {
+      const { pipelineRunId, agents, initialInput, onProgress } = options;
+      const steps: unknown[] = [];
+      let currentInput = initialInput;
 
-    for (let i = 0; i < agents.length; i++) {
-      const agent = agents[i];
-      const stepNumber = i + 1;
+      for (let i = 0; i < agents.length; i++) {
+        const agent = agents[i];
+        const stepNumber = i + 1;
 
-      if (onProgress) {
-        onProgress({
-          currentStep: stepNumber,
-          totalSteps: agents.length,
-          currentAgent: agent.type
-        });
+        if (onProgress) {
+          onProgress({
+            currentStep: stepNumber,
+            totalSteps: agents.length,
+            currentAgent: agent.type
+          });
+        }
+
+        await this.supabase
+          .from('pipeline_runs')
+          .update({
+            current_step: stepNumber,
+            total_steps: agents.length,
+            current_agent: agent.type
+          })
+          .eq('id', pipelineRunId);
+
+        try {
+          const output = await Logfire.span('agent.execute', { attributes: { agentType: agent.type, stepIndex: i }, callback: async (agentSpan: import('@opentelemetry/api').Span) => {
+            const result = await agent.execute(currentInput);
+            agentSpan.setAttributes({ 'agent.output_size': JSON.stringify(result).length });
+            return result;
+          }});
+          steps.push(output);
+          currentInput = output;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          span.setAttributes({ error: true, 'error.message': message });
+          return { status: 'failed' as const, error: message, failedStep: stepNumber };
+        }
       }
 
-      await this.supabase
-        .from('pipeline_runs')
-        .update({
-          current_step: stepNumber,
-          total_steps: agents.length,
-          current_agent: agent.type
-        })
-        .eq('id', pipelineRunId);
-
-      try {
-        const output = await agent.execute(currentInput);
-        steps.push(output);
-        currentInput = output;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        return { status: 'failed', error: message, failedStep: stepNumber };
-      }
-    }
-
-    return { status: 'completed', steps };
+      return { status: 'completed' as const, steps };
+    }});
   }
 }

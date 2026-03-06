@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@pydantic/logfire-node', () => ({
+  default: {
+    span: vi.fn((_name: string, options: { attributes?: unknown; callback: (span: unknown) => unknown }) => {
+      const fakeSpan = { setAttributes: vi.fn() };
+      return options.callback(fakeSpan);
+    })
+  }
+}));
+
 import { AgentType } from './types';
 import type { Agent, AgentConfig, ValidationResult } from './types';
 import { PipelineOrchestrator } from './orchestrator';

@@ -3,6 +3,20 @@
  * @business_rule The synthesis prompt must include citation dates and relevance scores when available
  */
 import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@pydantic/logfire-node', () => ({
+  default: {
+    span: vi.fn((_name: string, opts: { callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown }) => {
+      return opts.callback({ setAttributes: vi.fn() });
+    })
+  }
+}));
+
+vi.mock('@opentelemetry/api', () => ({
+  propagation: { inject: vi.fn() },
+  context: { active: vi.fn().mockReturnValue({}) }
+}));
+
 import { createSynthesizer } from './synthesizer.js';
 import type { Citation } from './research.agent.js';
 
@@ -22,7 +36,7 @@ describe('createSynthesizer', () => {
    */
   it('should include date and relevance_score in synthesis prompt when available', async () => {
     const mockFetch = createMockFetch('Synthesized brief with attribution.');
-    const synthesize = createSynthesizer('test-api-key', mockFetch);
+    const synthesize = createSynthesizer(mockFetch);
 
     const citations: Citation[] = [
       {
@@ -61,7 +75,7 @@ describe('createSynthesizer', () => {
    */
   it('should return the LLM response as the brief', async () => {
     const mockFetch = createMockFetch('This is the synthesized brief.');
-    const synthesize = createSynthesizer('test-api-key', mockFetch);
+    const synthesize = createSynthesizer(mockFetch);
 
     const result = await synthesize('query', [
       { url: 'https://example.com', title: 'Source', snippet: 'Info', provider: 'perplexity' }

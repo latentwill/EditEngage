@@ -9,12 +9,13 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@pydantic/logfire-node": "^0.13.0",
     "@supabase/supabase-js": "^2.45.0",
     "bullmq": "^5.0.0",
     "ioredis": "^5.4.0"
   },
   "devDependencies": {
-    "vitest": "^2.1.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^2.1.0"
   }
 }

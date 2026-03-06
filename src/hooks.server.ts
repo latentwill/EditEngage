@@ -1,3 +1,10 @@
+import Logfire from '@pydantic/logfire-node';
+
+Logfire.configure({
+  serviceName: 'editengage-app',
+  token: process.env.LOGFIRE_TOKEN
+});
+
 import { createServerSupabaseClient } from '$lib/server/supabase';
 import type { Handle } from '@sveltejs/kit';
 
