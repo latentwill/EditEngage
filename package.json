@@ -39,6 +39,7 @@
     "yaml": "^2.8.2"
   },
   "dependencies": {
+    "@pydantic/logfire-node": "^0.13.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.49.0",
     "bullmq": "^5.69.2",

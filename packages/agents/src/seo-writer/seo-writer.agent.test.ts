@@ -1,4 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@pydantic/logfire-node', () => ({
+  default: {
+    span: vi.fn((_name: string, opts: { callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown }) => {
+      return opts.callback({ setAttributes: vi.fn() });
+    })
+  }
+}));
+
+vi.mock('@opentelemetry/api', () => ({
+  propagation: { inject: vi.fn() },
+  context: { active: vi.fn().mockReturnValue({}) }
+}));
+
 import { SeoWriterAgent } from './seo-writer.agent.js';
 import { AgentType, type TopicRow } from '../types.js';
 import type { VarietyHints } from '../variety-engine/hooks.js';
@@ -85,7 +99,7 @@ function createMockFetch(options: {
   } = options;
 
   return vi.fn().mockImplementation((url: string) => {
-    if (typeof url === 'string' && url.includes('openrouter.ai')) {
+    if (typeof url === 'string' && url.includes('/v1/chat/completions')) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(openRouterResponse)
@@ -116,16 +130,16 @@ describe('SeoWriterAgent', () => {
   it('calls OpenRouter API with topic, variety hints, and writing style', async () => {
     await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+      { writingStyleId: 'style-1', serpResearch: false }
     );
 
     const openRouterCall = mockFetch.mock.calls.find(
-      (call: [string]) => call[0].includes('openrouter.ai')
+      (call: [string]) => call[0].includes('/v1/chat/completions')
     );
     expect(openRouterCall).toBeDefined();
 
     const [url, options] = openRouterCall as [string, RequestInit];
-    expect(url).toContain('openrouter.ai/api/v1/chat/completions');
+    expect(url).toContain('/v1/chat/completions');
 
     const body = JSON.parse(options.body as string);
     const prompt = body.messages[0].content as string;
@@ -134,13 +148,13 @@ describe('SeoWriterAgent', () => {
     expect(prompt).toContain('authoritative');
 
     const headers = options.headers as Record<string, string>;
-    expect(headers['Authorization']).toBe('Bearer test-key');
+    expect(headers['Content-Type']).toBe('application/json');
   });
 
   it('returns article with title, body (HTML), meta_description, tags, seo_score', async () => {
     const result = await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+      { writingStyleId: 'style-1', serpResearch: false }
     );
 
     expect(result.title).toBe('Advanced TypeScript Patterns for Production Apps');
@@ -155,7 +169,7 @@ describe('SeoWriterAgent', () => {
   it('performs SERP research when config.serpResearch is true', async () => {
     await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: true, openrouterApiKey: 'test-key', serpApiKey: 'serp-key' }
+      { writingStyleId: 'style-1', serpResearch: true, serpApiKey: 'serp-key' }
     );
 
     const serpCall = mockFetch.mock.calls.find(
@@ -167,13 +181,13 @@ describe('SeoWriterAgent', () => {
   it('targets 15% above average word count from SERP analysis', async () => {
     await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: true, openrouterApiKey: 'test-key', serpApiKey: 'serp-key' }
+      { writingStyleId: 'style-1', serpResearch: true, serpApiKey: 'serp-key' }
     );
 
     // Average word count: (1200 + 1800 + 1500) / 3 = 1500
     // Target: 1500 * 1.15 = 1725
     const openRouterCall = mockFetch.mock.calls.find(
-      (call: [string]) => call[0].includes('openrouter.ai')
+      (call: [string]) => call[0].includes('/v1/chat/completions')
     );
     const body = JSON.parse((openRouterCall as [string, RequestInit])[1].body as string);
     const prompt = body.messages[0].content as string;
@@ -183,11 +197,11 @@ describe('SeoWriterAgent', () => {
   it('includes voice_guidelines from writing style in the LLM prompt', async () => {
     await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+      { writingStyleId: 'style-1', serpResearch: false }
     );
 
     const openRouterCall = mockFetch.mock.calls.find(
-      (call: [string]) => call[0].includes('openrouter.ai')
+      (call: [string]) => call[0].includes('/v1/chat/completions')
     );
     const body = JSON.parse((openRouterCall as [string, RequestInit])[1].body as string);
     const prompt = body.messages[0].content as string;
@@ -197,11 +211,11 @@ describe('SeoWriterAgent', () => {
   it('avoids phrases listed in writing style avoid_phrases', async () => {
     await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+      { writingStyleId: 'style-1', serpResearch: false }
     );
 
     const openRouterCall = mockFetch.mock.calls.find(
-      (call: [string]) => call[0].includes('openrouter.ai')
+      (call: [string]) => call[0].includes('/v1/chat/completions')
     );
     const body = JSON.parse((openRouterCall as [string, RequestInit])[1].body as string);
     const prompt = body.messages[0].content as string;
@@ -213,7 +227,7 @@ describe('SeoWriterAgent', () => {
   it('generates 5 new topic suggestions added to topic queue', async () => {
     const result = await agent.execute(
       { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-      { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+      { writingStyleId: 'style-1', serpResearch: false }
     );
 
     expect(result.suggestedTopics).toBeDefined();
@@ -230,7 +244,7 @@ describe('SeoWriterAgent', () => {
     await expect(
       emptyAgent.execute(
         { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-        { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+        { writingStyleId: 'style-1', serpResearch: false }
       )
     ).rejects.toThrow('No response from LLM');
   });
@@ -244,7 +258,7 @@ describe('SeoWriterAgent', () => {
     await expect(
       invalidAgent.execute(
         { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints },
-        { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' }
+        { writingStyleId: 'style-1', serpResearch: false }
       )
     ).rejects.toThrow('Failed to parse LLM response as JSON');
   });
@@ -268,13 +282,13 @@ describe('SeoWriterAgent - Enhanced Writing Style Fields', () => {
 
   function extractPrompt(fetchMock: ReturnType<typeof createMockFetch>): string {
     const openRouterCall = fetchMock.mock.calls.find(
-      (call: [string]) => call[0].includes('openrouter.ai')
+      (call: [string]) => call[0].includes('/v1/chat/completions')
     );
     const body = JSON.parse((openRouterCall as [string, RequestInit])[1].body as string);
     return body.messages[0].content as string;
   }
 
-  const config = { writingStyleId: 'style-1', serpResearch: false, openrouterApiKey: 'test-key' };
+  const config = { writingStyleId: 'style-1', serpResearch: false };
   const input = { topic: mockTopic, canonical: 'optimize | typescript | patterns', hints: mockHints };
 
   it('buildPrompt includes structural template when set', async () => {

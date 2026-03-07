@@ -76,6 +76,19 @@ vi.mock('@editengage/agents/programmatic-page/programmatic-page.agent', () => ({
   ProgrammaticPageAgent: MockProgrammaticPageAgent
 }));
 
+vi.mock('@pydantic/logfire-node', () => ({
+  default: {
+    span: vi.fn().mockImplementation(
+      (_msg: string, _attrs: Record<string, unknown>, callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown) => {
+        return callback({ setAttributes: vi.fn() });
+      }
+    )
+  }
+}));
+vi.mock('@editengage/agents/research/providers/traceparent', () => ({
+  injectTraceHeaders: vi.fn()
+}));
+
 import { createQueue, addPipelineJob } from './queue';
 import { createWorker, createAgentFromStep } from './worker';
 import type { PipelineJobData } from './worker';

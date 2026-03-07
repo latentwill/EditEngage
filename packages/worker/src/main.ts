@@ -1,3 +1,10 @@
+import Logfire from '@pydantic/logfire-node';
+
+Logfire.configure({
+  serviceName: 'editengage-worker',
+  token: process.env.LOGFIRE_TOKEN
+});
+
 import { createClient } from '@supabase/supabase-js';
 import IORedis from 'ioredis';
 import { createWorker } from './worker';

@@ -1,4 +1,5 @@
 import { Worker } from 'bullmq';
+import Logfire from '@pydantic/logfire-node';
 import { PipelineOrchestrator } from '@editengage/agents/orchestrator';
 import { TopicQueueAgent } from '@editengage/agents/topic-queue/topic-queue.agent';
 import { VarietyEngineAgent } from '@editengage/agents/variety-engine/variety-engine.agent';
@@ -8,6 +9,7 @@ import { PostBridgePublisherAgent } from '@editengage/agents/postbridge-publishe
 import { EmailPublisherAgent } from '@editengage/agents/email-publisher/email-publisher.agent';
 import { ResearchAgent } from '@editengage/agents/research/research.agent';
 import { ProgrammaticPageAgent } from '@editengage/agents/programmatic-page/programmatic-page.agent';
+import { injectTraceHeaders } from '@editengage/agents/research/providers/traceparent';
 import { createQueue } from './queue';
 import type { QueueInstance } from './queue';
 
@@ -81,11 +83,34 @@ export function createAgentFromStep(
         providers: [],
         synthesizer: async (citations: unknown[]) => citations.map(String).join('\n')
       } as AgentConstructorArg<typeof ResearchAgent>);
-    case 'programmatic_page':
+    case 'programmatic_page': {
+      const llmServiceUrl = process.env.LLM_SERVICE_URL ?? 'http://llm-service:8000';
+      const llmFn = async (prompt: string): Promise<string> => {
+        return Logfire.span('llm.call', {
+          'llm.provider': 'openrouter',
+          'llm.model': 'anthropic/claude-sonnet-4-20250514',
+          'llm.prompt_length': prompt.length
+        }, async (span) => {
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          injectTraceHeaders(headers);
+          const response = await fetchFn(`${llmServiceUrl}/v1/chat/completions`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: 'anthropic/claude-sonnet-4-20250514',
+              messages: [{ role: 'user', content: prompt }]
+            })
+          });
+          span.setAttributes({ 'llm.response_status': response.ok ? 'ok' : 'error' });
+          const data = await response.json() as { choices: Array<{ message: { content: string } }> };
+          return data.choices[0]?.message?.content ?? '';
+        });
+      };
       return new ProgrammaticPageAgent(
-        (async () => '') as AgentConstructorArg<typeof ProgrammaticPageAgent>,
+        llmFn as AgentConstructorArg<typeof ProgrammaticPageAgent>,
         { publish: async () => ({ ghostPostId: '', slug: '', url: '' }) } as AgentConstructorArg2<typeof ProgrammaticPageAgent>
       );
+    }
     default:
       throw new Error(`Unsupported agent type: ${step.agentType}`);
   }
@@ -115,36 +140,48 @@ export function createWorker(supabase: SupabaseClient): void {
     QUEUE_NAME,
     async (job: unknown) => {
       const { data } = job as JobPayload;
-      const { pipelineRunId, steps } = data;
+      const typedJob = job as { id?: string; attemptsMade?: number };
 
-      await supabase
-        .from(PIPELINE_RUNS_TABLE)
-        .update({ status: 'running' })
-        .eq('id', pipelineRunId);
-
-      const agents = steps.map((step) => createAgentFromStep(step, deps));
-
-      try {
-        const result = await orchestrator.run({
-          pipelineRunId,
-          agents: agents as Parameters<typeof orchestrator.run>[0]['agents'],
-          initialInput: {}
-        });
+      return Logfire.span('job.process', {
+        'job.id': typedJob.id ?? 'unknown',
+        'job.queue': QUEUE_NAME,
+        'job.attempt': typedJob.attemptsMade ?? 1,
+      }, async (span) => {
+        const { pipelineRunId, steps } = data;
 
         await supabase
           .from(PIPELINE_RUNS_TABLE)
-          .update({ status: 'completed', result })
+          .update({ status: 'running' })
           .eq('id', pipelineRunId);
 
-        return result;
-      } catch (err) {
-        await supabase
-          .from(PIPELINE_RUNS_TABLE)
-          .update({ status: 'failed', error: toErrorMessage(err) })
-          .eq('id', pipelineRunId);
+        const agents = steps.map((step) => createAgentFromStep(step, deps));
 
-        throw err;
-      }
+        try {
+          const result = await orchestrator.run({
+            pipelineRunId,
+            agents: agents as Parameters<typeof orchestrator.run>[0]['agents'],
+            initialInput: {}
+          });
+
+          await supabase
+            .from(PIPELINE_RUNS_TABLE)
+            .update({ status: 'completed', result })
+            .eq('id', pipelineRunId);
+
+          span.setAttributes({ 'job.status': 'completed' });
+
+          return result;
+        } catch (err) {
+          await supabase
+            .from(PIPELINE_RUNS_TABLE)
+            .update({ status: 'failed', error: toErrorMessage(err) })
+            .eq('id', pipelineRunId);
+
+          span.setAttributes({ 'job.status': 'failed', error: true });
+
+          throw err;
+        }
+      });
     },
     { connection: getRedisConnection() }
   );

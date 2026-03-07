@@ -1,6 +1,8 @@
+import Logfire from '@pydantic/logfire-node';
 import { AgentType, type Agent, type AgentConfig, type ValidationResult, type TopicRow } from '../types.js';
 import type { VarietyHints } from '../variety-engine/hooks.js';
 import { performSerpResearch, type SerpAnalysis } from './serp-research.js';
+import { injectTraceHeaders } from '../research/providers/traceparent.js';
 
 export interface SeoWriterInput {
   topic: TopicRow;
@@ -20,7 +22,6 @@ export interface SeoWriterOutput {
 export interface SeoWriterConfig extends AgentConfig {
   writingStyleId: string;
   serpResearch: boolean;
-  openrouterApiKey: string;
   serpApiKey?: string;
 }
 
@@ -48,7 +49,6 @@ interface SupabaseClient {
   };
 }
 
-const OPENROUTER_COMPLETIONS_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-20250514';
 
 export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
@@ -68,8 +68,7 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
   ): Promise<SeoWriterOutput> {
     const cfg: SeoWriterConfig = config ?? {
       writingStyleId: '',
-      serpResearch: false,
-      openrouterApiKey: ''
+      serpResearch: false
     };
 
     // Fetch writing style
@@ -92,21 +91,36 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
     // Build prompt
     const prompt = this.buildPrompt(input, writingStyle, serpAnalysis);
 
-    const response = await this.fetchFn(OPENROUTER_COMPLETIONS_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${cfg.openrouterApiKey}`,
-        'Content-Type': 'application/json'
+    const data = await Logfire.span('llm.call', {
+      attributes: {
+        'llm.provider': 'openrouter',
+        'llm.model': DEFAULT_MODEL,
+        'llm.prompt_length': prompt.length,
+        'seo_writer.writing_style_id': cfg.writingStyleId,
       },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+      callback: async (span) => {
+        const llmServiceUrl = process.env.LLM_SERVICE_URL ?? 'http://llm-service:8000';
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        injectTraceHeaders(headers);
 
-    const data = await response.json() as {
-      choices: Array<{ message: { content: string } }>;
-    };
+        const response = await this.fetchFn(`${llmServiceUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            model: DEFAULT_MODEL,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        span.setAttributes({ 'llm.response_status': response.ok ? 'ok' : 'error' });
+
+        return await response.json() as {
+          choices: Array<{ message: { content: string } }>;
+        };
+      },
+    });
 
     if (!data.choices?.[0]?.message?.content) {
       throw new Error('No response from LLM');
@@ -180,9 +194,6 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
 
     if (!config.writingStyleId) {
       errors.push('writingStyleId is required');
-    }
-    if (!config.openrouterApiKey) {
-      errors.push('openrouterApiKey is required');
     }
 
     return errors.length > 0

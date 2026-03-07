@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { createServerSupabaseClient } from '$lib/server/supabase.js';
+import { getUserProjects } from '$lib/server/project-access.js';
 
 export const PATCH: RequestHandler = async ({ params, request, cookies }) => {
   const supabase = createServerSupabaseClient(cookies);
@@ -41,4 +42,44 @@ export const PATCH: RequestHandler = async ({ params, request, cookies }) => {
   }
 
   return json({ data: agent });
+};
+
+export const DELETE: RequestHandler = async ({ params, cookies }) => {
+  const supabase = createServerSupabaseClient(cookies);
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Fetch the agent to verify it exists and get its project_id
+  const { data: agent } = await supabase
+    .from('writing_agents')
+    .select('id, project_id')
+    .eq('id', params.id)
+    .single();
+
+  if (!agent) {
+    return json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Verify ownership through project membership
+  const projects = await getUserProjects(supabase, user.id);
+  const projectIds = projects.map((p) => p.id);
+
+  if (!projectIds.includes(agent.project_id)) {
+    return json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const { error } = await supabase
+    .from('writing_agents')
+    .delete()
+    .eq('id', params.id);
+
+  if (error) {
+    console.error('[writing-agents DELETE] DB error:', error);
+    return json({ error: 'An internal error occurred' }, { status: 500 });
+  }
+
+  return json({ success: true }, { status: 200 });
 };

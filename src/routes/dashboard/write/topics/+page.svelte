@@ -47,6 +47,10 @@
   // Local topics state for optimistic updates
   let localTopics = $state<TopicItem[]>(data.topics);
 
+  // Delete confirmation state
+  let deleteConfirmId = $state<string | null>(null);
+  let deleteError = $state<string | null>(null);
+
   function parseCanonicalLine(line: string): { intent: string; entity: string; angle: string } | null {
     const parts = line.split(' | ');
     if (parts.length === 3) {
@@ -103,6 +107,20 @@
       newKeywords = '';
       newNotes = '';
       showAddForm = false;
+    }
+  }
+
+  async function handleDeleteTopic(topicId: string) {
+    const response = await fetch(`/api/v1/topics/${topicId}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      localTopics = localTopics.filter((t) => t.id !== topicId);
+      deleteConfirmId = null;
+      deleteError = null;
+    } else {
+      deleteError = 'Failed to delete topic';
     }
   }
 
@@ -321,6 +339,13 @@
                   Skip
                 </button>
               {/if}
+              <button
+                data-testid="delete-topic-button"
+                class="btn btn-ghost btn-xs text-error"
+                onclick={() => { deleteConfirmId = topic.id; }}
+              >
+                Delete
+              </button>
             </div>
           </div>
           {#if topic.notes}
@@ -389,6 +414,34 @@
           No variety memory entries yet.
         </div>
       {/if}
+    </div>
+  {/if}
+
+  {#if deleteConfirmId}
+    <div data-testid="delete-confirm-modal" class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Delete Topic</h3>
+        <p class="py-4">Are you sure? This cannot be undone.</p>
+        {#if deleteError}
+          <p data-testid="delete-error" class="text-error text-sm">{deleteError}</p>
+        {/if}
+        <div class="modal-action">
+          <button
+            data-testid="confirm-delete-button"
+            class="btn btn-error"
+            onclick={() => handleDeleteTopic(deleteConfirmId!)}
+          >
+            Delete
+          </button>
+          <button
+            data-testid="cancel-delete-button"
+            class="btn"
+            onclick={() => { deleteConfirmId = null; deleteError = null; }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   {/if}
 </div>
