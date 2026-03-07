@@ -41,6 +41,11 @@ export function createPerplexityProvider(fetchFn: FetchFn): ResearchProvider {
 
           span.setAttributes({ 'llm.response_status': response.ok ? 'ok' : 'error' });
 
+          if (!response.ok) {
+            const errorBody = await response.json().catch(() => ({}));
+            throw new Error(`LLM service error for perplexity: ${JSON.stringify(errorBody)}`);
+          }
+
           const data = await response.json() as PerplexityResponse;
           const content = data.choices[0]?.message?.content ?? '';
           const citations = data.citations ?? [];

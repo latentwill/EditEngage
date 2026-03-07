@@ -90,8 +90,8 @@ describe('Provider tracing with Logfire', () => {
       );
     });
 
-    it('sets response_status error on failed response', async () => {
-      const fakeSpan = { setAttributes: vi.fn() };
+    it('sets response_status error on failed response and throws', async () => {
+      const fakeSpan = { setAttributes: vi.fn(), recordException: vi.fn() };
       mockSpan.mockImplementation((_msg: string, opts: { callback: (span: typeof fakeSpan) => unknown }) => {
         return opts.callback(fakeSpan);
       });
@@ -99,7 +99,7 @@ describe('Provider tracing with Logfire', () => {
       const fetchFn = makeFetchFn(defaultChatResponse(), false);
       const provider = createOpenRouterProvider(fetchFn);
 
-      await provider.query('test query');
+      await expect(provider.query('test query')).rejects.toThrow('LLM service error');
 
       expect(fakeSpan.setAttributes).toHaveBeenCalledWith(
         expect.objectContaining({ 'llm.response_status': 'error' })
@@ -158,8 +158,8 @@ describe('Provider tracing with Logfire', () => {
       );
     });
 
-    it('sets response_status error on failed response', async () => {
-      const fakeSpan = { setAttributes: vi.fn() };
+    it('sets response_status error on failed response and throws', async () => {
+      const fakeSpan = { setAttributes: vi.fn(), recordException: vi.fn() };
       mockSpan.mockImplementation((_msg: string, opts: { callback: (span: typeof fakeSpan) => unknown }) => {
         return opts.callback(fakeSpan);
       });
@@ -167,7 +167,7 @@ describe('Provider tracing with Logfire', () => {
       const fetchFn = makeFetchFn(defaultChatResponse(), false);
       const provider = createOpenAIProvider(fetchFn);
 
-      await provider.query('test query');
+      await expect(provider.query('test query')).rejects.toThrow('LLM service error');
 
       expect(fakeSpan.setAttributes).toHaveBeenCalledWith(
         expect.objectContaining({ 'llm.response_status': 'error' })
@@ -226,8 +226,8 @@ describe('Provider tracing with Logfire', () => {
       );
     });
 
-    it('sets response_status error on failed response', async () => {
-      const fakeSpan = { setAttributes: vi.fn() };
+    it('sets response_status error on failed response and throws', async () => {
+      const fakeSpan = { setAttributes: vi.fn(), recordException: vi.fn() };
       mockSpan.mockImplementation((_msg: string, opts: { callback: (span: typeof fakeSpan) => unknown }) => {
         return opts.callback(fakeSpan);
       });
@@ -235,7 +235,7 @@ describe('Provider tracing with Logfire', () => {
       const fetchFn = makeFetchFn(perplexityChatResponse(), false);
       const provider = createPerplexityProvider(fetchFn);
 
-      await provider.query('test query');
+      await expect(provider.query('test query')).rejects.toThrow('LLM service error');
 
       expect(fakeSpan.setAttributes).toHaveBeenCalledWith(
         expect.objectContaining({ 'llm.response_status': 'error' })

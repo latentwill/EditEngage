@@ -46,6 +46,12 @@ vi.mock('$lib/server/supabase', () => ({
 	createServerSupabaseClient: vi.fn(() => mockSupabase)
 }));
 
+let mockUserProjects: Array<{ id: string; org_id: string }>;
+
+vi.mock('$lib/server/project-access', () => ({
+	getUserProjects: vi.fn(() => Promise.resolve(mockUserProjects))
+}));
+
 function makeDeleteRequest(): Request {
 	return new Request('http://localhost/api/v1/writing-styles/style-1', {
 		method: 'DELETE'
@@ -57,9 +63,15 @@ describe('DELETE /api/v1/writing-styles/:id', () => {
 		vi.clearAllMocks();
 		mockAuthUser = { id: 'user-1' };
 		mockChain = createChainMock({ data: null, error: null });
+		mockUserProjects = [{ id: 'proj-1', org_id: 'org-1' }];
 	});
 
 	it('deletes a writing style and returns success', async () => {
+		mockChain = createChainMock({
+			data: { id: 'style-1', project_id: 'proj-1' },
+			error: null
+		});
+
 		const { DELETE } = await import('./[id]/+server.js');
 
 		const request = makeDeleteRequest();
@@ -92,7 +104,10 @@ describe('DELETE /api/v1/writing-styles/:id', () => {
 	});
 
 	it('returns 500 when database delete fails', async () => {
-		mockChain = createChainMock({ data: null, error: { message: 'DB error' } });
+		mockChain = createChainMock({
+			data: { id: 'style-1', project_id: 'proj-1' },
+			error: { message: 'DB error' }
+		});
 
 		const { DELETE } = await import('./[id]/+server.js');
 
@@ -104,5 +119,43 @@ describe('DELETE /api/v1/writing-styles/:id', () => {
 		} as never);
 
 		expect(response.status).toBe(500);
+	});
+
+	it('returns 404 when style belongs to a project the user cannot access', async () => {
+		mockChain = createChainMock({
+			data: { id: 'style-1', project_id: 'proj-999' },
+			error: null
+		});
+		mockUserProjects = [{ id: 'proj-1', org_id: 'org-1' }];
+
+		const { DELETE } = await import('./[id]/+server.js');
+
+		const request = makeDeleteRequest();
+		const response = await DELETE({
+			request,
+			params: { id: 'style-1' },
+			cookies: {}
+		} as never);
+
+		expect(response.status).toBe(404);
+		const json = await response.json();
+		expect(json.error).toBeDefined();
+	});
+
+	it('returns 404 when style does not exist', async () => {
+		mockChain = createChainMock({ data: null, error: null });
+
+		const { DELETE } = await import('./[id]/+server.js');
+
+		const request = makeDeleteRequest();
+		const response = await DELETE({
+			request,
+			params: { id: 'nonexistent' },
+			cookies: {}
+		} as never);
+
+		expect(response.status).toBe(404);
+		const json = await response.json();
+		expect(json.error).toBeDefined();
 	});
 });

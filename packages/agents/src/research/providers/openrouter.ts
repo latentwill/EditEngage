@@ -40,6 +40,11 @@ export function createOpenRouterProvider(fetchFn: FetchFn): ResearchProvider {
 
           span.setAttributes({ 'llm.response_status': response.ok ? 'ok' : 'error' });
 
+          if (!response.ok) {
+            const errorBody = await response.json().catch(() => ({}));
+            throw new Error(`LLM service error for openrouter: ${JSON.stringify(errorBody)}`);
+          }
+
           const data = await response.json() as OpenRouterResponse;
           const content = data.choices[0]?.message?.content ?? '';
 

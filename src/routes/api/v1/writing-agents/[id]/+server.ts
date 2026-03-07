@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types.js';
 import { createServerSupabaseClient } from '$lib/server/supabase.js';
+import { getUserProjects } from '$lib/server/project-access.js';
 
 export const PATCH: RequestHandler = async ({ params, request, cookies }) => {
   const supabase = createServerSupabaseClient(cookies);
@@ -49,6 +50,25 @@ export const DELETE: RequestHandler = async ({ params, cookies }) => {
 
   if (authError || !user) {
     return json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Fetch the agent to verify it exists and get its project_id
+  const { data: agent } = await supabase
+    .from('writing_agents')
+    .select('id, project_id')
+    .eq('id', params.id)
+    .single();
+
+  if (!agent) {
+    return json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Verify ownership through project membership
+  const projects = await getUserProjects(supabase, user.id);
+  const projectIds = projects.map((p) => p.id);
+
+  if (!projectIds.includes(agent.project_id)) {
+    return json({ error: 'Not found' }, { status: 404 });
   }
 
   const { error } = await supabase

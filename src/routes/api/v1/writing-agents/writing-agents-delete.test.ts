@@ -51,6 +51,12 @@ vi.mock('$lib/server/supabase', () => ({
   createServiceRoleClient: vi.fn(() => mockSupabase)
 }));
 
+let mockUserProjects: Array<{ id: string; org_id: string }>;
+
+vi.mock('$lib/server/project-access', () => ({
+  getUserProjects: vi.fn(() => Promise.resolve(mockUserProjects))
+}));
+
 // --- Tests ---
 
 describe('DELETE /api/v1/writing-agents/:id', () => {
@@ -58,10 +64,14 @@ describe('DELETE /api/v1/writing-agents/:id', () => {
     vi.resetModules();
     vi.clearAllMocks();
     mockAuthUser = { id: 'user-1' };
+    mockUserProjects = [{ id: 'proj-1', org_id: 'org-1' }];
   });
 
   it('should return 200 with success true when agent is deleted', async () => {
-    deleteChain = createChainMock({ data: null, error: null });
+    deleteChain = createChainMock({
+      data: { id: 'agent-1', project_id: 'proj-1' },
+      error: null
+    });
 
     const { DELETE } = await import('./[id]/+server.js');
 
@@ -93,7 +103,7 @@ describe('DELETE /api/v1/writing-agents/:id', () => {
 
   it('should return 500 when database error occurs', async () => {
     deleteChain = createChainMock({
-      data: null,
+      data: { id: 'agent-1', project_id: 'proj-1' },
       error: { message: 'DB failure', code: 'INTERNAL' }
     });
 
@@ -105,6 +115,41 @@ describe('DELETE /api/v1/writing-agents/:id', () => {
     } as never);
 
     expect(response.status).toBe(500);
+    const json = await response.json();
+    expect(json.error).toBeDefined();
+  });
+
+  it('should return 404 when agent belongs to a project the user cannot access', async () => {
+    // Agent exists but belongs to proj-999 which user does NOT have access to
+    deleteChain = createChainMock({
+      data: { id: 'agent-1', project_id: 'proj-999' },
+      error: null
+    });
+    mockUserProjects = [{ id: 'proj-1', org_id: 'org-1' }];
+
+    const { DELETE } = await import('./[id]/+server.js');
+
+    const response = await DELETE({
+      params: { id: 'agent-1' },
+      cookies: {}
+    } as never);
+
+    expect(response.status).toBe(404);
+    const json = await response.json();
+    expect(json.error).toBeDefined();
+  });
+
+  it('should return 404 when agent does not exist', async () => {
+    deleteChain = createChainMock({ data: null, error: null });
+
+    const { DELETE } = await import('./[id]/+server.js');
+
+    const response = await DELETE({
+      params: { id: 'nonexistent' },
+      cookies: {}
+    } as never);
+
+    expect(response.status).toBe(404);
     const json = await response.json();
     expect(json.error).toBeDefined();
   });
