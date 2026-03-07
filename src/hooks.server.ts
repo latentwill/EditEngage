@@ -12,6 +12,20 @@ Logfire.span('app.startup', {
   },
 });
 
+import { runProbe } from '$lib/server/external-health';
+
+if (process.env.ENABLE_EXTERNAL_HEALTH_CHECK === 'true') {
+  const probeUrl = `https://${process.env.APP_DOMAIN}/api/health`;
+  const intervalMs = Number(process.env.EXTERNAL_HEALTH_CHECK_INTERVAL_MS) || 300_000;
+  const timeoutMs = Number(process.env.EXTERNAL_HEALTH_CHECK_TIMEOUT_MS) || 5_000;
+
+  setInterval(() => {
+    runProbe(probeUrl, timeoutMs).catch((err: unknown) => {
+      console.error('[PROBE] External health probe error:', err);
+    });
+  }, intervalMs).unref();
+}
+
 import { createServerSupabaseClient } from '$lib/server/supabase';
 import type { Handle } from '@sveltejs/kit';
 
