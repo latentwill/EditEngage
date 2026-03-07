@@ -5,10 +5,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockConfigure = vi.fn();
+const mockSpan = vi.fn((_name: string, opts: { callback?: () => void }) => {
+  if (opts?.callback) opts.callback();
+});
 
 vi.mock('@pydantic/logfire-node', () => ({
   default: {
-    configure: mockConfigure
+    configure: mockConfigure,
+    span: mockSpan
   }
 }));
 
@@ -27,7 +31,8 @@ describe('Logfire app configuration', () => {
 
     vi.doMock('@pydantic/logfire-node', () => ({
       default: {
-        configure: mockConfigure
+        configure: mockConfigure,
+        span: mockSpan
       }
     }));
     vi.doMock('$lib/server/supabase', () => ({
@@ -42,6 +47,36 @@ describe('Logfire app configuration', () => {
     });
   });
 
+  it('sends a startup span on boot so Logfire dashboard shows initialization', async () => {
+    vi.resetModules();
+
+    const localMockSpan = vi.fn((_name: string, opts: { callback?: () => void }) => {
+      if (opts?.callback) opts.callback();
+    });
+
+    vi.doMock('@pydantic/logfire-node', () => ({
+      default: {
+        configure: vi.fn(),
+        span: localMockSpan
+      }
+    }));
+    vi.doMock('$lib/server/supabase', () => ({
+      createServerSupabaseClient: vi.fn()
+    }));
+
+    await import('../../src/hooks.server');
+
+    expect(localMockSpan).toHaveBeenCalledWith(
+      'app.startup',
+      expect.objectContaining({
+        attributes: expect.objectContaining({
+          'service.name': 'editengage-app'
+        }),
+        callback: expect.any(Function)
+      })
+    );
+  });
+
   it('reads LOGFIRE_TOKEN from environment variables', async () => {
     process.env.LOGFIRE_TOKEN = 'custom-app-token';
 
@@ -49,7 +84,8 @@ describe('Logfire app configuration', () => {
 
     vi.doMock('@pydantic/logfire-node', () => ({
       default: {
-        configure: mockConfigure
+        configure: mockConfigure,
+        span: mockSpan
       }
     }));
     vi.doMock('$lib/server/supabase', () => ({

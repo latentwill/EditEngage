@@ -5,6 +5,13 @@ Logfire.configure({
   token: process.env.LOGFIRE_TOKEN
 });
 
+Logfire.span('app.startup', {
+  attributes: { 'service.name': 'editengage-app' },
+  callback: () => {
+    console.log('[app] Logfire startup span sent');
+  },
+});
+
 import { createServerSupabaseClient } from '$lib/server/supabase';
 import type { Handle } from '@sveltejs/kit';
 
