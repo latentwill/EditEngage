@@ -45,12 +45,19 @@ def test_dockerfile_exists():
     assert os.path.exists(dockerfile_path)
 
 
-def test_dockerfile_copies_source_before_pip_install():
-    """Build requires source for hatchling to discover the package."""
+def test_dockerfile_installs_runtime_dependencies():
+    """Dockerfile must install all runtime deps from pyproject.toml."""
     dockerfile_path = os.path.join(os.path.dirname(__file__), '..', 'Dockerfile')
     with open(dockerfile_path) as f:
         content = f.read()
-    lines = [line.strip() for line in content.splitlines() if line.strip() and not line.strip().startswith('#')]
-    copy_src_idx = next(i for i, l in enumerate(lines) if 'COPY' in l and 'src' in l and 'builder' not in l.lower())
-    pip_install_idx = next(i for i, l in enumerate(lines) if 'pip install' in l)
-    assert copy_src_idx < pip_install_idx, "Source must be copied before pip install for hatchling build"
+    for dep in ['fastapi', 'uvicorn', 'logfire', 'httpx']:
+        assert dep in content, f"Dockerfile must install {dep}"
+
+
+def test_dockerfile_uses_multi_stage_build():
+    """Runtime image should not contain build tools."""
+    dockerfile_path = os.path.join(os.path.dirname(__file__), '..', 'Dockerfile')
+    with open(dockerfile_path) as f:
+        content = f.read()
+    assert 'AS builder' in content
+    assert 'COPY --from=builder' in content
