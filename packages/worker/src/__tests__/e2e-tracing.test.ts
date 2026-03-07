@@ -120,6 +120,9 @@ vi.mock('@editengage/agents/programmatic-page/programmatic-page.agent', () => ({
 vi.mock('../queue', () => ({
   createQueue: vi.fn(() => ({ add: vi.fn() }))
 }));
+vi.mock('@editengage/agents/research/providers/traceparent', () => ({
+  injectTraceHeaders: vi.fn()
+}));
 
 describe('E2E trace: TS pipeline → Python LLM service', () => {
   let mockFetchFn: ReturnType<typeof vi.fn>;

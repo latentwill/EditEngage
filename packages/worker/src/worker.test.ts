@@ -85,6 +85,9 @@ vi.mock('@pydantic/logfire-node', () => ({
     )
   }
 }));
+vi.mock('@editengage/agents/research/providers/traceparent', () => ({
+  injectTraceHeaders: vi.fn()
+}));
 
 import { createQueue, addPipelineJob } from './queue';
 import { createWorker, createAgentFromStep } from './worker';

@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 import logfire
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 
@@ -44,7 +45,7 @@ def resolve_provider(model: str) -> str:
         return "openai"
     if model.startswith("anthropic/") or model.startswith("claude-"):
         return "openrouter"
-    if model.startswith("sonar-") or model.startswith("perplexity/"):
+    if model.startswith("sonar-") or model.startswith("perplexity/") or model.startswith("llama-"):
         return "perplexity"
     raise HTTPException(status_code=400, detail=f"Unknown model prefix: {model}")
 
@@ -66,7 +67,7 @@ async def chat_completions(request: ChatCompletionRequest) -> Any:
             "llm.model": request.model,
             "llm.prompt_length": prompt_length,
         },
-    ):
+    ) as span:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 config["url"],
@@ -77,4 +78,18 @@ async def chat_completions(request: ChatCompletionRequest) -> Any:
                 },
             )
 
-    return response.json()
+        if response.status_code != 200:
+            span.set_attribute("llm.response_status", response.status_code)
+            return JSONResponse(
+                status_code=response.status_code,
+                content=response.json(),
+            )
+
+        response_data = response.json()
+        usage = response_data.get("usage")
+        if usage:
+            for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                if key in usage:
+                    span.set_attribute(f"llm.usage.{key}", usage[key])
+
+    return response_data

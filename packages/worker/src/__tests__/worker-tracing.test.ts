@@ -63,6 +63,9 @@ vi.mock('@pydantic/logfire-node', () => ({
     span: mockLogfireSpan
   }
 }));
+vi.mock('@editengage/agents/research/providers/traceparent', () => ({
+  injectTraceHeaders: vi.fn()
+}));
 
 import { createWorker } from '../worker';
 import type { PipelineJobData } from '../worker';
