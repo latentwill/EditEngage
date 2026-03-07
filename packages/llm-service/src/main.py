@@ -9,6 +9,9 @@ app = FastAPI(title="EditEngage LLM Service")
 logfire.instrument_fastapi(app)
 app.include_router(router)
 
+with logfire.span("llm_service.startup"):
+    logfire.info("LLM service initialized")
+
 
 @app.get("/health")
 async def health():

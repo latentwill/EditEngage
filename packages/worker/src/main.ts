@@ -63,4 +63,15 @@ setInterval(async () => {
 // Initial health write
 writeFileSync('/tmp/worker-healthy', new Date().toISOString());
 
+Logfire.span('worker.startup', {
+  attributes: {
+    'service.name': 'editengage-worker',
+    'worker.redis_host': REDIS_HOST,
+    'worker.redis_port': REDIS_PORT,
+  },
+  callback: () => {
+    console.log(`[worker] Logfire startup span sent`);
+  },
+});
+
 console.log(`[worker] Ready`);
