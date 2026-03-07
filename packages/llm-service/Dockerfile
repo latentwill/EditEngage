@@ -4,6 +4,7 @@ FROM python:3.12-slim AS builder
 WORKDIR /app
 
 COPY packages/llm-service/pyproject.toml .
+COPY packages/llm-service/src ./src
 RUN pip install --no-cache-dir .
 
 # Runtime stage
