@@ -43,3 +43,14 @@ def test_llm_service_not_exposed_externally():
 def test_dockerfile_exists():
     dockerfile_path = os.path.join(os.path.dirname(__file__), '..', 'Dockerfile')
     assert os.path.exists(dockerfile_path)
+
+
+def test_dockerfile_copies_source_before_pip_install():
+    """Build requires source for hatchling to discover the package."""
+    dockerfile_path = os.path.join(os.path.dirname(__file__), '..', 'Dockerfile')
+    with open(dockerfile_path) as f:
+        content = f.read()
+    lines = [line.strip() for line in content.splitlines() if line.strip() and not line.strip().startswith('#')]
+    copy_src_idx = next(i for i, l in enumerate(lines) if 'COPY' in l and 'src' in l and 'builder' not in l.lower())
+    pip_install_idx = next(i for i, l in enumerate(lines) if 'pip install' in l)
+    assert copy_src_idx < pip_install_idx, "Source must be copied before pip install for hatchling build"
