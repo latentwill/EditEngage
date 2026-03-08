@@ -32,4 +32,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["node", "build"]
+CMD ["sh", "-c", "node build 2>&1 || echo 'EXIT CODE: '$?; sleep 3600"]
