@@ -26,7 +26,7 @@ describe('Logfire app configuration', () => {
     process.env.LOGFIRE_TOKEN = 'test-logfire-token';
   });
 
-  it('calls Logfire.configure with serviceName and token on boot', async () => {
+  it('calls Logfire.configure with serviceName, token, and HTTP filtering on boot', async () => {
     vi.resetModules();
 
     vi.doMock('@pydantic/logfire-node', () => ({
@@ -43,8 +43,49 @@ describe('Logfire app configuration', () => {
 
     expect(mockConfigure).toHaveBeenCalledWith({
       serviceName: 'editengage-app',
-      token: 'test-logfire-token'
+      token: 'test-logfire-token',
+      nodeAutoInstrumentations: {
+        '@opentelemetry/instrumentation-http': {
+          ignoreIncomingRequestHook: expect.any(Function)
+        }
+      }
     });
+  });
+
+  it('ignores incoming HTML page requests but keeps API requests', async () => {
+    vi.resetModules();
+
+    let capturedHook: ((req: { url?: string }) => boolean) | undefined;
+    const captureConfigure = vi.fn((config: Record<string, unknown>) => {
+      const autoInst = config.nodeAutoInstrumentations as Record<string, Record<string, unknown>> | undefined;
+      const httpConfig = autoInst?.['@opentelemetry/instrumentation-http'];
+      capturedHook = httpConfig?.ignoreIncomingRequestHook as typeof capturedHook;
+    });
+
+    vi.doMock('@pydantic/logfire-node', () => ({
+      default: {
+        configure: captureConfigure,
+        span: mockSpan
+      }
+    }));
+    vi.doMock('$lib/server/supabase', () => ({
+      createServerSupabaseClient: vi.fn()
+    }));
+
+    await import('../../src/hooks.server');
+
+    expect(capturedHook).toBeDefined();
+
+    // HTML page requests should be ignored (return true)
+    expect(capturedHook!({ url: '/dashboard' })).toBe(true);
+    expect(capturedHook!({ url: '/dashboard/write/content' })).toBe(true);
+    expect(capturedHook!({ url: '/auth/login' })).toBe(true);
+    expect(capturedHook!({ url: '/onboarding' })).toBe(true);
+    expect(capturedHook!({ url: '/' })).toBe(true);
+
+    // API requests should NOT be ignored (return false)
+    expect(capturedHook!({ url: '/api/v1/content' })).toBe(false);
+    expect(capturedHook!({ url: '/api/health' })).toBe(false);
   });
 
   it('sends a startup span on boot so Logfire dashboard shows initialization', async () => {

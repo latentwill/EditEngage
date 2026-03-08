@@ -2,7 +2,15 @@ import Logfire from '@pydantic/logfire-node';
 
 Logfire.configure({
   serviceName: 'editengage-app',
-  token: process.env.LOGFIRE_TOKEN
+  token: process.env.LOGFIRE_TOKEN,
+  nodeAutoInstrumentations: {
+    '@opentelemetry/instrumentation-http': {
+      ignoreIncomingRequestHook: (req: { url?: string }) => {
+        const url = req.url ?? '';
+        return !url.startsWith('/api/');
+      }
+    }
+  }
 });
 
 Logfire.span('app.startup', {
