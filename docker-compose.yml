@@ -19,6 +19,10 @@ services:
       - LOGFIRE_TOKEN=${LOGFIRE_TOKEN}
       - LOGFIRE_ENVIRONMENT=${NODE_ENV:-production}
       - LLM_SERVICE_URL=http://llm-service:8000
+      - APP_DOMAIN=${APP_DOMAIN:-api.editengage.com}
+      - ENABLE_EXTERNAL_HEALTH_CHECK=${ENABLE_EXTERNAL_HEALTH_CHECK:-false}
+      - EXTERNAL_HEALTH_CHECK_INTERVAL_MS=${EXTERNAL_HEALTH_CHECK_INTERVAL_MS:-300000}
+      - EXTERNAL_HEALTH_CHECK_TIMEOUT_MS=${EXTERNAL_HEALTH_CHECK_TIMEOUT_MS:-5000}
     depends_on:
       redis:
         condition: service_healthy
