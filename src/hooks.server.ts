@@ -1,29 +1,20 @@
 import Logfire from '@pydantic/logfire-node';
 
-Logfire.configure({
-  serviceName: 'editengage-app',
-  token: process.env.LOGFIRE_TOKEN,
-  nodeAutoInstrumentations: {
-    '@opentelemetry/instrumentation-http': {
-      ignoreIncomingRequestHook: (req: { url?: string }) => {
-        const url = req.url ?? '';
-        return !url.startsWith('/api/');
-      }
-    },
-    '@opentelemetry/instrumentation-undici': {
-      ignoreRequestHook: (req: { origin: string }) => {
-        return req.origin.includes('.supabase.co');
-      }
-    }
-  }
-});
+try {
+  Logfire.configure({
+    serviceName: 'editengage-app',
+    token: process.env.LOGFIRE_TOKEN
+  });
 
-Logfire.span('app.startup', {
-  attributes: { 'service.name': 'editengage-app' },
-  callback: () => {
-    console.log('[app] Logfire startup span sent');
-  },
-});
+  Logfire.span('app.startup', {
+    attributes: { 'service.name': 'editengage-app' },
+    callback: () => {
+      console.log('[app] Logfire startup span sent');
+    },
+  });
+} catch (err) {
+  console.error('[app] Logfire initialization failed, continuing without tracing:', err);
+}
 
 import { runProbe } from '$lib/server/external-health';
 

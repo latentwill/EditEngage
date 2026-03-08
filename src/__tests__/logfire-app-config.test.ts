@@ -1,6 +1,6 @@
 /**
- * @behavior When the SvelteKit app starts, Logfire is initialized for API route tracing
- * @business_rule App must have Logfire configured for observability
+ * @behavior When the SvelteKit app starts, Logfire is initialized for observability
+ * @business_rule App must have Logfire configured and must not crash if it fails
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -26,7 +26,7 @@ describe('Logfire app configuration', () => {
     process.env.LOGFIRE_TOKEN = 'test-logfire-token';
   });
 
-  it('calls Logfire.configure with serviceName, token, and HTTP filtering on boot', async () => {
+  it('calls Logfire.configure with serviceName and token on boot', async () => {
     vi.resetModules();
 
     vi.doMock('@pydantic/logfire-node', () => ({
@@ -43,85 +43,8 @@ describe('Logfire app configuration', () => {
 
     expect(mockConfigure).toHaveBeenCalledWith({
       serviceName: 'editengage-app',
-      token: 'test-logfire-token',
-      nodeAutoInstrumentations: {
-        '@opentelemetry/instrumentation-http': {
-          ignoreIncomingRequestHook: expect.any(Function)
-        },
-        '@opentelemetry/instrumentation-undici': {
-          ignoreRequestHook: expect.any(Function)
-        }
-      }
+      token: 'test-logfire-token'
     });
-  });
-
-  it('ignores incoming HTML page requests but keeps API requests', async () => {
-    vi.resetModules();
-
-    let capturedHook: ((req: { url?: string }) => boolean) | undefined;
-    const captureConfigure = vi.fn((config: Record<string, unknown>) => {
-      const autoInst = config.nodeAutoInstrumentations as Record<string, Record<string, unknown>> | undefined;
-      const httpConfig = autoInst?.['@opentelemetry/instrumentation-http'];
-      capturedHook = httpConfig?.ignoreIncomingRequestHook as typeof capturedHook;
-    });
-
-    vi.doMock('@pydantic/logfire-node', () => ({
-      default: {
-        configure: captureConfigure,
-        span: mockSpan
-      }
-    }));
-    vi.doMock('$lib/server/supabase', () => ({
-      createServerSupabaseClient: vi.fn()
-    }));
-
-    await import('../../src/hooks.server');
-
-    expect(capturedHook).toBeDefined();
-
-    // HTML page requests should be ignored (return true)
-    expect(capturedHook!({ url: '/dashboard' })).toBe(true);
-    expect(capturedHook!({ url: '/dashboard/write/content' })).toBe(true);
-    expect(capturedHook!({ url: '/auth/login' })).toBe(true);
-    expect(capturedHook!({ url: '/onboarding' })).toBe(true);
-    expect(capturedHook!({ url: '/' })).toBe(true);
-
-    // API requests should NOT be ignored (return false)
-    expect(capturedHook!({ url: '/api/v1/content' })).toBe(false);
-    expect(capturedHook!({ url: '/api/health' })).toBe(false);
-  });
-
-  it('ignores outgoing Supabase API calls from undici instrumentation', async () => {
-    vi.resetModules();
-
-    let capturedUndiciHook: ((req: { origin: string; method: string; path: string }) => boolean) | undefined;
-    const captureConfigure = vi.fn((config: Record<string, unknown>) => {
-      const autoInst = config.nodeAutoInstrumentations as Record<string, Record<string, unknown>> | undefined;
-      const undiciConfig = autoInst?.['@opentelemetry/instrumentation-undici'];
-      capturedUndiciHook = undiciConfig?.ignoreRequestHook as typeof capturedUndiciHook;
-    });
-
-    vi.doMock('@pydantic/logfire-node', () => ({
-      default: {
-        configure: captureConfigure,
-        span: mockSpan
-      }
-    }));
-    vi.doMock('$lib/server/supabase', () => ({
-      createServerSupabaseClient: vi.fn()
-    }));
-
-    await import('../../src/hooks.server');
-
-    expect(capturedUndiciHook).toBeDefined();
-
-    // Supabase REST API calls should be ignored (return true)
-    expect(capturedUndiciHook!({ origin: 'https://wgizzmbashsndqeunnwv.supabase.co', method: 'GET', path: '/rest/v1/pipelines' })).toBe(true);
-    expect(capturedUndiciHook!({ origin: 'https://abc123.supabase.co', method: 'POST', path: '/auth/v1/token' })).toBe(true);
-
-    // Non-Supabase outgoing calls should NOT be ignored (return false)
-    expect(capturedUndiciHook!({ origin: 'https://api.openai.com', method: 'POST', path: '/v1/chat/completions' })).toBe(false);
-    expect(capturedUndiciHook!({ origin: 'https://api.tavily.com', method: 'POST', path: '/search' })).toBe(false);
   });
 
   it('sends a startup span on boot so Logfire dashboard shows initialization', async () => {
@@ -176,5 +99,22 @@ describe('Logfire app configuration', () => {
         token: 'custom-app-token'
       })
     );
+  });
+
+  it('app still starts if Logfire.configure throws', async () => {
+    vi.resetModules();
+
+    vi.doMock('@pydantic/logfire-node', () => ({
+      default: {
+        configure: vi.fn(() => { throw new Error('OTEL init failed'); }),
+        span: vi.fn()
+      }
+    }));
+    vi.doMock('$lib/server/supabase', () => ({
+      createServerSupabaseClient: vi.fn()
+    }));
+
+    // Should not throw — app must start even if Logfire fails
+    await expect(import('../../src/hooks.server')).resolves.toBeDefined();
   });
 });
