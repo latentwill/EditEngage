@@ -9,6 +9,11 @@ Logfire.configure({
         const url = req.url ?? '';
         return !url.startsWith('/api/');
       }
+    },
+    '@opentelemetry/instrumentation-undici': {
+      ignoreRequestHook: (req: { origin: string }) => {
+        return req.origin.includes('.supabase.co');
+      }
     }
   }
 });

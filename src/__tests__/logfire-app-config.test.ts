@@ -47,6 +47,9 @@ describe('Logfire app configuration', () => {
       nodeAutoInstrumentations: {
         '@opentelemetry/instrumentation-http': {
           ignoreIncomingRequestHook: expect.any(Function)
+        },
+        '@opentelemetry/instrumentation-undici': {
+          ignoreRequestHook: expect.any(Function)
         }
       }
     });
@@ -86,6 +89,39 @@ describe('Logfire app configuration', () => {
     // API requests should NOT be ignored (return false)
     expect(capturedHook!({ url: '/api/v1/content' })).toBe(false);
     expect(capturedHook!({ url: '/api/health' })).toBe(false);
+  });
+
+  it('ignores outgoing Supabase API calls from undici instrumentation', async () => {
+    vi.resetModules();
+
+    let capturedUndiciHook: ((req: { origin: string; method: string; path: string }) => boolean) | undefined;
+    const captureConfigure = vi.fn((config: Record<string, unknown>) => {
+      const autoInst = config.nodeAutoInstrumentations as Record<string, Record<string, unknown>> | undefined;
+      const undiciConfig = autoInst?.['@opentelemetry/instrumentation-undici'];
+      capturedUndiciHook = undiciConfig?.ignoreRequestHook as typeof capturedUndiciHook;
+    });
+
+    vi.doMock('@pydantic/logfire-node', () => ({
+      default: {
+        configure: captureConfigure,
+        span: mockSpan
+      }
+    }));
+    vi.doMock('$lib/server/supabase', () => ({
+      createServerSupabaseClient: vi.fn()
+    }));
+
+    await import('../../src/hooks.server');
+
+    expect(capturedUndiciHook).toBeDefined();
+
+    // Supabase REST API calls should be ignored (return true)
+    expect(capturedUndiciHook!({ origin: 'https://wgizzmbashsndqeunnwv.supabase.co', method: 'GET', path: '/rest/v1/pipelines' })).toBe(true);
+    expect(capturedUndiciHook!({ origin: 'https://abc123.supabase.co', method: 'POST', path: '/auth/v1/token' })).toBe(true);
+
+    // Non-Supabase outgoing calls should NOT be ignored (return false)
+    expect(capturedUndiciHook!({ origin: 'https://api.openai.com', method: 'POST', path: '/v1/chat/completions' })).toBe(false);
+    expect(capturedUndiciHook!({ origin: 'https://api.tavily.com', method: 'POST', path: '/search' })).toBe(false);
   });
 
   it('sends a startup span on boot so Logfire dashboard shows initialization', async () => {
