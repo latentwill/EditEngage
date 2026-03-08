@@ -32,4 +32,5 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "node build 2>&1 || echo 'EXIT CODE: '$?; sleep 3600"]
+HEALTHCHECK NONE
+CMD ["sh", "-c", "echo 'CONTAINER STARTING' && ls build/ && echo 'NODE VERSION:' && node --version && echo 'STARTING APP...' && exec node build"]
