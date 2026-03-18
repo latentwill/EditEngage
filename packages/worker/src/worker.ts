@@ -193,7 +193,7 @@ export function createWorker(supabase: SupabaseClient): void {
         originalJobId: failedJob.id,
         data: failedJob.data,
         error: err.message
-      });
+      }, { removeOnComplete: { age: 604800, count: 100 }, removeOnFail: { age: 604800, count: 100 } } as Record<string, unknown>);
     }
   });
 }
