@@ -21,7 +21,9 @@ export async function addPipelineJob(
 ): Promise<{ id: string }> {
   const job = await queue.add('pipeline', data, {
     attempts: 3,
-    backoff: { type: 'exponential', delay: 1000 }
+    backoff: { type: 'exponential', delay: 1000 },
+    removeOnComplete: { age: 86400, count: 100 },
+    removeOnFail: { age: 604800, count: 500 }
   });
   return { id: job.id };
 }

@@ -133,10 +133,12 @@ describe('BullMQ Queue & Worker', () => {
           { agentType: 'seo_writer', config: {} }
         ]
       },
-      {
+      expect.objectContaining({
         attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 }
-      }
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: { age: 86400, count: 100 },
+        removeOnFail: { age: 604800, count: 500 }
+      })
     );
   });
 
@@ -268,6 +270,10 @@ describe('BullMQ Queue & Worker', () => {
       expect.objectContaining({
         originalJobId: 'job-dead',
         error: 'permanent failure'
+      }),
+      expect.objectContaining({
+        removeOnComplete: expect.any(Object),
+        removeOnFail: expect.any(Object)
       })
     );
   });

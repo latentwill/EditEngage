@@ -3,7 +3,20 @@ import Logfire from '@pydantic/logfire-node';
 try {
   Logfire.configure({
     serviceName: 'editengage-app',
-    token: process.env.LOGFIRE_TOKEN
+    token: process.env.LOGFIRE_TOKEN,
+    nodeAutoInstrumentations: {
+      '@opentelemetry/instrumentation-http': {
+        ignoreIncomingRequestHook: (req: { url?: string }) => {
+          const url = req.url ?? '';
+          return !url.startsWith('/api/');
+        }
+      },
+      '@opentelemetry/instrumentation-undici': {
+        ignoreRequestHook: (req: { origin: string }) => {
+          return req.origin.includes('.supabase.co');
+        }
+      }
+    }
   });
 
   Logfire.span('app.startup', {
