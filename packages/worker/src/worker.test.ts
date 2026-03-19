@@ -244,7 +244,7 @@ describe('BullMQ Queue & Worker', () => {
     expect(jobOptions.backoff).toEqual({ type: 'exponential', delay: 1000 });
   });
 
-  it('worker moves permanently failed jobs to dead-letter queue', async () => {
+  it('worker logs permanently failed jobs after exhausting retries', async () => {
     const { instance } = createMockSupabase();
     createWorker(instance);
 
@@ -260,22 +260,15 @@ describe('BullMQ Queue & Worker', () => {
       opts: { attempts: 3 }
     };
 
-    const dlqAddSpy = mockQueueAdd;
-    dlqAddSpy.mockResolvedValue({ id: 'dlq-1' });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await failedHandler![1](mockFailedJob, new Error('permanent failure'));
 
-    expect(dlqAddSpy).toHaveBeenCalledWith(
-      'dead-letter',
-      expect.objectContaining({
-        originalJobId: 'job-dead',
-        error: 'permanent failure'
-      }),
-      expect.objectContaining({
-        removeOnComplete: expect.any(Object),
-        removeOnFail: expect.any(Object)
-      })
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('job-dead')
     );
+
+    consoleSpy.mockRestore();
   });
 });
 

@@ -10,13 +10,10 @@ import { EmailPublisherAgent } from '@editengage/agents/email-publisher/email-pu
 import { ResearchAgent } from '@editengage/agents/research/research.agent';
 import { ProgrammaticPageAgent } from '@editengage/agents/programmatic-page/programmatic-page.agent';
 import { injectTraceHeaders } from '@editengage/agents/research/providers/traceparent';
-import { createQueue } from './queue';
-import type { QueueInstance } from './queue';
-
 export interface PipelineJobData {
   readonly pipelineId: string;
   readonly pipelineRunId: string;
-  readonly steps: ReadonlyArray<{ agentType: string; config: Record<string, unknown> }>;
+  readonly steps: ReadonlyArray<{ agentType?: string; agent_type?: string; config?: Record<string, unknown> }>;
 }
 
 interface SupabaseClient {
@@ -55,16 +52,18 @@ type AgentConstructorArg<T extends new (...args: never[]) => unknown> = Construc
 type AgentConstructorArg2<T extends new (...args: never[]) => unknown> = ConstructorParameters<T>[1];
 
 export function createAgentFromStep(
-  step: { agentType: string; config: Record<string, unknown> },
+  step: { agentType?: string; agent_type?: string; config?: Record<string, unknown> },
   deps: AgentDeps
 ): PipelineAgent {
   const { supabase, fetchFn } = deps;
+  const agentType = step.agentType ?? step.agent_type ?? '';
 
-  switch (step.agentType) {
+  switch (agentType) {
     case 'topic_queue':
       return new TopicQueueAgent(supabase as AgentConstructorArg<typeof TopicQueueAgent>);
     case 'variety_engine':
       return new VarietyEngineAgent(supabase as AgentConstructorArg<typeof VarietyEngineAgent>);
+    case 'writing':
     case 'seo_writer':
       return new SeoWriterAgent(
         supabase as AgentConstructorArg<typeof SeoWriterAgent>,
@@ -78,6 +77,7 @@ export function createAgentFromStep(
       return new EmailPublisherAgent(
         (() => { throw new Error('Email transporter not configured'); }) as AgentConstructorArg<typeof EmailPublisherAgent>
       );
+    case 'research':
     case 'research_agent':
       return new ResearchAgent({
         providers: [],
@@ -133,7 +133,6 @@ function toErrorMessage(err: unknown): string {
 
 export function createWorker(supabase: SupabaseClient): void {
   const orchestrator = new PipelineOrchestrator(supabase);
-  const dlq: QueueInstance = createQueue();
   const deps: AgentDeps = { supabase, fetchFn: globalThis.fetch };
 
   const worker = new Worker(
@@ -189,11 +188,7 @@ export function createWorker(supabase: SupabaseClient): void {
   worker.on('failed', async (job: unknown, err: Error) => {
     const failedJob = job as FailedJob;
     if (failedJob.attemptsMade >= failedJob.opts.attempts) {
-      await dlq.add('dead-letter', {
-        originalJobId: failedJob.id,
-        data: failedJob.data,
-        error: err.message
-      }, { removeOnComplete: { age: 604800, count: 100 }, removeOnFail: { age: 604800, count: 100 } } as Record<string, unknown>);
+      console.error(`[worker] Job ${failedJob.id} permanently failed after ${failedJob.attemptsMade} attempts: ${err.message}`);
     }
   });
 }
