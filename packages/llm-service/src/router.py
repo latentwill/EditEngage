@@ -77,13 +77,17 @@ async def chat_completions(request: ChatCompletionRequest) -> Any:
     ) as span:
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                }
+                if provider == "openrouter":
+                    headers["HTTP-Referer"] = "https://editengage.com"
+                    headers["X-Title"] = "EditEngage"
                 response = await client.post(
                     config["url"],
                     json=body,
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                    },
+                    headers=headers,
                 )
         except httpx.HTTPError as exc:
             span.set_attribute("llm.response_status", "error")
@@ -98,6 +102,7 @@ async def chat_completions(request: ChatCompletionRequest) -> Any:
                 error_body = response.json()
             except Exception:
                 error_body = {"raw": response.text[:500]}
+            print(f"[llm-service] {provider} returned {response.status_code} for model={request.model}: {error_body}")
             return JSONResponse(
                 status_code=response.status_code,
                 content={"error": error_body, "provider": provider, "model": request.model},
