@@ -71,7 +71,7 @@ describe('Synthesizer tracing', () => {
     expect(options.attributes).toEqual(
       expect.objectContaining({
         'llm.provider': 'openrouter',
-        'llm.model': 'anthropic/claude-sonnet-4-20250514',
+        'llm.model': 'anthropic/claude-sonnet-4',
       })
     );
     expect(options.attributes['llm.prompt_length']).toBeGreaterThan(0);

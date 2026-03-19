@@ -66,7 +66,7 @@ describe('Provider tracing with Logfire', () => {
         expect.objectContaining({
           attributes: expect.objectContaining({
             'llm.provider': 'openrouter',
-            'llm.model': 'anthropic/claude-sonnet-4-20250514',
+            'llm.model': 'anthropic/claude-sonnet-4',
             'llm.prompt_length': 'test query'.length,
           }),
           callback: expect.any(Function),

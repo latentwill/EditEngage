@@ -192,7 +192,7 @@ describe('Pipeline Observability (Acceptance)', () => {
       const llmSpans = [...spanRecords.values()].filter(s => s.name === 'llm.call');
       expect(llmSpans).toHaveLength(1);
       expect(llmSpans[0].attributes).toHaveProperty('llm.provider', 'openrouter');
-      expect(llmSpans[0].attributes).toHaveProperty('llm.model', 'anthropic/claude-sonnet-4-20250514');
+      expect(llmSpans[0].attributes).toHaveProperty('llm.model', 'anthropic/claude-sonnet-4');
       expect(llmSpans[0].attributes['llm.prompt_length']).toBeGreaterThan(0);
     });
   });
@@ -319,7 +319,7 @@ describe('Python LLM Service Observability (Acceptance)', () => {
 
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
-      expect(body.model).toBe('anthropic/claude-sonnet-4-20250514');
+      expect(body.model).toBe('anthropic/claude-sonnet-4');
     });
   });
 

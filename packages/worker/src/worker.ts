@@ -144,7 +144,7 @@ export function createAgentFromStep(
         return Logfire.span('llm.call', {
           attributes: {
             'llm.provider': 'openrouter',
-            'llm.model': 'anthropic/claude-sonnet-4-20250514',
+            'llm.model': 'anthropic/claude-sonnet-4',
             'llm.prompt_length': prompt.length
           },
           callback: async (span) => {
@@ -154,7 +154,7 @@ export function createAgentFromStep(
             method: 'POST',
             headers,
             body: JSON.stringify({
-              model: 'anthropic/claude-sonnet-4-20250514',
+              model: 'anthropic/claude-sonnet-4',
               messages: [{ role: 'user', content: prompt }]
             })
           });

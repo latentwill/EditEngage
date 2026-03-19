@@ -12,7 +12,7 @@ interface OpenRouterResponse {
   }>;
 }
 
-const MODEL = 'anthropic/claude-sonnet-4-20250514';
+const MODEL = 'anthropic/claude-sonnet-4';
 
 export function createOpenRouterProvider(fetchFn: FetchFn): ResearchProvider {
   return {

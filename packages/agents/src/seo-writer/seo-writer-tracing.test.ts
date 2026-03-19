@@ -138,7 +138,7 @@ describe('SeoWriterAgent tracing', () => {
     expect(options.attributes).toEqual(
       expect.objectContaining({
         'llm.provider': 'openrouter',
-        'llm.model': 'anthropic/claude-sonnet-4-20250514',
+        'llm.model': 'anthropic/claude-sonnet-4',
         'seo_writer.writing_style_id': 'style-1',
       })
     );
