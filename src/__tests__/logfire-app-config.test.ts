@@ -41,16 +41,10 @@ describe('Logfire app configuration', () => {
 
     await import('../../src/hooks.server');
 
-    expect(mockConfigure).toHaveBeenCalledWith(
-      expect.objectContaining({
-        serviceName: 'editengage-app',
-        token: 'test-logfire-token',
-        nodeAutoInstrumentations: expect.objectContaining({
-          '@opentelemetry/instrumentation-http': expect.any(Object),
-          '@opentelemetry/instrumentation-undici': expect.any(Object)
-        })
-      })
-    );
+    expect(mockConfigure).toHaveBeenCalledWith({
+      serviceName: 'editengage-app',
+      token: 'test-logfire-token'
+    });
   });
 
   it('sends a startup span on boot so Logfire dashboard shows initialization', async () => {
