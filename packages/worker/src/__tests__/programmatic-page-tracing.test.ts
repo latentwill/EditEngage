@@ -69,9 +69,9 @@ describe('programmatic_page llmFn tracing', () => {
 
     // Make Logfire.span execute the callback and return its result
     mockLogfireSpan.mockImplementation(
-      (_name: string, _attrs: Record<string, unknown>, callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown) => {
+      (_name: string, opts: { callback?: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown }) => {
         const fakeSpan = { setAttributes: vi.fn() };
-        return callback(fakeSpan);
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
   });
@@ -101,20 +101,22 @@ describe('programmatic_page llmFn tracing', () => {
 
     expect(mockLogfireSpan).toHaveBeenCalledWith(
       'llm.call',
-      {
-        'llm.provider': 'openrouter',
-        'llm.model': 'anthropic/claude-sonnet-4-20250514',
-        'llm.prompt_length': prompt.length
-      },
-      expect.any(Function)
+      expect.objectContaining({
+        attributes: {
+          'llm.provider': 'openrouter',
+          'llm.model': 'anthropic/claude-sonnet-4-20250514',
+          'llm.prompt_length': prompt.length
+        },
+        callback: expect.any(Function)
+      })
     );
   });
 
   it('sets llm.response_status on the span after receiving response', async () => {
     const fakeSpan = { setAttributes: vi.fn() };
     mockLogfireSpan.mockImplementation(
-      (_name: string, _attrs: Record<string, unknown>, callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown) => {
-        return callback(fakeSpan);
+      (_name: string, opts: { callback?: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown }) => {
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
 
@@ -133,8 +135,8 @@ describe('programmatic_page llmFn tracing', () => {
   it('sets llm.response_status to error when response is not ok', async () => {
     const fakeSpan = { setAttributes: vi.fn() };
     mockLogfireSpan.mockImplementation(
-      (_name: string, _attrs: Record<string, unknown>, callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown) => {
-        return callback(fakeSpan);
+      (_name: string, opts: { callback?: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown }) => {
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
 

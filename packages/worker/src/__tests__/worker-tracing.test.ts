@@ -73,8 +73,10 @@ import type { PipelineJobData } from '../worker';
 function createMockSupabase() {
   const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
   const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
+  const selectEqFn = vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: null }) });
+  const selectFn = vi.fn().mockReturnValue({ eq: selectEqFn });
   return {
-    instance: { from: vi.fn().mockReturnValue({ update: updateFn }) },
+    instance: { from: vi.fn().mockReturnValue({ update: updateFn, select: selectFn }) },
     updateFn,
     eqFn
   };
@@ -97,9 +99,9 @@ describe('Worker tracing with Logfire', () => {
 
     // Make mockLogfireSpan execute the callback and return its result
     mockLogfireSpan.mockImplementation(
-      (_msg: string, _opts: Record<string, unknown>, callback: (span: unknown) => unknown) => {
+      (_msg: string, opts: { callback?: (span: unknown) => unknown }) => {
         const fakeSpan = { setAttributes: vi.fn() };
-        return callback(fakeSpan);
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
 
@@ -119,12 +121,14 @@ describe('Worker tracing with Logfire', () => {
 
     expect(mockLogfireSpan).toHaveBeenCalledWith(
       'job.process',
-      {
-        'job.id': 'job-42',
-        'job.queue': 'editengage-pipeline',
-        'job.attempt': 2
-      },
-      expect.any(Function)
+      expect.objectContaining({
+        attributes: {
+          'job.id': 'job-42',
+          'job.queue': 'editengage-pipeline',
+          'job.attempt': 2
+        },
+        callback: expect.any(Function)
+      })
     );
   });
 
@@ -139,8 +143,8 @@ describe('Worker tracing with Logfire', () => {
 
     const fakeSpan = { setAttributes: vi.fn() };
     mockLogfireSpan.mockImplementation(
-      (_msg: string, _opts: Record<string, unknown>, callback: (span: unknown) => unknown) => {
-        return callback(fakeSpan);
+      (_msg: string, opts: { callback?: (span: unknown) => unknown }) => {
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
 
@@ -174,8 +178,8 @@ describe('Worker tracing with Logfire', () => {
 
     const fakeSpan = { setAttributes: vi.fn() };
     mockLogfireSpan.mockImplementation(
-      (_msg: string, _opts: Record<string, unknown>, callback: (span: unknown) => unknown) => {
-        return callback(fakeSpan);
+      (_msg: string, opts: { callback?: (span: unknown) => unknown }) => {
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
 
@@ -204,9 +208,9 @@ describe('Worker tracing with Logfire', () => {
     mockOrchestratorRun.mockResolvedValue({ status: 'completed', steps: [] });
 
     mockLogfireSpan.mockImplementation(
-      (_msg: string, _opts: Record<string, unknown>, callback: (span: unknown) => unknown) => {
+      (_msg: string, opts: { callback?: (span: unknown) => unknown }) => {
         const fakeSpan = { setAttributes: vi.fn() };
-        return callback(fakeSpan);
+        if (opts?.callback) return opts.callback(fakeSpan);
       }
     );
 
@@ -225,12 +229,14 @@ describe('Worker tracing with Logfire', () => {
 
     expect(mockLogfireSpan).toHaveBeenCalledWith(
       'job.process',
-      {
-        'job.id': 'unknown',
-        'job.queue': 'editengage-pipeline',
-        'job.attempt': 1
-      },
-      expect.any(Function)
+      expect.objectContaining({
+        attributes: {
+          'job.id': 'unknown',
+          'job.queue': 'editengage-pipeline',
+          'job.attempt': 1
+        },
+        callback: expect.any(Function)
+      })
     );
   });
 });

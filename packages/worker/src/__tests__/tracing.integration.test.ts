@@ -45,24 +45,22 @@ vi.mock('@editengage/agents/orchestrator', () => {
     PipelineOrchestrator: vi.fn().mockImplementation(() => ({
       run: vi.fn().mockImplementation(async (options: { pipelineRunId: string; agents: Array<{ type: string; execute: () => Promise<unknown> }>; initialInput: unknown }) => {
         return Logfire.span('pipeline.run', {
-          pipelineRunId: options.pipelineRunId,
-          'pipeline.step_count': options.agents.length
-        }, async () => {
+          attributes: { pipelineRunId: options.pipelineRunId, 'pipeline.step_count': options.agents.length },
+          callback: async () => {
           const steps: unknown[] = [];
           for (let i = 0; i < options.agents.length; i++) {
             const agent = options.agents[i];
             const result = await Logfire.span('agent.execute', {
-              agentType: agent.type,
-              stepIndex: i
-            }, async (span: { setAttributes: typeof mockSetAttributes }) => {
+              attributes: { agentType: agent.type, stepIndex: i },
+              callback: async (span: { setAttributes: typeof mockSetAttributes }) => {
               const output = await agent.execute({});
               span.setAttributes({ 'agent.output_size': JSON.stringify(output).length });
               return output;
-            });
+            }});
             steps.push(result);
           }
           return { status: 'completed', steps };
-        });
+        }});
       })
     }))
   };
@@ -122,9 +120,11 @@ describe('Trace hierarchy integration', () => {
     spanRecords.clear();
     spanCounter = 0;
 
-    mockSpan.mockImplementation((name: string, attrs: Record<string, unknown>, callback: (span: { setAttributes: typeof mockSetAttributes }) => unknown) => {
+    mockSpan.mockImplementation((name: string, opts: { attributes?: Record<string, unknown>; callback?: (span: { setAttributes: typeof mockSetAttributes }) => unknown }) => {
       const spanId = `span-${spanCounter++}`;
       const parentId = spanStack.length > 0 ? spanStack[spanStack.length - 1] : null;
+      const attrs = opts.attributes ?? {};
+      const callback = opts.callback;
 
       const record: SpanRecord = {
         name,
@@ -146,6 +146,7 @@ describe('Trace hierarchy integration', () => {
       };
 
       try {
+        if (!callback) { spanStack.pop(); return undefined; }
         const result = callback(fakeSpan);
         if (result && typeof (result as Promise<unknown>).then === 'function') {
           return (result as Promise<unknown>).then((val) => {
@@ -170,6 +171,11 @@ describe('Trace hierarchy integration', () => {
       from: vi.fn().mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null })
+          })
         })
       })
     };
@@ -230,6 +236,11 @@ describe('Trace hierarchy integration', () => {
       from: vi.fn().mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null })
+          })
         })
       })
     };
@@ -261,6 +272,11 @@ describe('Trace hierarchy integration', () => {
       from: vi.fn().mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null })
+          })
         })
       })
     };
