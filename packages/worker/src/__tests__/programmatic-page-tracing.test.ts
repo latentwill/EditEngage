@@ -104,7 +104,7 @@ describe('programmatic_page llmFn tracing', () => {
       expect.objectContaining({
         attributes: {
           'llm.provider': 'openrouter',
-          'llm.model': 'anthropic/claude-sonnet-4-20250514',
+          'llm.model': 'anthropic/claude-sonnet-4',
           'llm.prompt_length': prompt.length
         },
         callback: expect.any(Function)

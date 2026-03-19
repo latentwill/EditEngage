@@ -49,7 +49,7 @@ interface SupabaseClient {
   };
 }
 
-const DEFAULT_MODEL = 'anthropic/claude-sonnet-4-20250514';
+const DEFAULT_MODEL = 'anthropic/claude-sonnet-4';
 
 export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
   type = AgentType.SEO_WRITER;

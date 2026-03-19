@@ -84,7 +84,7 @@ vi.mock('@editengage/agents/seo-writer/seo-writer.agent', () => ({
       await fetchFn('http://llm-service:8000/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'anthropic/claude-sonnet-4-20250514', messages: [{ role: 'user', content: 'test' }] })
+        body: JSON.stringify({ model: 'anthropic/claude-sonnet-4', messages: [{ role: 'user', content: 'test' }] })
       });
       return { content: 'article' };
     }),
