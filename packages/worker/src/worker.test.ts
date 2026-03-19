@@ -79,8 +79,8 @@ vi.mock('@editengage/agents/programmatic-page/programmatic-page.agent', () => ({
 vi.mock('@pydantic/logfire-node', () => ({
   default: {
     span: vi.fn().mockImplementation(
-      (_msg: string, _attrs: Record<string, unknown>, callback: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown) => {
-        return callback({ setAttributes: vi.fn() });
+      (_msg: string, opts: { callback?: (span: { setAttributes: ReturnType<typeof vi.fn> }) => unknown }) => {
+        if (opts?.callback) return opts.callback({ setAttributes: vi.fn() });
       }
     )
   }
@@ -96,8 +96,10 @@ import type { PipelineJobData } from './worker';
 function createMockSupabase() {
   const eqFn = vi.fn().mockResolvedValue({ data: null, error: null });
   const updateFn = vi.fn().mockReturnValue({ eq: eqFn });
+  const selectEqFn = vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null, error: null }) });
+  const selectFn = vi.fn().mockReturnValue({ eq: selectEqFn });
   return {
-    instance: { from: vi.fn().mockReturnValue({ update: updateFn }) },
+    instance: { from: vi.fn().mockReturnValue({ update: updateFn, select: selectFn }) },
     updateFn,
     eqFn
   };

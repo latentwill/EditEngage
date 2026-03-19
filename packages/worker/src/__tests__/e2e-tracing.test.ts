@@ -48,22 +48,20 @@ vi.mock('@editengage/agents/orchestrator', () => {
         agents: Array<{ type: string; execute: (input: unknown, config?: unknown) => Promise<unknown> }>;
       }) => {
         return Logfire.span('pipeline.run', {
-          pipelineRunId: options.pipelineRunId,
-          'pipeline.step_count': options.agents.length
-        }, async () => {
+          attributes: { pipelineRunId: options.pipelineRunId, 'pipeline.step_count': options.agents.length },
+          callback: async () => {
           const steps: unknown[] = [];
           for (let i = 0; i < options.agents.length; i++) {
             const agent = options.agents[i];
             const result = await Logfire.span('agent.execute', {
-              agentType: agent.type,
-              stepIndex: i
-            }, async () => {
+              attributes: { agentType: agent.type, stepIndex: i },
+              callback: async () => {
               return agent.execute({}, {});
-            });
+            }});
             steps.push(result);
           }
           return { status: 'completed', steps };
-        });
+        }});
       })
     }))
   };
@@ -140,13 +138,16 @@ describe('E2E trace: TS pipeline → Python LLM service', () => {
     });
     globalThis.fetch = mockFetchFn;
 
-    mockSpan.mockImplementation((name: string, attrs: Record<string, unknown>, callback: (span: { setAttributes: (a: Record<string, unknown>) => void }) => unknown) => {
+    mockSpan.mockImplementation((name: string, opts: { attributes?: Record<string, unknown>; callback?: (span: { setAttributes: (a: Record<string, unknown>) => void }) => unknown }) => {
       const spanId = `span-${spanCounter++}`;
       const parentId = spanStack.length > 0 ? spanStack[spanStack.length - 1] : null;
+      const attrs = opts.attributes ?? {};
+      const callback = opts.callback;
       spanRecords.set(spanId, { name, attributes: { ...attrs }, parent: parentId });
       spanStack.push(spanId);
       const fakeSpan = { setAttributes: (a: Record<string, unknown>) => Object.assign(spanRecords.get(spanId)!.attributes, a) };
       try {
+        if (!callback) { spanStack.pop(); return undefined; }
         const result = callback(fakeSpan);
         if (result && typeof (result as Promise<unknown>).then === 'function') {
           return (result as Promise<unknown>).then((val) => { spanStack.pop(); return val; }).catch((err) => { spanStack.pop(); throw err; });
@@ -163,6 +164,11 @@ describe('E2E trace: TS pipeline → Python LLM service', () => {
       from: vi.fn().mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null })
+          })
         })
       })
     });
@@ -211,6 +217,11 @@ describe('E2E trace: TS pipeline → Python LLM service', () => {
       from: vi.fn().mockReturnValue({
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ data: null, error: null })
+        }),
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null })
+          })
         })
       })
     });

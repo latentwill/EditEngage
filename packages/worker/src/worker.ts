@@ -142,10 +142,12 @@ export function createAgentFromStep(
       const llmServiceUrl = process.env.LLM_SERVICE_URL ?? 'http://llm-service:8000';
       const llmFn = async (prompt: string): Promise<string> => {
         return Logfire.span('llm.call', {
-          'llm.provider': 'openrouter',
-          'llm.model': 'anthropic/claude-sonnet-4-20250514',
-          'llm.prompt_length': prompt.length
-        }, async (span) => {
+          attributes: {
+            'llm.provider': 'openrouter',
+            'llm.model': 'anthropic/claude-sonnet-4-20250514',
+            'llm.prompt_length': prompt.length
+          },
+          callback: async (span) => {
           const headers: Record<string, string> = { 'Content-Type': 'application/json' };
           injectTraceHeaders(headers);
           const response = await fetchFn(`${llmServiceUrl}/v1/chat/completions`, {
@@ -159,7 +161,7 @@ export function createAgentFromStep(
           span.setAttributes({ 'llm.response_status': response.ok ? 'ok' : 'error' });
           const data = await response.json() as { choices: Array<{ message: { content: string } }> };
           return data.choices[0]?.message?.content ?? '';
-        });
+        }});
       };
       return new ProgrammaticPageAgent(
         llmFn as AgentConstructorArg<typeof ProgrammaticPageAgent>,
@@ -197,10 +199,12 @@ export function createWorker(supabase: SupabaseClient): void {
       const typedJob = job as { id?: string; attemptsMade?: number };
 
       return Logfire.span('job.process', {
-        'job.id': typedJob.id ?? 'unknown',
-        'job.queue': QUEUE_NAME,
-        'job.attempt': typedJob.attemptsMade ?? 1,
-      }, async (span) => {
+        attributes: {
+          'job.id': typedJob.id ?? 'unknown',
+          'job.queue': QUEUE_NAME,
+          'job.attempt': typedJob.attemptsMade ?? 1,
+        },
+        callback: async (span) => {
         const { pipelineRunId, steps } = data;
 
         await supabase
@@ -246,7 +250,7 @@ export function createWorker(supabase: SupabaseClient): void {
 
           throw err;
         }
-      });
+      }});
     },
     { connection: getRedisConnection() }
   );
