@@ -18,10 +18,65 @@ export interface PipelineJobData {
 
 interface SupabaseClient {
   from(table: string): {
+    select(columns?: string): {
+      eq(column: string, value: string): {
+        single(): Promise<{ data: Record<string, unknown> | null; error: unknown }>;
+      };
+    };
     update(data: Record<string, unknown>): {
       eq(column: string, value: string): Promise<{ data: unknown; error: unknown }>;
     };
   };
+}
+
+interface PipelineStep {
+  agentType?: string;
+  agent_type?: string;
+  agent_id?: string;
+  topic_id?: string;
+  destination_id?: string;
+  config?: Record<string, unknown>;
+}
+
+async function hydrateStepInput(
+  step: PipelineStep,
+  supabase: SupabaseClient
+): Promise<{ input: Record<string, unknown>; config: Record<string, unknown> }> {
+  const agentType = step.agentType ?? step.agent_type ?? '';
+
+  if (agentType === 'writing' || agentType === 'seo_writer') {
+    const [topicResult, agentResult] = await Promise.all([
+      step.topic_id
+        ? supabase.from('topic_queue').select('*').eq('id', step.topic_id).single()
+        : Promise.resolve({ data: null, error: null }),
+      step.agent_id
+        ? supabase.from('writing_agents').select('*').eq('id', step.agent_id).single()
+        : Promise.resolve({ data: null, error: null })
+    ]);
+
+    const topic = topicResult.data ?? { title: 'Untitled', keywords: [] };
+    const writingAgent = agentResult.data;
+    const writingStyleId = (writingAgent as Record<string, unknown>)?.writing_style_id as string ?? '';
+
+    return {
+      input: {
+        topic,
+        canonical: (topic as Record<string, unknown>).title ?? 'Untitled',
+        hints: {
+          structureHint: 'standard blog post with introduction, body, and conclusion',
+          exampleSeed: '',
+          avoidList: []
+        }
+      },
+      config: {
+        writingStyleId,
+        serpResearch: false,
+        ...step.config
+      }
+    };
+  }
+
+  return { input: {}, config: step.config ?? {} };
 }
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
@@ -154,12 +209,16 @@ export function createWorker(supabase: SupabaseClient): void {
           .eq('id', pipelineRunId);
 
         const agents = steps.map((step) => createAgentFromStep(step, deps));
+        const firstStep = steps[0] as PipelineStep | undefined;
+        const hydrated = firstStep
+          ? await hydrateStepInput(firstStep, supabase)
+          : { input: {}, config: {} };
 
         try {
           const result = await orchestrator.run({
             pipelineRunId,
             agents: agents as Parameters<typeof orchestrator.run>[0]['agents'],
-            initialInput: {}
+            initialInput: hydrated.input
           });
 
           await supabase
