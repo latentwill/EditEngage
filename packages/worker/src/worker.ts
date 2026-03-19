@@ -23,6 +23,11 @@ interface SupabaseClient {
         single(): Promise<{ data: Record<string, unknown> | null; error: unknown }>;
       };
     };
+    insert(data: Record<string, unknown> | Record<string, unknown>[]): {
+      select(): {
+        single(): Promise<{ data: Record<string, unknown> | null; error: unknown }>;
+      };
+    };
     update(data: Record<string, unknown>): {
       eq(column: string, value: string): Promise<{ data: unknown; error: unknown }>;
     };
@@ -176,6 +181,50 @@ export function createAgentFromStep(
 const QUEUE_NAME = 'editengage-pipeline';
 const PIPELINE_RUNS_TABLE = 'pipeline_runs';
 
+interface SeoWriterOutput {
+  title: string;
+  body: string;
+  metaDescription: string;
+  tags: string[];
+  seoScore: number;
+  suggestedTopics: string[];
+}
+
+async function saveContentFromResult(
+  result: { status: string; steps?: unknown[] },
+  pipelineRunId: string,
+  projectId: string,
+  supabase: SupabaseClient
+): Promise<void> {
+  if (result.status !== 'completed' || !result.steps?.length) return;
+
+  for (const step of result.steps) {
+    const output = step as SeoWriterOutput;
+    if (!output.title || !output.body) continue;
+
+    const { error } = await supabase
+      .from('content')
+      .insert({
+        project_id: projectId,
+        pipeline_run_id: pipelineRunId,
+        title: output.title,
+        body: { html: output.body },
+        meta_description: output.metaDescription ?? '',
+        tags: output.tags ?? [],
+        content_type: 'article',
+        status: 'draft'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`[worker] Failed to save content: ${JSON.stringify(error)}`);
+    } else {
+      console.log(`[worker] Content saved: "${output.title}"`);
+    }
+  }
+}
+
 function getRedisConnection(): { host: string; port: number; password: string | undefined } {
   return {
     host: process.env.REDIS_HOST ?? 'localhost',
@@ -250,6 +299,11 @@ export function createWorker(supabase: SupabaseClient): void {
             .from(PIPELINE_RUNS_TABLE)
             .update({ status: 'completed', result })
             .eq('id', pipelineRunId);
+
+          const projectId = ((hydrated.input as Record<string, unknown>).topic as Record<string, unknown>)?.project_id as string;
+          if (projectId) {
+            await saveContentFromResult(result as { status: string; steps?: unknown[] }, pipelineRunId, projectId, supabase);
+          }
 
           span.setAttributes({ 'job.status': 'completed' });
 

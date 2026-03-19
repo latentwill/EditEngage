@@ -224,19 +224,55 @@
           </div>
         {/if}
 
-        {#if expandedRunId === run.id && run.steps}
+        {#if expandedRunId === run.id}
           <div class="pl-4 py-2 space-y-2 border-b border-base-300">
-            {#each run.steps as step}
-              <div data-testid="run-step-detail" class="card bg-base-300/50 p-3 rounded-lg">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold text-sm text-base-content">{step.agent_name}</span>
-                  <span class="badge badge-sm {statusColors[step.status] ?? 'badge-ghost'}">{step.status}</span>
+            {#if run.steps}
+              {#each run.steps as step}
+                <div data-testid="run-step-detail" class="card bg-base-300/50 p-3 rounded-lg">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-semibold text-sm text-base-content">{step.agent_name}</span>
+                    <span class="badge badge-sm {statusColors[step.status] ?? 'badge-ghost'}">{step.status}</span>
+                  </div>
+                  {#if step.log_output || step.log}
+                    <p class="text-xs text-base-content/60 font-mono">{step.log_output ?? step.log}</p>
+                  {/if}
                 </div>
-                {#if step.log_output || step.log}
-                  <p class="text-xs text-base-content/60 font-mono">{step.log_output ?? step.log}</p>
-                {/if}
-              </div>
-            {/each}
+              {/each}
+            {/if}
+
+            {#if run.result}
+              {@const pipelineResult = run.result as { status?: string; steps?: Array<{ title?: string; body?: string; metaDescription?: string; tags?: string[]; seoScore?: number }> }}
+              {#if pipelineResult.steps?.length}
+                {#each pipelineResult.steps as stepResult, i}
+                  {#if stepResult.title}
+                    <div class="card bg-base-300/50 p-4 rounded-lg">
+                      <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs text-base-content/40 uppercase">Step {i + 1} Output</span>
+                        {#if stepResult.seoScore}
+                          <span class="badge badge-sm badge-info">SEO: {stepResult.seoScore}/100</span>
+                        {/if}
+                      </div>
+                      <h3 class="font-semibold text-base-content mb-1">{stepResult.title}</h3>
+                      {#if stepResult.metaDescription}
+                        <p class="text-sm text-base-content/60 mb-2">{stepResult.metaDescription}</p>
+                      {/if}
+                      {#if stepResult.tags?.length}
+                        <div class="flex flex-wrap gap-1">
+                          {#each stepResult.tags as tag}
+                            <span class="badge badge-sm badge-outline">{tag}</span>
+                          {/each}
+                        </div>
+                      {/if}
+                    </div>
+                  {/if}
+                {/each}
+              {/if}
+              {#if pipelineResult.status === 'failed'}
+                <div class="text-sm text-error">Pipeline failed: {(run.result as { error?: string }).error ?? 'Unknown error'}</div>
+              {/if}
+            {:else if !run.steps?.length}
+              <div class="text-sm text-base-content/40 py-2">No details available for this run.</div>
+            {/if}
           </div>
         {/if}
       {/each}
