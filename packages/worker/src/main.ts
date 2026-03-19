@@ -12,7 +12,10 @@ Logfire.configure({
     },
     '@opentelemetry/instrumentation-undici': {
       ignoreRequestHook: (req: { origin: string }) => {
-        return req.origin.includes('.supabase.co');
+        return req.origin.includes('.supabase.co') ||
+          req.origin.includes('logfire') ||
+          req.origin.includes('otel') ||
+          req.origin.includes('otlp');
       }
     }
   }
