@@ -126,9 +126,12 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
       throw new Error('No response from LLM');
     }
 
+    let rawContent = data.choices[0].message.content;
+    rawContent = rawContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+
     let content: SeoWriterOutput;
     try {
-      content = JSON.parse(data.choices[0].message.content) as SeoWriterOutput;
+      content = JSON.parse(rawContent) as SeoWriterOutput;
     } catch (cause) {
       const reason = cause instanceof Error ? cause.message : String(cause);
       throw new Error(`Failed to parse LLM response as JSON: ${reason}`);
