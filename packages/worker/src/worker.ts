@@ -232,6 +232,20 @@ export function createWorker(supabase: SupabaseClient): void {
             initialInput: hydrated.input
           });
 
+          const pipelineStatus = (result as { status: string }).status;
+          if (pipelineStatus === 'failed') {
+            const errorMsg = (result as { error?: string }).error ?? 'Pipeline failed';
+            await supabase
+              .from(PIPELINE_RUNS_TABLE)
+              .update({ status: 'failed', error: errorMsg, result })
+              .eq('id', pipelineRunId);
+
+            span.setAttributes({ 'job.status': 'failed', error: true });
+            console.error(`[worker] Pipeline failed at step ${(result as { failedStep?: number }).failedStep}: ${errorMsg}`);
+
+            return result;
+          }
+
           await supabase
             .from(PIPELINE_RUNS_TABLE)
             .update({ status: 'completed', result })
