@@ -54,7 +54,14 @@ def resolve_provider(model: str) -> str:
 async def chat_completions(request: ChatCompletionRequest) -> Any:
     provider = resolve_provider(request.model)
     config = PROVIDER_CONFIG[provider]
-    api_key = os.environ.get(config["env_key"], "")
+    env_key = config["env_key"]
+    api_key = os.environ.get(env_key, "").strip()
+
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail=f"LLM provider '{provider}' not configured: {env_key} environment variable is empty or missing",
+        )
 
     prompt_length = sum(len(m.content) for m in request.messages)
 
@@ -68,21 +75,32 @@ async def chat_completions(request: ChatCompletionRequest) -> Any:
             "llm.prompt_length": prompt_length,
         },
     ) as span:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                config["url"],
-                json=body,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-            )
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    config["url"],
+                    json=body,
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                )
+        except httpx.HTTPError as exc:
+            span.set_attribute("llm.response_status", "error")
+            raise HTTPException(
+                status_code=502,
+                detail=f"Failed to reach {provider} API at {config['url']}: {exc}",
+            ) from exc
 
         if response.status_code != 200:
             span.set_attribute("llm.response_status", response.status_code)
+            try:
+                error_body = response.json()
+            except Exception:
+                error_body = {"raw": response.text[:500]}
             return JSONResponse(
                 status_code=response.status_code,
-                content=response.json(),
+                content={"error": error_body, "provider": provider, "model": request.model},
             )
 
         response_data = response.json()

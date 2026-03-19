@@ -381,7 +381,10 @@ async def test_upstream_error_returns_error_status(monkeypatch):
             )
 
     assert response.status_code == 429
-    assert response.json() == error_body
+    resp_json = response.json()
+    assert resp_json["error"] == error_body
+    assert resp_json["provider"] == "openai"
+    assert resp_json["model"] == "gpt-4"
 
     # Verify span recorded the error status
     mock_span.set_attribute.assert_any_call("llm.response_status", 429)
