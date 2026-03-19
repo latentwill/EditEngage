@@ -208,11 +208,18 @@ export function createWorker(supabase: SupabaseClient): void {
           .update({ status: 'running' })
           .eq('id', pipelineRunId);
 
+        console.log(`[worker] Processing job ${typedJob.id} with ${steps.length} steps`);
+        console.log(`[worker] Steps:`, JSON.stringify(steps));
+
         const agents = steps.map((step) => createAgentFromStep(step, deps));
         const firstStep = steps[0] as PipelineStep | undefined;
+        console.log(`[worker] First step agent_type: ${firstStep?.agent_type ?? firstStep?.agentType ?? 'none'}`);
+
         const hydrated = firstStep
           ? await hydrateStepInput(firstStep, supabase)
           : { input: {}, config: {} };
+        console.log(`[worker] Hydrated input keys: ${Object.keys(hydrated.input)}`);
+        console.log(`[worker] Hydrated topic: ${JSON.stringify((hydrated.input as Record<string, unknown>).topic ?? 'none')}`);
 
         try {
           const result = await orchestrator.run({
