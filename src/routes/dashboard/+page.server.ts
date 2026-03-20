@@ -48,7 +48,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       .from('content')
       .select('*', { count: 'exact', head: true })
       .eq('project_id', activeProjectId)
-      .eq('status', 'in_review'),
+      .or('status.eq.draft,status.eq.in_review'),
     supabase
       .from('pipelines')
       .select('*', { count: 'exact', head: true })
@@ -64,7 +64,8 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       .from('content')
       .select('id, title, status, created_at')
       .eq('project_id', activeProjectId)
-      .eq('status', 'in_review')
+      .or('status.eq.draft,status.eq.in_review')
+      .order('created_at', { ascending: false })
       .limit(5),
     supabase
       .from('topic_queue')
