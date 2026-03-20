@@ -56,8 +56,16 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
       .sort((a, b) => a.step_index - b.step_index)
   }));
 
+  const { data: events } = await supabase
+    .from('events')
+    .select('*')
+    .eq('metadata->>pipeline_id', params.id)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
   return {
     workflow: pipeline,
-    runs: runsWithSteps
+    runs: runsWithSteps,
+    events: events ?? []
   };
 };

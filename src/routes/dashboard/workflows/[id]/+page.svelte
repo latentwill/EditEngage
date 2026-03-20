@@ -2,6 +2,8 @@
   import { goto } from '$app/navigation';
   import { createSupabaseClient } from '$lib/supabase.js';
   import type { WorkflowReviewMode, WorkflowRunStatus } from '$lib/types/database.js';
+  import OrchestrationFeed from '$lib/components/OrchestrationFeed.svelte';
+  import type { EventRow } from '$lib/stores/events.js';
 
   type Workflow = {
     id: string;
@@ -45,6 +47,7 @@
     data: {
       workflow: Workflow;
       runs: WorkflowRun[];
+      events: EventRow[];
     };
   } = $props();
 
@@ -283,6 +286,11 @@
         </div>
       {/if}
     </div>
+  </div>
+
+  <div class="card bg-base-200 rounded-xl p-4">
+    <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Activity Feed</h2>
+    <OrchestrationFeed events={(data.events ?? []) as EventRow[]} />
   </div>
 
   {#if deleteConfirmOpen}

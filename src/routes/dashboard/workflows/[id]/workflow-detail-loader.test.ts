@@ -119,9 +119,19 @@ function createLogsQueryMock(returnData: unknown[]) {
   return { select: mockSelect, in: mockIn, order: mockOrder };
 }
 
+// Chainable mock for events query (with .eq().order().limit())
+function createEventsQueryMock(returnData: unknown[]) {
+  const mockLimit = vi.fn().mockResolvedValue({ data: returnData, error: null });
+  const mockOrder = vi.fn().mockReturnValue({ limit: mockLimit });
+  const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+  const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+  return { select: mockSelect, eq: mockEq, order: mockOrder, limit: mockLimit };
+}
+
 let pipelineQuery: ReturnType<typeof createPipelineQueryMock>;
 let runsQuery: ReturnType<typeof createRunsQueryMock>;
 let logsQuery: ReturnType<typeof createLogsQueryMock>;
+let eventsQuery: ReturnType<typeof createEventsQueryMock>;
 let mockAuthUser: { id: string } | null = { id: 'user-1' };
 let mockMemberships: Array<{ org_id: string }> = [{ org_id: 'org-1' }];
 let mockUserProjects: Array<{ id: string; org_id: string }> = [{ id: 'proj-1', org_id: 'org-1' }];
@@ -157,6 +167,7 @@ vi.mock('$lib/server/supabase', () => ({
       if (table === 'pipelines') return { select: pipelineQuery.select };
       if (table === 'pipeline_runs') return { select: runsQuery.select };
       if (table === 'pipeline_run_logs') return { select: logsQuery.select };
+      if (table === 'events') return { select: eventsQuery.select };
       if (table === 'organization_members') return { select: membershipsQuery.select };
       if (table === 'projects') return { select: projectsQuery.select };
       return { select: vi.fn() };
@@ -171,6 +182,7 @@ describe('Workflow Detail Loader', () => {
     mockAuthUser = { id: 'user-1' };
     mockMemberships = [{ org_id: 'org-1' }];
     mockUserProjects = [{ id: 'proj-1', org_id: 'org-1' }];
+    eventsQuery = createEventsQueryMock([]);
     membershipsQuery = createMembershipsQueryMock(mockMemberships);
     projectsQuery = createProjectsQueryMock(mockUserProjects);
   });
