@@ -219,15 +219,15 @@ async function saveContentFromResult(
 
     if (error) {
       console.error(`[worker] Failed to save content: ${JSON.stringify(error)}`);
-    } else {
+    } else if (saved) {
       console.log(`[worker] Content saved: "${output.title}"`);
       await supabase.from('events').insert({
         project_id: projectId,
         event_type: 'content_created',
         module: 'writing',
         payload_summary: `Content created: "${output.title}"`,
-        artifact_link: `/dashboard/write/content?highlight=${saved!.id}`,
-        metadata: { pipeline_run_id: pipelineRunId, content_id: saved!.id },
+        artifact_link: `/dashboard/write/content?highlight=${saved.id}`,
+        metadata: { pipeline_run_id: pipelineRunId, content_id: saved.id },
       });
     }
   }

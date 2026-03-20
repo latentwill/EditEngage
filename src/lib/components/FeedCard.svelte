@@ -27,7 +27,7 @@
     };
     showProjectBadge: boolean;
     onApprove: (id: string) => void;
-    onReject: (id: string) => void;
+    onReject: (id: string, reason?: string) => void;
     onSave?: (updates: { title: string; body: { html: string }; meta_description: string; tags: string[] }) => Promise<void>;
     expanded?: boolean;
     onExpand?: (id: string) => void;
@@ -57,7 +57,7 @@
   }
 
   function handleEditorReject(id: string, reason: string) {
-    return Promise.resolve(onReject(id));
+    return Promise.resolve(onReject(id, reason));
   }
 
   async function handleEditorSave(updates: { title: string; body: { html: string }; meta_description: string; tags: string[] }) {

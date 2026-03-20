@@ -54,8 +54,8 @@
     await client.from('content').update({ status: 'approved' }).eq('id', id);
   }
 
-  async function handleReject(id: string) {
-    await client.from('content').update({ status: 'rejected' }).eq('id', id);
+  async function handleReject(id: string, reason?: string) {
+    await client.from('content').update({ status: 'rejected', destination_config: reason ? { rejection_reason: reason } : undefined }).eq('id', id);
   }
 
   const statusColors: Record<string, string> = {

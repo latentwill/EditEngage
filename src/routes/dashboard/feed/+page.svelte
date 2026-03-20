@@ -71,7 +71,7 @@
         onExpand={(id) => { expandedId = id; }}
         onCollapse={() => { expandedId = null; }}
         onApprove={(id) => feedStore.approveContent(id)}
-        onReject={(id) => feedStore.rejectContent(id, '')}
+        onReject={(id, reason) => feedStore.rejectContent(id, reason ?? '')}
         onSave={async (updates) => feedStore.saveContent(item.id, updates)}
       />
     {/each}
