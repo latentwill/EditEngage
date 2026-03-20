@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { ContentType, ContentStatus, DestinationType } from '$lib/types/database.js';
+  import ContentEditor from '$lib/components/ContentEditor.svelte';
+  import { createSupabaseClient } from '$lib/supabase';
 
   type ContentItem = {
     id: string;
@@ -35,6 +37,20 @@
   let statusFilter = $state('all');
   let typeFilter = $state('all');
   let workflowFilter = $state('all');
+  let expandedId = $state<string | null>(null);
+  const client = createSupabaseClient();
+
+  async function handleSave(id: string, updates: { title: string; body: { html: string }; meta_description: string; tags: string[] }) {
+    await client.from('content').update(updates).eq('id', id);
+  }
+
+  async function handleApprove(id: string) {
+    await client.from('content').update({ status: 'approved' }).eq('id', id);
+  }
+
+  async function handleReject(id: string, reason: string) {
+    await client.from('content').update({ status: 'rejected', destination_config: { rejection_reason: reason } }).eq('id', id);
+  }
 
   const statusColors: Record<string, string> = {
     draft: 'badge-ghost',
@@ -98,30 +114,52 @@
 
   <div class="space-y-2">
     {#each filteredItems as item}
-      <a
-        href="/dashboard/write/content/{item.id}"
-        data-testid="content-item"
-        class="card bg-base-200 shadow-xl block p-4 hover:bg-base-300 transition-all duration-300"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-sm font-medium text-base-content">{item.title}</span>
-            <span
-              data-testid="content-status-badge"
-              class="badge {statusColors[item.status] ?? 'badge-ghost'}"
-            >
-              {item.status}
-            </span>
-          </div>
+      {#if expandedId === item.id}
+        <ContentEditor
+          content={{
+            id: item.id,
+            title: item.title,
+            body: item.body as { html: string } | null,
+            meta_description: item.meta_description,
+            tags: item.tags,
+            content_type: item.content_type,
+            status: item.status,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+          }}
+          onSave={async (updates) => handleSave(item.id, updates)}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onClose={() => { expandedId = null; }}
+        />
+      {:else}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          data-testid="content-item"
+          class="card bg-base-200 shadow-xl block p-4 hover:bg-base-300 transition-all duration-300 cursor-pointer"
+          onclick={() => { expandedId = item.id; }}
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-medium text-base-content">{item.title}</span>
+              <span
+                data-testid="content-status-badge"
+                class="badge {statusColors[item.status] ?? 'badge-ghost'}"
+              >
+                {item.status}
+              </span>
+            </div>
 
-          <div class="flex items-center gap-4">
-            <span class="text-xs text-base-content/40">{item.pipeline_name}</span>
-            <span data-testid="content-date" class="text-xs text-base-content/40">
-              {new Date(item.created_at).toLocaleDateString()}
-            </span>
+            <div class="flex items-center gap-4">
+              <span class="text-xs text-base-content/40">{item.pipeline_name}</span>
+              <span data-testid="content-date" class="text-xs text-base-content/40">
+                {new Date(item.created_at).toLocaleDateString()}
+              </span>
+            </div>
           </div>
         </div>
-      </a>
+      {/if}
     {/each}
 
     {#if filteredItems.length === 0}
