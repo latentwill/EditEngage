@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       contentInReview: [],
       topicQueueHealth: { pendingCount: 0, nextScheduledRun: null },
       activeProjectId: '',
-      recentEvents: []
+      recentContent: []
     };
   }
 
@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
     { data: pipelineRuns },
     { data: contentInReview },
     { count: pendingTopics },
-    { data: recentEvents }
+    { data: recentContent }
   ] = await Promise.all([
     supabase
       .from('content')
@@ -72,11 +72,10 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       .eq('project_id', activeProjectId)
       .eq('status', 'pending'),
     supabase
-      .from('events')
-      .select('*')
-      .eq('project_id', activeProjectId)
+      .from('content')
+      .select('*, projects(name, color)')
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(10)
   ]);
 
   const recentWorkflowRuns = (pipelineRuns ?? []).map((run) => ({
@@ -96,6 +95,6 @@ export const load: PageServerLoad = async ({ parent, cookies }) => {
       nextScheduledRun: null
     },
     activeProjectId,
-    recentEvents: recentEvents ?? []
+    recentContent: recentContent ?? []
   };
 };

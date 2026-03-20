@@ -1,7 +1,7 @@
 <script lang="ts">
   import StatCard from '$lib/components/StatCard.svelte';
-  import OrchestrationFeed from '$lib/components/OrchestrationFeed.svelte';
-  import type { EventRow } from '$lib/stores/events.js';
+  import FeedCard from '$lib/components/FeedCard.svelte';
+  import { createSupabaseClient } from '$lib/supabase';
 
   let { data }: {
     data: {
@@ -28,9 +28,35 @@
         nextScheduledRun: string | null;
       };
       activeProjectId: string;
-      recentEvents?: EventRow[];
+      recentContent?: Array<{
+        id: string;
+        title: string;
+        body: { html: string; text?: string } | null;
+        tags: string[];
+        status: string;
+        content_type: string;
+        created_at: string;
+        updated_at?: string;
+        meta_description?: string | null;
+        projects?: { name: string; color: string | null } | null;
+      }>;
     };
   } = $props();
+
+  let expandedId = $state<string | null>(null);
+  const client = createSupabaseClient();
+
+  async function handleSave(id: string, updates: { title: string; body: { html: string }; meta_description: string; tags: string[] }) {
+    await client.from('content').update(updates).eq('id', id);
+  }
+
+  async function handleApprove(id: string) {
+    await client.from('content').update({ status: 'approved' }).eq('id', id);
+  }
+
+  async function handleReject(id: string) {
+    await client.from('content').update({ status: 'rejected' }).eq('id', id);
+  }
 
   const statusColors: Record<string, string> = {
     completed: 'badge-success',
@@ -109,12 +135,37 @@
     </div>
   </div>
 
-  <!-- Orchestration Feed -->
-  <div
-    data-testid="orchestration-feed-section"
-    class="card bg-base-200 rounded-xl p-4"
-  >
-    <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Orchestration Feed</h2>
-    <OrchestrationFeed events={data.recentEvents ?? []} />
+  <!-- Recent Content -->
+  <div data-testid="content-feed-section" class="card bg-base-200 rounded-xl p-4">
+    <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide mb-3">Recent Content</h2>
+    {#if (data.recentContent ?? []).length === 0}
+      <p class="text-sm text-base-content/50 text-center py-4">No content yet.</p>
+    {:else}
+      <div class="space-y-3">
+        {#each data.recentContent ?? [] as item (item.id)}
+          <FeedCard
+            content={{
+              id: item.id,
+              title: item.title,
+              body: item.body as { html: string; text?: string },
+              tags: item.tags,
+              status: item.status,
+              content_type: item.content_type,
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+              meta_description: item.meta_description,
+              project: item.projects ? { name: item.projects.name, color: item.projects.color ?? '#888' } : undefined
+            }}
+            showProjectBadge={true}
+            expanded={expandedId === item.id}
+            onExpand={(id) => { expandedId = id; }}
+            onCollapse={() => { expandedId = null; }}
+            onApprove={handleApprove}
+            onReject={(id) => handleReject(id)}
+            onSave={async (updates) => handleSave(item.id, updates)}
+          />
+        {/each}
+      </div>
+    {/if}
   </div>
 </div>

@@ -17,6 +17,12 @@ vi.mock('$env/static/private', () => ({
   SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key'
 }));
 
+vi.mock('$lib/supabase', () => ({
+  createSupabaseClient: () => ({
+    from: () => ({ update: () => ({ eq: () => Promise.resolve({}) }) })
+  })
+}));
+
 const mockDashboardData = {
   totalContent: 42,
   publishedThisWeek: 7,
@@ -37,7 +43,21 @@ const mockDashboardData = {
     pendingCount: 15,
     nextScheduledRun: '2025-01-11T06:00:00Z'
   },
-  activeProjectId: 'proj-1'
+  activeProjectId: 'proj-1',
+  recentContent: [
+    {
+      id: 'content-feed-1',
+      title: 'AI-Generated Blog Post',
+      body: { html: '<p>Some content</p>', text: 'Some content' },
+      tags: ['ai', 'seo'],
+      status: 'draft',
+      content_type: 'blog_post',
+      created_at: '2025-01-10T10:00:00Z',
+      updated_at: '2025-01-10T10:00:00Z',
+      meta_description: 'A blog post about AI',
+      projects: { name: 'My Project', color: '#3B82F6' }
+    }
+  ]
 };
 
 describe('Dashboard Page', () => {
@@ -134,5 +154,30 @@ describe('Dashboard Page', () => {
     const pageRoot = screen.getByTestId('dashboard-page');
     expect(pageRoot).toBeInTheDocument();
     expect(pageRoot.getAttribute('data-project-id')).toBe('proj-1');
+  });
+
+  it('renders content feed section with recent content items', async () => {
+    const DashboardPage = (await import('./+page.svelte')).default;
+
+    render(DashboardPage, {
+      props: { data: mockDashboardData }
+    });
+
+    const feedSection = screen.getByTestId('content-feed-section');
+    expect(feedSection).toBeInTheDocument();
+
+    expect(screen.getByText('AI-Generated Blog Post')).toBeInTheDocument();
+  });
+
+  it('shows empty state when no recent content', async () => {
+    const DashboardPage = (await import('./+page.svelte')).default;
+
+    render(DashboardPage, {
+      props: { data: { ...mockDashboardData, recentContent: [] } }
+    });
+
+    const feedSection = screen.getByTestId('content-feed-section');
+    expect(feedSection).toBeInTheDocument();
+    expect(screen.getByText('No content yet.')).toBeInTheDocument();
   });
 });
