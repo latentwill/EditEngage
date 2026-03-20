@@ -202,7 +202,7 @@ async function saveContentFromResult(
     const output = step as SeoWriterOutput;
     if (!output.title || !output.body) continue;
 
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from('content')
       .insert({
         project_id: projectId,
@@ -221,6 +221,14 @@ async function saveContentFromResult(
       console.error(`[worker] Failed to save content: ${JSON.stringify(error)}`);
     } else {
       console.log(`[worker] Content saved: "${output.title}"`);
+      await supabase.from('events').insert({
+        project_id: projectId,
+        event_type: 'content_created',
+        module: 'writing',
+        payload_summary: `Content created: "${output.title}"`,
+        artifact_link: `/dashboard/write/content?highlight=${saved!.id}`,
+        metadata: { pipeline_run_id: pipelineRunId, content_id: saved!.id },
+      });
     }
   }
 }
