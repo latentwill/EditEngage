@@ -16,6 +16,7 @@
 
   const showProjectBadge = $derived(projectStore.selectedProjectId === 'all');
 
+  let expandedId = $state<string | null>(null);
   let sentinelEl: HTMLDivElement | undefined = $state();
 
   $effect(() => {
@@ -61,11 +62,17 @@
           status: item.status,
           content_type: item.content_type,
           created_at: item.created_at,
+          updated_at: item.updated_at,
+          meta_description: item.meta_description,
           project: item.projects ? { name: item.projects.name, color: item.projects.color ?? '#888' } : undefined
         }}
         {showProjectBadge}
+        expanded={expandedId === item.id}
+        onExpand={(id) => { expandedId = id; }}
+        onCollapse={() => { expandedId = null; }}
         onApprove={(id) => feedStore.approveContent(id)}
         onReject={(id) => feedStore.rejectContent(id, '')}
+        onSave={async (updates) => feedStore.saveContent(item.id, updates)}
       />
     {/each}
   </div>

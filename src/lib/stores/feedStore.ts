@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, ContentType, ContentStatus } from '../types/database.js';
+import type { Database, ContentType, ContentStatus, Json } from '../types/database.js';
 
 type Client = SupabaseClient<Database>;
 
@@ -25,6 +25,7 @@ export interface FeedStore {
   loadMore(): Promise<void>;
   approveContent(id: string): Promise<void>;
   rejectContent(id: string, reason: string): Promise<void>;
+  saveContent(id: string, updates: { title?: string; body?: Json; meta_description?: string; tags?: string[] }): Promise<void>;
   setFilters(filters: FeedFilters): void;
 }
 
@@ -115,6 +116,16 @@ export function createFeedStore(client: Client): FeedStore {
       .eq('id', id);
   }
 
+  async function saveContent(id: string, updates: { title?: string; body?: Json; meta_description?: string; tags?: string[] }): Promise<void> {
+    await client
+      .from('content')
+      .update(updates)
+      .eq('id', id);
+    items = items.map(item =>
+      item.id === id ? { ...item, ...updates } as ContentWithProject : item
+    );
+  }
+
   function setFilters(filters: FeedFilters): void {
     currentFilters = filters;
   }
@@ -128,6 +139,7 @@ export function createFeedStore(client: Client): FeedStore {
     loadMore,
     approveContent,
     rejectContent,
+    saveContent,
     setFilters,
   };
 }
