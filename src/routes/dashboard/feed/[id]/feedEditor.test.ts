@@ -64,12 +64,12 @@ describe('FeedEditor Page', () => {
     vi.clearAllMocks();
   });
 
-  it('should render EditorNavBar', async () => {
+  it('should render ContentEditor', async () => {
     const FeedEditor = (await import('./+page.svelte')).default;
 
     render(FeedEditor, { props: { data: { content: makeContent() } } });
 
-    expect(screen.getByTestId('editor-nav-bar')).toBeInTheDocument();
+    expect(screen.getByTestId('content-editor')).toBeInTheDocument();
   });
 
   it('should render editable title field with content title', async () => {

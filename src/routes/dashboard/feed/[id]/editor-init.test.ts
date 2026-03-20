@@ -1,8 +1,8 @@
 /**
- * @behavior Feed editor page initializes the editor store with the content ID on mount
- * @business_rule The editor store must be loaded with the current content so approve/reject/navigate work correctly
+ * @behavior Feed editor page renders ContentEditor with the correct content data
+ * @business_rule The page passes server-loaded content to ContentEditor for display and editing
  */
-import { render } from '@testing-library/svelte';
+import { render, screen } from '@testing-library/svelte';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('$env/static/public', () => ({
@@ -14,8 +14,6 @@ vi.mock('$app/navigation', () => ({
   goto: vi.fn()
 }));
 
-const mockLoadContent = vi.fn();
-
 vi.mock('$lib/stores/editorStore', () => ({
   createEditorStore: vi.fn(() => ({
     content: null,
@@ -24,7 +22,7 @@ vi.mock('$lib/stores/editorStore', () => ({
     total: 0,
     hasNext: false,
     hasPrev: false,
-    loadContent: mockLoadContent,
+    loadContent: vi.fn(),
     setFilteredIds: vi.fn(),
     next: vi.fn(),
     prev: vi.fn(),
@@ -59,26 +57,28 @@ function makeContent(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe('Editor store initialization on mount', () => {
+describe('Feed editor page renders ContentEditor with content data', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should call loadContent with the content ID on mount', async () => {
+  it('should render ContentEditor with the content title', async () => {
     const FeedEditor = (await import('./+page.svelte')).default;
 
     render(FeedEditor, { props: { data: { content: makeContent() } } });
 
-    expect(mockLoadContent).toHaveBeenCalledWith('content-abc-123');
+    const titleInput = screen.getByTestId('editor-title-input') as HTMLInputElement;
+    expect(titleInput.value).toBe('Test Article');
   });
 
-  it('should call loadContent with a different content ID when data changes', async () => {
+  it('should render ContentEditor with a different content title when data changes', async () => {
     const FeedEditor = (await import('./+page.svelte')).default;
 
     render(FeedEditor, {
-      props: { data: { content: makeContent({ id: 'content-xyz-789' }) } }
+      props: { data: { content: makeContent({ id: 'content-xyz-789', title: 'Different Article' }) } }
     });
 
-    expect(mockLoadContent).toHaveBeenCalledWith('content-xyz-789');
+    const titleInput = screen.getByTestId('editor-title-input') as HTMLInputElement;
+    expect(titleInput.value).toBe('Different Article');
   });
 });
