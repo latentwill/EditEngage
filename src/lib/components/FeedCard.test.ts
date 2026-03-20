@@ -21,6 +21,8 @@ function createContent(overrides: Record<string, unknown> = {}) {
     status: 'pending',
     content_type: 'article',
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    updated_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+    meta_description: 'A test meta description',
     pipeline: { name: 'Blog Pipeline' },
     project: { name: 'Marketing', color: '#3b82f6' },
     ...overrides
@@ -34,7 +36,10 @@ describe('FeedCard', () => {
         content: createContent(),
         showProjectBadge: true,
         onApprove: vi.fn(),
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -50,7 +55,10 @@ describe('FeedCard', () => {
         content: createContent({ title: 'My Great Article' }),
         showProjectBadge: false,
         onApprove: vi.fn(),
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -63,7 +71,10 @@ describe('FeedCard', () => {
         content: createContent(),
         showProjectBadge: false,
         onApprove: vi.fn(),
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -78,7 +89,10 @@ describe('FeedCard', () => {
         content: createContent({ tags: ['seo', 'marketing', 'growth'] }),
         showProjectBadge: false,
         onApprove: vi.fn(),
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -96,7 +110,10 @@ describe('FeedCard', () => {
         content: createContent({ id: 'content-42' }),
         showProjectBadge: false,
         onApprove,
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -113,7 +130,10 @@ describe('FeedCard', () => {
         content: createContent({ id: 'content-99' }),
         showProjectBadge: false,
         onApprove: vi.fn(),
-        onReject
+        onReject,
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -123,28 +143,16 @@ describe('FeedCard', () => {
     expect(onReject).toHaveBeenCalledWith('content-99');
   });
 
-  it('should render Edit button linking to content editor', () => {
-    render(FeedCard, {
-      props: {
-        content: createContent({ id: 'content-7' }),
-        showProjectBadge: false,
-        onApprove: vi.fn(),
-        onReject: vi.fn()
-      }
-    });
-
-    const editLink = screen.getByTestId('feed-card-edit-link') as HTMLAnchorElement;
-    expect(editLink).toBeInTheDocument();
-    expect(editLink.getAttribute('href')).toBe('/dashboard/write/content/content-7');
-  });
-
   it('should show project badge only when showProjectBadge is true', () => {
     const { unmount } = render(FeedCard, {
       props: {
         content: createContent(),
         showProjectBadge: false,
         onApprove: vi.fn(),
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
@@ -156,10 +164,43 @@ describe('FeedCard', () => {
         content: createContent(),
         showProjectBadge: true,
         onApprove: vi.fn(),
-        onReject: vi.fn()
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
       }
     });
 
     expect(screen.getByTestId('project-badge')).toBeInTheDocument();
+  });
+
+  it('does not show ContentEditor when not expanded', () => {
+    const { container } = render(FeedCard, {
+      props: {
+        content: createContent(),
+        showProjectBadge: false,
+        onApprove: vi.fn(),
+        onReject: vi.fn(),
+        expanded: false,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
+      },
+    });
+    expect(container.querySelector('[data-testid="content-editor"]')).toBeNull();
+  });
+
+  it('shows ContentEditor when expanded is true', () => {
+    render(FeedCard, {
+      props: {
+        content: createContent(),
+        showProjectBadge: false,
+        onApprove: vi.fn(),
+        onReject: vi.fn(),
+        expanded: true,
+        onExpand: vi.fn(),
+        onCollapse: vi.fn(),
+      },
+    });
+    expect(screen.getByTestId('content-editor')).toBeTruthy();
   });
 });
