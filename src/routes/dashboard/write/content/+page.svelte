@@ -2,6 +2,7 @@
   import type { ContentType, ContentStatus, DestinationType } from '$lib/types/database.js';
   import ContentEditor from '$lib/components/ContentEditor.svelte';
   import { createSupabaseClient } from '$lib/supabase';
+  import { page } from '$app/stores';
 
   type ContentItem = {
     id: string;
@@ -39,6 +40,13 @@
   let workflowFilter = $state('all');
   let expandedId = $state<string | null>(null);
   const client = createSupabaseClient();
+
+  $effect(() => {
+    const highlight = $page.url?.searchParams.get('highlight');
+    if (highlight) {
+      expandedId = highlight;
+    }
+  });
 
   async function handleSave(id: string, updates: { title: string; body: { html: string }; meta_description: string; tags: string[] }) {
     await client.from('content').update(updates).eq('id', id);
