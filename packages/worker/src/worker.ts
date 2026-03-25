@@ -43,11 +43,44 @@ interface PipelineStep {
   config?: Record<string, unknown>;
 }
 
+async function lookupProjectId(
+  pipelineId: string,
+  supabase: SupabaseClient
+): Promise<string> {
+  const { data } = await supabase
+    .from('pipelines')
+    .select('project_id')
+    .eq('id', pipelineId)
+    .single();
+  return (data as Record<string, unknown>)?.project_id as string ?? '';
+}
+
 async function hydrateStepInput(
   step: PipelineStep,
+  pipelineId: string,
   supabase: SupabaseClient
 ): Promise<{ input: Record<string, unknown>; config: Record<string, unknown> }> {
   const agentType = step.agentType ?? step.agent_type ?? '';
+
+  if (agentType === 'topic_queue') {
+    const projectId = await lookupProjectId(pipelineId, supabase);
+    return {
+      input: { projectId },
+      config: step.config ?? {}
+    };
+  }
+
+  if (agentType === 'variety_engine') {
+    const projectId = await lookupProjectId(pipelineId, supabase);
+    const topicResult = step.topic_id
+      ? await supabase.from('topic_queue').select('*').eq('id', step.topic_id).single()
+      : { data: null };
+    const topic = topicResult.data ?? { title: 'Untitled', keywords: [] };
+    return {
+      input: { topic, projectId },
+      config: step.config ?? {}
+    };
+  }
 
   if (agentType === 'writing' || agentType === 'seo_writer') {
     const [topicResult, agentResult] = await Promise.all([
@@ -262,7 +295,7 @@ export function createWorker(supabase: SupabaseClient): void {
           'job.attempt': typedJob.attemptsMade ?? 1,
         },
         callback: async (span) => {
-        const { pipelineRunId, steps } = data;
+        const { pipelineId, pipelineRunId, steps } = data;
 
         await supabase
           .from(PIPELINE_RUNS_TABLE)
@@ -277,7 +310,7 @@ export function createWorker(supabase: SupabaseClient): void {
         console.log(`[worker] First step agent_type: ${firstStep?.agent_type ?? firstStep?.agentType ?? 'none'}`);
 
         const hydrated = firstStep
-          ? await hydrateStepInput(firstStep, supabase)
+          ? await hydrateStepInput(firstStep, pipelineId, supabase)
           : { input: {}, config: {} };
         console.log(`[worker] Hydrated input keys: ${Object.keys(hydrated.input)}`);
         console.log(`[worker] Hydrated topic: ${JSON.stringify((hydrated.input as Record<string, unknown>).topic ?? 'none')}`);
