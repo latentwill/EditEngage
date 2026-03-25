@@ -187,7 +187,6 @@ export function createAgentFromStep(
           },
           callback: async (span) => {
           const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-          injectTraceHeaders(headers);
           const response = await fetchFn(`${llmServiceUrl}/v1/chat/completions`, {
             method: 'POST',
             headers,

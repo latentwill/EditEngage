@@ -67,7 +67,7 @@ export class PipelineOrchestrator {
             return result;
           }});
           steps.push(output);
-          currentInput = output;
+          currentInput = { ...(currentInput as Record<string, unknown>), ...(output as Record<string, unknown>) };
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           span.setAttributes({ error: true, 'error.message': message });

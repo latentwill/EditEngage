@@ -103,7 +103,6 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
         const headers: Record<string, string> = {
           'Content-Type': 'application/json'
         };
-        injectTraceHeaders(headers);
 
         const response = await this.fetchFn(`${llmServiceUrl}/v1/chat/completions`, {
           method: 'POST',
