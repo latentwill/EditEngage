@@ -44,18 +44,18 @@ describe('ThemeToggle', () => {
 
     // Second click switches back to light
     await fireEvent.click(button);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('editengage-light');
   });
 
   it('reads saved preference from localStorage on mount', () => {
     mockStorage.setItem('theme', 'light');
     render(ThemeToggle);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('editengage-light');
   });
 
   it('defaults to light mode when no preference is saved', () => {
     render(ThemeToggle);
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('editengage-light');
   });
 
   it('uses daisyUI btn class on the toggle button', () => {
