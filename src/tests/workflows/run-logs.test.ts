@@ -84,7 +84,7 @@ function renderPage(runs = [makeRun()]) {
     props: {
       data: {
         workflow: makeWorkflow(),
-        resolvedSteps: [],
+        resolvedSteps: [], allTopics: [], allDestinations: [],
         runs,
         events: []
       }

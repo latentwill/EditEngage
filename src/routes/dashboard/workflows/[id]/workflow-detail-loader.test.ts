@@ -153,6 +153,17 @@ function createProjectsQueryMock(data: unknown[]) {
 let membershipsQuery: ReturnType<typeof createMembershipsQueryMock>;
 let projectsQuery: ReturnType<typeof createProjectsQueryMock>;
 
+// Chainable mock for simple lookup queries (writing_agents, topic_queue, destinations)
+// Supports .select().eq().order() and .select().in()
+function createLookupQueryMock(returnData: unknown[] = []) {
+  const resolved = { data: returnData, error: null };
+  const mockOrder = vi.fn().mockResolvedValue(resolved);
+  const mockIn = vi.fn().mockResolvedValue(resolved);
+  const mockEq = vi.fn().mockReturnValue({ order: mockOrder, in: mockIn });
+  const mockSelect = vi.fn().mockReturnValue({ eq: mockEq, in: mockIn });
+  return { select: mockSelect };
+}
+
 vi.mock('$lib/server/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: {
@@ -170,6 +181,9 @@ vi.mock('$lib/server/supabase', () => ({
       if (table === 'events') return { select: eventsQuery.select };
       if (table === 'organization_members') return { select: membershipsQuery.select };
       if (table === 'projects') return { select: projectsQuery.select };
+      if (table === 'writing_agents') return createLookupQueryMock();
+      if (table === 'topic_queue') return createLookupQueryMock();
+      if (table === 'destinations') return createLookupQueryMock();
       return { select: vi.fn() };
     })
   }))

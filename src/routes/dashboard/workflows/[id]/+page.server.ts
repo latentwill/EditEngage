@@ -76,21 +76,21 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
   const topicIds = steps.map(s => s.topic_id).filter(Boolean) as string[];
   const destinationIds = steps.map(s => s.destination_id).filter(Boolean) as string[];
 
-  const [agentsResult, topicsResult, destinationsResult] = await Promise.all([
+  // Fetch all topics and destinations for the project (for dropdown options)
+  const [agentsResult, allTopicsResult, allDestinationsResult] = await Promise.all([
     agentIds.length > 0
       ? supabase.from('writing_agents').select('id, name').in('id', agentIds)
       : { data: [] },
-    topicIds.length > 0
-      ? supabase.from('topic_queue').select('id, title').in('id', topicIds)
-      : { data: [] },
-    destinationIds.length > 0
-      ? supabase.from('destinations').select('id, name').in('id', destinationIds)
-      : { data: [] },
+    supabase.from('topic_queue').select('id, title').eq('project_id', pipeline.project_id).order('title'),
+    supabase.from('destinations').select('id, name').eq('project_id', pipeline.project_id).order('name'),
   ]);
 
+  const allTopics = (allTopicsResult.data ?? []) as Array<{ id: string; title: string }>;
+  const allDestinations = (allDestinationsResult.data ?? []) as Array<{ id: string; name: string }>;
+
   const agentMap = Object.fromEntries((agentsResult.data ?? []).map(a => [a.id, a.name]));
-  const topicMap = Object.fromEntries((topicsResult.data ?? []).map(t => [t.id, t.title]));
-  const destMap = Object.fromEntries((destinationsResult.data ?? []).map(d => [d.id, d.name]));
+  const topicMap = Object.fromEntries(allTopics.map(t => [t.id, t.title]));
+  const destMap = Object.fromEntries(allDestinations.map(d => [d.id, d.name]));
 
   const resolvedSteps = steps.map((step, i) => ({
     index: i,
@@ -107,6 +107,8 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
   return {
     workflow: pipeline,
     resolvedSteps,
+    allTopics,
+    allDestinations,
     runs: runsWithSteps,
     events: events ?? []
   };

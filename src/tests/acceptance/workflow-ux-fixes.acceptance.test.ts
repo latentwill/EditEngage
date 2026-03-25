@@ -188,7 +188,7 @@ describe('Issue 1 -- Run logs not showing error detail', () => {
       props: {
         data: {
           workflow: baseWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [failedRunWithError],
           events: []
         }
@@ -222,7 +222,7 @@ describe('Issue 1 -- Run logs not showing error detail', () => {
       props: {
         data: {
           workflow: baseWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [completedRunWithSteps],
           events: []
         }
@@ -267,7 +267,7 @@ describe('Issue 1 -- Run logs not showing error detail', () => {
       props: {
         data: {
           workflow: baseWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [completedRunWithSteps],
           events: []
         }
@@ -315,7 +315,7 @@ describe('Issue 2 -- Delete workflow capability', () => {
       props: {
         data: {
           workflow: baseWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [],
           events: []
         }
@@ -357,7 +357,7 @@ describe('Issue 2 -- Delete workflow capability', () => {
       props: {
         data: {
           workflow: baseWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [],
           events: []
         }
