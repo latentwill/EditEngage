@@ -793,7 +793,7 @@ describe('US-005 -- Workflow Run Logs on Detail Page', () => {
 
     // Given I am on a workflow detail page
     render(WorkflowDetailPage, {
-      props: { data: { workflow, runs } }
+      props: { data: { workflow, resolvedSteps: [], runs, events: [] } }
     });
 
     // When I click on a run in the history

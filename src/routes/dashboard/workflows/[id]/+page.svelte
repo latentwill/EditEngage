@@ -13,10 +13,22 @@
     schedule: string | null;
     review_mode: WorkflowReviewMode;
     is_active: boolean;
-    steps: Array<{ agentType: string; config: Record<string, unknown> }>;
+    steps: Array<Record<string, unknown>>;
     created_at: string;
     updated_at: string;
     last_run_at: string | null;
+  };
+
+  type ResolvedStep = {
+    index: number;
+    agent_id: string | null;
+    agent_type: string;
+    agent_name: string;
+    topic_id: string | null;
+    topic_name: string | null;
+    destination_id: string | null;
+    destination_name: string | null;
+    prompt: string;
   };
 
   type RunStep = {
@@ -46,22 +58,64 @@
   let { data }: {
     data: {
       workflow: Workflow;
+      resolvedSteps: ResolvedStep[];
       runs: WorkflowRun[];
       events: EventRow[];
     };
   } = $props();
 
   let workflow = $derived(data.workflow);
+  let resolvedSteps = $state(data.resolvedSteps);
   let runs = $state(data.runs);
   let runLoading = $state(false);
   let runError = $state<string | null>(null);
   let expandedRunId = $state<string | null>(null);
+  let expandedStepIndex = $state<number | null>(null);
+  let stepSaving = $state(false);
+  let stepSaveError = $state<string | null>(null);
+  let stepSaveSuccess = $state(false);
   let deleteConfirmOpen = $state(false);
   let deleting = $state(false);
   let deleteError = $state<string | null>(null);
 
   function toggleRunExpanded(runId: string) {
     expandedRunId = expandedRunId === runId ? null : runId;
+  }
+
+  function toggleStepExpanded(index: number) {
+    expandedStepIndex = expandedStepIndex === index ? null : index;
+  }
+
+  function updateStepPrompt(index: number, prompt: string) {
+    resolvedSteps = resolvedSteps.map((s, i) => i === index ? { ...s, prompt } : s);
+  }
+
+  async function saveSteps() {
+    stepSaving = true;
+    stepSaveError = null;
+    stepSaveSuccess = false;
+    try {
+      const updatedSteps = workflow.steps.map((step, i) => ({
+        ...step,
+        prompt: resolvedSteps[i]?.prompt ?? ''
+      }));
+      const res = await fetch(`/api/v1/workflows/${workflow.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ steps: updatedSteps })
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        stepSaveError = body.error || 'Failed to save steps';
+      } else {
+        stepSaveSuccess = true;
+        setTimeout(() => { stepSaveSuccess = false; }, 2000);
+      }
+    } catch {
+      stepSaveError = 'Failed to save steps';
+    } finally {
+      stepSaving = false;
+    }
   }
 
   async function handleDelete() {
@@ -183,6 +237,93 @@
 
     {#if workflow.description}
       <p class="text-sm text-base-content/60 mt-2">{workflow.description}</p>
+    {/if}
+  </div>
+
+  <!-- Workflow Steps -->
+  <div class="card bg-base-200 rounded-xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide">Steps</h2>
+      {#if resolvedSteps.some(s => s.prompt !== (data.resolvedSteps[s.index]?.prompt ?? ''))}
+        <button
+          class="btn btn-primary btn-sm"
+          disabled={stepSaving}
+          onclick={saveSteps}
+        >
+          {stepSaving ? 'Saving...' : 'Save Changes'}
+        </button>
+      {/if}
+    </div>
+
+    {#if stepSaveError}
+      <p class="text-sm text-error mb-2">{stepSaveError}</p>
+    {/if}
+    {#if stepSaveSuccess}
+      <p class="text-sm text-success mb-2">Steps saved.</p>
+    {/if}
+
+    {#if resolvedSteps.length === 0}
+      <div class="py-6 text-center text-sm text-base-content/40">
+        No steps configured for this workflow.
+      </div>
+    {:else}
+      <div class="space-y-2">
+        {#each resolvedSteps as step (step.index)}
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div class="rounded-lg border border-base-300 overflow-hidden">
+            <div
+              class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-base-300/30 transition-colors"
+              onclick={() => toggleStepExpanded(step.index)}
+            >
+              <span class="text-base-content/40 text-xs font-mono w-6">{step.index + 1}</span>
+              <span class="font-medium text-sm text-base-content flex-1">{step.agent_name}</span>
+              <span class="badge badge-sm badge-ghost">{step.agent_type}</span>
+              {#if step.topic_name}
+                <span class="text-xs text-base-content/50">{step.topic_name}</span>
+              {/if}
+              <svg
+                class="w-4 h-4 text-base-content/40 transition-transform {expandedStepIndex === step.index ? 'rotate-180' : ''}"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+
+            {#if expandedStepIndex === step.index}
+              <div class="px-4 pb-4 pt-1 border-t border-base-300 space-y-3">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span class="text-base-content/50 text-xs block mb-1">Topic</span>
+                    <span class="text-base-content/80">{step.topic_name ?? 'Not set'}</span>
+                  </div>
+                  <div>
+                    <span class="text-base-content/50 text-xs block mb-1">Destination</span>
+                    <span class="text-base-content/80">{step.destination_name ?? 'Not set'}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    class="text-base-content/50 text-xs block mb-1"
+                    for="step-prompt-{step.index}"
+                  >
+                    Prompt / Instructions
+                  </label>
+                  <textarea
+                    id="step-prompt-{step.index}"
+                    class="textarea textarea-bordered w-full text-sm font-mono"
+                    rows="4"
+                    placeholder="Custom instructions for this step (e.g. tone, length, focus areas)..."
+                    value={step.prompt}
+                    oninput={(e) => updateStepPrompt(step.index, (e.target as HTMLTextAreaElement).value)}
+                  ></textarea>
+                </div>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      </div>
     {/if}
   </div>
 

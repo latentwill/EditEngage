@@ -79,7 +79,9 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          runs: []
+          resolvedSteps: [],
+          runs: [],
+          events: []
         }
       }
     });
@@ -107,7 +109,9 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          runs: []
+          resolvedSteps: [],
+          runs: [],
+          events: []
         }
       }
     });
@@ -138,6 +142,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
+          resolvedSteps: [],
           runs: [{
             id: 'run-fail-1',
             pipeline_id: mockWorkflow.id,
@@ -150,7 +155,8 @@ describe('Workflow Detail Run Now button', () => {
             error: 'LLM connection timeout after 30s',
             bullmq_job_id: null,
             created_at: '2025-01-01T10:00:00Z'
-          }]
+          }],
+          events: []
         }
       }
     });
@@ -186,7 +192,7 @@ describe('Workflow Detail Run Now button', () => {
     };
 
     render(WorkflowDetailPage, {
-      props: { data: { workflow: mockWorkflow, runs: [runWithSteps] } }
+      props: { data: { workflow: mockWorkflow, resolvedSteps: [], runs: [runWithSteps], events: [] } }
     });
 
     // Click to expand
@@ -206,6 +212,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
+          resolvedSteps: [],
           runs: [{
             id: 'run-datetime-1',
             pipeline_id: mockWorkflow.id,
@@ -218,7 +225,8 @@ describe('Workflow Detail Run Now button', () => {
             error: null,
             bullmq_job_id: null,
             created_at: '2025-06-15T14:30:00Z'
-          }]
+          }],
+          events: []
         }
       }
     });
@@ -242,7 +250,9 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          runs: []
+          resolvedSteps: [],
+          runs: [],
+          events: []
         }
       }
     });

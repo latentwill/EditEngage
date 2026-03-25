@@ -71,7 +71,7 @@ describe('Workflow Detail Delete button', () => {
   it('should render delete button on workflow detail page', async () => {
     const WorkflowDetailPage = (await import('./+page.svelte')).default;
     render(WorkflowDetailPage, {
-      props: { data: { workflow: mockWorkflow, runs: [] } }
+      props: { data: { workflow: mockWorkflow, resolvedSteps: [], runs: [], events: [] } }
     });
 
     const deleteButton = screen.getByTestId('workflow-delete-button');
@@ -81,7 +81,7 @@ describe('Workflow Detail Delete button', () => {
   it('should show confirmation dialog when delete clicked', async () => {
     const WorkflowDetailPage = (await import('./+page.svelte')).default;
     render(WorkflowDetailPage, {
-      props: { data: { workflow: mockWorkflow, runs: [] } }
+      props: { data: { workflow: mockWorkflow, resolvedSteps: [], runs: [], events: [] } }
     });
 
     const deleteButton = screen.getByTestId('workflow-delete-button');
@@ -102,7 +102,7 @@ describe('Workflow Detail Delete button', () => {
 
     const WorkflowDetailPage = (await import('./+page.svelte')).default;
     render(WorkflowDetailPage, {
-      props: { data: { workflow: mockWorkflow, runs: [] } }
+      props: { data: { workflow: mockWorkflow, resolvedSteps: [], runs: [], events: [] } }
     });
 
     const deleteButton = screen.getByTestId('workflow-delete-button');
