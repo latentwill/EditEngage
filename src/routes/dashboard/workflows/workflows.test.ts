@@ -245,7 +245,7 @@ describe('Workflow Detail Page', () => {
       props: {
         data: {
           workflow: mockWorkflows[0],
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: mockWorkflowRuns,
           events: []
         }
@@ -279,7 +279,7 @@ describe('Workflow Detail Page', () => {
       props: {
         data: {
           workflow: mockWorkflows[0],
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: mockWorkflowRuns,
           events: []
         }

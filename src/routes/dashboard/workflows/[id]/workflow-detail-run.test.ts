@@ -79,7 +79,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [],
           events: []
         }
@@ -109,7 +109,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [],
           events: []
         }
@@ -142,7 +142,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [{
             id: 'run-fail-1',
             pipeline_id: mockWorkflow.id,
@@ -192,7 +192,7 @@ describe('Workflow Detail Run Now button', () => {
     };
 
     render(WorkflowDetailPage, {
-      props: { data: { workflow: mockWorkflow, resolvedSteps: [], runs: [runWithSteps], events: [] } }
+      props: { data: { workflow: mockWorkflow, resolvedSteps: [], allTopics: [], allDestinations: [], runs: [runWithSteps], events: [] } }
     });
 
     // Click to expand
@@ -212,7 +212,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [{
             id: 'run-datetime-1',
             pipeline_id: mockWorkflow.id,
@@ -250,7 +250,7 @@ describe('Workflow Detail Run Now button', () => {
       props: {
         data: {
           workflow: mockWorkflow,
-          resolvedSteps: [],
+          resolvedSteps: [], allTopics: [], allDestinations: [],
           runs: [],
           events: []
         }

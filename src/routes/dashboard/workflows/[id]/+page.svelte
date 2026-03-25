@@ -55,10 +55,15 @@
     steps?: RunStep[];
   };
 
+  type TopicOption = { id: string; title: string };
+  type DestinationOption = { id: string; name: string };
+
   let { data }: {
     data: {
       workflow: Workflow;
       resolvedSteps: ResolvedStep[];
+      allTopics: TopicOption[];
+      allDestinations: DestinationOption[];
       runs: WorkflowRun[];
       events: EventRow[];
     };
@@ -86,8 +91,19 @@
     expandedStepIndex = expandedStepIndex === index ? null : index;
   }
 
-  function updateStepPrompt(index: number, prompt: string) {
-    resolvedSteps = resolvedSteps.map((s, i) => i === index ? { ...s, prompt } : s);
+  function updateStepField(index: number, field: string, value: string) {
+    resolvedSteps = resolvedSteps.map((s, i) => {
+      if (i !== index) return s;
+      const updated = { ...s, [field]: value };
+      // Update display names when IDs change
+      if (field === 'topic_id') {
+        updated.topic_name = data.allTopics.find(t => t.id === value)?.title ?? null;
+      }
+      if (field === 'destination_id') {
+        updated.destination_name = data.allDestinations.find(d => d.id === value)?.name ?? null;
+      }
+      return updated;
+    });
   }
 
   async function saveSteps() {
@@ -97,6 +113,8 @@
     try {
       const updatedSteps = workflow.steps.map((step, i) => ({
         ...step,
+        topic_id: resolvedSteps[i]?.topic_id ?? step.topic_id,
+        destination_id: resolvedSteps[i]?.destination_id ?? step.destination_id,
         prompt: resolvedSteps[i]?.prompt ?? ''
       }));
       const res = await fetch(`/api/v1/workflows/${workflow.id}`, {
@@ -244,7 +262,10 @@
   <div class="card bg-base-200 rounded-xl p-4">
     <div class="flex items-center justify-between mb-3">
       <h2 class="text-sm font-semibold text-base-content/70 uppercase tracking-wide">Steps</h2>
-      {#if resolvedSteps.some(s => s.prompt !== (data.resolvedSteps[s.index]?.prompt ?? ''))}
+      {#if resolvedSteps.some(s => {
+        const orig = data.resolvedSteps[s.index];
+        return s.prompt !== (orig?.prompt ?? '') || s.topic_id !== orig?.topic_id || s.destination_id !== orig?.destination_id;
+      })}
         <button
           class="btn btn-primary btn-sm"
           disabled={stepSaving}
@@ -294,12 +315,32 @@
               <div class="px-4 pb-4 pt-1 border-t border-base-300 space-y-3">
                 <div class="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span class="text-base-content/50 text-xs block mb-1">Topic</span>
-                    <span class="text-base-content/80">{step.topic_name ?? 'Not set'}</span>
+                    <label class="text-base-content/50 text-xs block mb-1" for="step-topic-{step.index}">Topic</label>
+                    <select
+                      id="step-topic-{step.index}"
+                      class="select select-bordered select-sm w-full text-sm"
+                      value={step.topic_id ?? ''}
+                      onchange={(e) => updateStepField(step.index, 'topic_id', (e.target as HTMLSelectElement).value)}
+                    >
+                      <option value="" disabled>Select a topic</option>
+                      {#each data.allTopics as topic (topic.id)}
+                        <option value={topic.id}>{topic.title}</option>
+                      {/each}
+                    </select>
                   </div>
                   <div>
-                    <span class="text-base-content/50 text-xs block mb-1">Destination</span>
-                    <span class="text-base-content/80">{step.destination_name ?? 'Not set'}</span>
+                    <label class="text-base-content/50 text-xs block mb-1" for="step-dest-{step.index}">Destination</label>
+                    <select
+                      id="step-dest-{step.index}"
+                      class="select select-bordered select-sm w-full text-sm"
+                      value={step.destination_id ?? ''}
+                      onchange={(e) => updateStepField(step.index, 'destination_id', (e.target as HTMLSelectElement).value)}
+                    >
+                      <option value="" disabled>Select a destination</option>
+                      {#each data.allDestinations as dest (dest.id)}
+                        <option value={dest.id}>{dest.name}</option>
+                      {/each}
+                    </select>
                   </div>
                 </div>
 
@@ -316,7 +357,7 @@
                     rows="4"
                     placeholder="Custom instructions for this step (e.g. tone, length, focus areas)..."
                     value={step.prompt}
-                    oninput={(e) => updateStepPrompt(step.index, (e.target as HTMLTextAreaElement).value)}
+                    oninput={(e) => updateStepField(step.index, 'prompt', (e.target as HTMLTextAreaElement).value)}
                   ></textarea>
                 </div>
               </div>
