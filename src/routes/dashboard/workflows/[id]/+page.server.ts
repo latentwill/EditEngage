@@ -63,8 +63,50 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
     .order('created_at', { ascending: false })
     .limit(50);
 
+  // Resolve step names (agents, topics, destinations)
+  const steps = (pipeline.steps ?? []) as Array<{
+    agent_id?: string;
+    agent_type?: string;
+    topic_id?: string;
+    destination_id?: string;
+    prompt?: string;
+  }>;
+
+  const agentIds = steps.map(s => s.agent_id).filter(Boolean) as string[];
+  const topicIds = steps.map(s => s.topic_id).filter(Boolean) as string[];
+  const destinationIds = steps.map(s => s.destination_id).filter(Boolean) as string[];
+
+  const [agentsResult, topicsResult, destinationsResult] = await Promise.all([
+    agentIds.length > 0
+      ? supabase.from('writing_agents').select('id, name').in('id', agentIds)
+      : { data: [] },
+    topicIds.length > 0
+      ? supabase.from('topic_queue').select('id, title').in('id', topicIds)
+      : { data: [] },
+    destinationIds.length > 0
+      ? supabase.from('destinations').select('id, name').in('id', destinationIds)
+      : { data: [] },
+  ]);
+
+  const agentMap = Object.fromEntries((agentsResult.data ?? []).map(a => [a.id, a.name]));
+  const topicMap = Object.fromEntries((topicsResult.data ?? []).map(t => [t.id, t.title]));
+  const destMap = Object.fromEntries((destinationsResult.data ?? []).map(d => [d.id, d.name]));
+
+  const resolvedSteps = steps.map((step, i) => ({
+    index: i,
+    agent_id: step.agent_id ?? null,
+    agent_type: step.agent_type ?? 'writing',
+    agent_name: agentMap[step.agent_id ?? ''] ?? 'Unknown Agent',
+    topic_id: step.topic_id ?? null,
+    topic_name: topicMap[step.topic_id ?? ''] ?? null,
+    destination_id: step.destination_id ?? null,
+    destination_name: destMap[step.destination_id ?? ''] ?? null,
+    prompt: step.prompt ?? '',
+  }));
+
   return {
     workflow: pipeline,
+    resolvedSteps,
     runs: runsWithSteps,
     events: events ?? []
   };

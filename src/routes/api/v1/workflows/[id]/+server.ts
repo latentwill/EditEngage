@@ -74,6 +74,7 @@ export const PATCH: RequestHandler = async ({ params, request, cookies }) => {
   if (typeof body.is_active === 'boolean') allowedFields.is_active = body.is_active;
   if (typeof body.name === 'string') allowedFields.name = body.name;
   if (typeof body.description === 'string') allowedFields.description = body.description;
+  if (Array.isArray(body.steps)) allowedFields.steps = body.steps;
 
   const { data: updated, error: updateError } = await supabase
     .from('pipelines')
