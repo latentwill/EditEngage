@@ -71,12 +71,10 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
       serpResearch: false
     };
 
-    // Fetch writing style
-    const { data: writingStyle } = await this.supabase
-      .from('writing_styles')
-      .select('*')
-      .eq('id', cfg.writingStyleId)
-      .single();
+    // Fetch writing style (skip lookup if no ID configured)
+    const writingStyle = cfg.writingStyleId
+      ? (await this.supabase.from('writing_styles').select('*').eq('id', cfg.writingStyleId).single()).data
+      : null;
 
     // Perform SERP research if enabled
     let serpAnalysis: SerpAnalysis | null = null;
@@ -91,7 +89,7 @@ export class SeoWriterAgent implements Agent<SeoWriterInput, SeoWriterOutput> {
     // Build prompt
     const prompt = this.buildPrompt(input, writingStyle, serpAnalysis);
 
-    const data = await Logfire.span('llm.call', {
+    const data = await Logfire.span('seo_writer.llm_generate', {
       attributes: {
         'llm.provider': 'openrouter',
         'llm.model': DEFAULT_MODEL,

@@ -34,7 +34,7 @@ export class PipelineOrchestrator {
   }
 
   async run(options: PipelineRunOptions): Promise<PipelineResult> {
-    return Logfire.span('pipeline.run', { attributes: { pipelineRunId: options.pipelineRunId, 'pipeline.step_count': options.agents.length }, callback: async (span: import('@opentelemetry/api').Span) => {
+    return Logfire.span('workflow.orchestrate', { attributes: { pipelineRunId: options.pipelineRunId, 'workflow.step_count': options.agents.length }, callback: async (span: import('@opentelemetry/api').Span) => {
       const { pipelineRunId, agents, initialInput, onProgress } = options;
       const steps: unknown[] = [];
       let currentInput = initialInput;
@@ -61,7 +61,7 @@ export class PipelineOrchestrator {
           .eq('id', pipelineRunId);
 
         try {
-          const output = await Logfire.span('agent.execute', { attributes: { agentType: agent.type, stepIndex: i }, callback: async (agentSpan: import('@opentelemetry/api').Span) => {
+          const output = await Logfire.span(`step.${stepNumber} ${agent.type}`, { attributes: { 'step.agent_type': agent.type, 'step.index': i, 'step.number': stepNumber }, callback: async (agentSpan: import('@opentelemetry/api').Span) => {
             const result = await agent.execute(currentInput);
             agentSpan.setAttributes({ 'agent.output_size': JSON.stringify(result).length });
             return result;

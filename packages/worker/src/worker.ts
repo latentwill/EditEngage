@@ -179,7 +179,7 @@ export function createAgentFromStep(
     case 'programmatic_page': {
       const llmServiceUrl = process.env.LLM_SERVICE_URL ?? 'http://llm-service:8000';
       const llmFn = async (prompt: string): Promise<string> => {
-        return Logfire.span('llm.call', {
+        return Logfire.span('programmatic_page.llm_generate', {
           attributes: {
             'llm.provider': 'openrouter',
             'llm.model': 'anthropic/claude-sonnet-4',
@@ -253,11 +253,13 @@ async function saveContentFromResult(
       console.error(`[worker] Failed to save content: ${JSON.stringify(error)}`);
     } else if (saved) {
       console.log(`[worker] Content saved: "${output.title}"`);
+      const eventDescription = `Content created: "${output.title}"`;
       await supabase.from('events').insert({
         project_id: projectId,
-        event_type: 'content_created',
+        event_type: 'content.created',
+        description: eventDescription,
         module: 'writing',
-        payload_summary: `Content created: "${output.title}"`,
+        payload_summary: eventDescription,
         artifact_link: `/dashboard/write/content?highlight=${saved.id}`,
         metadata: { pipeline_run_id: pipelineRunId, content_id: saved.id },
       });
@@ -287,11 +289,16 @@ export function createWorker(supabase: SupabaseClient): void {
       const { data } = job as JobPayload;
       const typedJob = job as { id?: string; attemptsMade?: number };
 
-      return Logfire.span('job.process', {
+      const stepTypes = steps.map(s => (s as PipelineStep).agentType ?? (s as PipelineStep).agent_type ?? '?').join(' → ');
+      return Logfire.span(`workflow.run [${stepTypes}]`, {
         attributes: {
           'job.id': typedJob.id ?? 'unknown',
           'job.queue': QUEUE_NAME,
           'job.attempt': typedJob.attemptsMade ?? 1,
+          'workflow.pipeline_id': data.pipelineId,
+          'workflow.pipeline_run_id': data.pipelineRunId,
+          'workflow.step_count': steps.length,
+          'workflow.steps': stepTypes,
         },
         callback: async (span) => {
         const { pipelineId, pipelineRunId, steps } = data;
@@ -301,18 +308,15 @@ export function createWorker(supabase: SupabaseClient): void {
           .update({ status: 'running' })
           .eq('id', pipelineRunId);
 
-        console.log(`[worker] Processing job ${typedJob.id} with ${steps.length} steps`);
-        console.log(`[worker] Steps:`, JSON.stringify(steps));
-
         const agents = steps.map((step) => createAgentFromStep(step, deps));
         const firstStep = steps[0] as PipelineStep | undefined;
-        console.log(`[worker] First step agent_type: ${firstStep?.agent_type ?? firstStep?.agentType ?? 'none'}`);
 
-        const hydrated = firstStep
-          ? await hydrateStepInput(firstStep, pipelineId, supabase)
-          : { input: {}, config: {} };
-        console.log(`[worker] Hydrated input keys: ${Object.keys(hydrated.input)}`);
-        console.log(`[worker] Hydrated topic: ${JSON.stringify((hydrated.input as Record<string, unknown>).topic ?? 'none')}`);
+        const hydrated = await Logfire.span('workflow.hydrate', {
+          attributes: { 'hydrate.agent_type': firstStep?.agentType ?? firstStep?.agent_type ?? 'none' },
+          callback: async () => firstStep
+            ? await hydrateStepInput(firstStep, pipelineId, supabase)
+            : { input: {}, config: {} }
+        });
 
         try {
           const result = await orchestrator.run({
@@ -329,8 +333,7 @@ export function createWorker(supabase: SupabaseClient): void {
               .update({ status: 'failed', error: errorMsg, result })
               .eq('id', pipelineRunId);
 
-            span.setAttributes({ 'job.status': 'failed', error: true });
-            console.error(`[worker] Pipeline failed at step ${(result as { failedStep?: number }).failedStep}: ${errorMsg}`);
+            span.setAttributes({ 'job.status': 'failed', error: true, 'error.message': errorMsg });
 
             return result;
           }
@@ -342,7 +345,10 @@ export function createWorker(supabase: SupabaseClient): void {
 
           const projectId = ((hydrated.input as Record<string, unknown>).topic as Record<string, unknown>)?.project_id as string;
           if (projectId) {
-            await saveContentFromResult(result as { status: string; steps?: unknown[] }, pipelineRunId, projectId, supabase);
+            await Logfire.span('workflow.save_content', {
+              attributes: { 'save.project_id': projectId, 'save.pipeline_run_id': pipelineRunId },
+              callback: async () => saveContentFromResult(result as { status: string; steps?: unknown[] }, pipelineRunId, projectId, supabase)
+            });
           }
 
           span.setAttributes({ 'job.status': 'completed' });
@@ -354,7 +360,7 @@ export function createWorker(supabase: SupabaseClient): void {
             .update({ status: 'failed', error: toErrorMessage(err) })
             .eq('id', pipelineRunId);
 
-          span.setAttributes({ 'job.status': 'failed', error: true });
+          span.setAttributes({ 'job.status': 'failed', error: true, 'error.message': toErrorMessage(err) });
 
           throw err;
         }
