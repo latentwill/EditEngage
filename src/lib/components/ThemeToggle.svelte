@@ -18,12 +18,12 @@
     const storage = getStorage();
     const saved = storage?.getItem('theme') ?? null;
     isDark = saved ? saved === 'dark' : false;
-    document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'light');
+    document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'editengage-light');
   });
 
   function toggle() {
     isDark = !isDark;
-    document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'light');
+    document.documentElement.setAttribute('data-theme', isDark ? 'editengage' : 'editengage-light');
     getStorage()?.setItem('theme', isDark ? 'dark' : 'light');
   }
 </script>
